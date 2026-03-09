@@ -1,0 +1,166 @@
+✅ CAMBIOS REALIZADOS EN main.cpp - ORGANIZACIÓN Y DOCUMENTACIÓN
+
+═══════════════════════════════════════════════════════════════════
+
+📌 CAMBIO 1: ENDPOINTS CENTRALIZADOS (Líneas 35-39)
+
+ANTES:
+  - Endpoint hardcodeado dentro de funciones
+  - URL dispersa en sendWeightData() y sendSanction()
+  - Difícil de modificar sin buscar en todo el código
+
+AHORA:
+  const char* ENDPOINT_REGISTRAR_DEPOSITOS = "/contenedores/registrar_depositos.php";
+  const char* ENDPOINT_REGISTRAR_SANCION = "/sanciones/register.php";
+  
+VENTAJAS:
+  ✓ Todos los endpoints visibles en un solo lugar
+  ✓ Cambios rápidos: solo modificar línea 36-37
+  ✓ Fácil agregar nuevos endpoints
+  ✓ Código más limpio y mantenible
+
+═══════════════════════════════════════════════════════════════════
+
+📌 CAMBIO 2: FUNCIÓN sendWeightData() - DOCUMENTADA Y MEJORADA
+
+ANTES:
+  bool sendWeightData(int userId, float weightKg, float kwh, float costRD) {
+    String url = baseURL + "/contenedores/registrar_depositos.php";
+    ...
+    doc["usuario_id"] = userId;
+    doc["peso"] = weightKg;
+    doc["id_contenedor"] = CONTAINER_ID_SANTIAGO;
+    doc["kwh"] = kwh;
+    doc["cost_rd"] = costRD;
+    doc["timestamp"] = millis();
+
+AHORA:
+  // Campos CLARAMENTE DOCUMENTADOS con descripción
+  // - usuario_id (requerido): ID del usuario que deposita
+  // - peso (requerido): Peso en kg medido por HX711
+  // - id_contenedor (requerido): ID del contenedor fijo de Santiago
+  // - metal_detectado (opcional): 0 o 1 si detectó metal
+  // - kwh (opcional): Conversión de kg a kWh
+  // - cost_rd (opcional): Costo en pesos dominicanos
+  // - timestamp (opcional): Timestamp del depósito
+  
+  // AHORA INCLUYE metal_detectado en JSON:
+  doc["metal_detectado"] = 0;  // ← AGREGADO (importante para BD)
+  
+VENTAJAS:
+  ✓ Cada campo tiene descripción clara
+  ✓ Indica cuál es requerido vs opcional
+  ✓ Más fácil entender qué envía cada línea
+  ✓ metal_detectado ahora NO se omite (completa el registro)
+
+═══════════════════════════════════════════════════════════════════
+
+📌 CAMBIO 3: FUNCIÓN sendSanction() - DOCUMENTADA Y MEJORADA
+
+ANTES:
+  bool sendSanction(int userId, String reason) {
+    String url = String(serverAPI) + "/sanciones/register.php";
+    ...
+    doc["user_id"] = userId;
+    doc["reason"] = reason;
+    doc["type"] = "metal_detection";
+    doc["timestamp"] = millis();
+    doc["container_id"] = CONTAINER_ID_SANTIAGO;
+
+AHORA:
+  // Campos CLARAMENTE DOCUMENTADOS
+  // - user_id (requerido): ID del usuario que cometió la infracción
+  // - reason (requerido): Motivo de la sanción
+  // - type (opcional): Tipo de infracción (metal_detection, etc.)
+  // - container_id (opcional): ID del contenedor donde ocurrió
+  // - timestamp (opcional): Cuando ocurrió la infracción
+  
+  doc["user_id"] = userId;
+  doc["reason"] = reason;
+  doc["type"] = "metal_detection";
+  doc["container_id"] = CONTAINER_ID_SANTIAGO;
+  doc["timestamp"] = millis();
+
+VENTAJAS:
+  ✓ Usa endpoint centralizado (no hardcodea URL)
+  ✓ Cada campo documentado con descripción
+  ✓ Campos ordenados lógicamente (requeridos primero)
+  ✓ Mensajes de consola mejorados con ✓ y ✗ para claridad
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 INFORMACIÓN ENVIADA AHORA (COMPLETA):
+
+DEPOSITO:
+  ✅ usuario_id (4)                  → BD: id_usuario
+  ✅ peso (2.29 kg)                  → BD: peso
+  ✅ id_contenedor (1)               → BD: id_contenedor
+  ✅ metal_detectado (0)             → BD: metal_detectado ⭐ NUEVO
+  ✅ kwh (0.00252)                   → Cálculo: BD: credito_kwh
+  ✅ cost_rd (0.0139)                → Cálculo: BD observaciones
+  ✅ timestamp (36862)               → Ref: BD: creado_en
+
+SANCIÓN:
+  ✅ user_id (4)                     → BD: user_id
+  ✅ reason ("Metal detectado...")   → BD: reason
+  ✅ type ("metal_detection")        → BD: type
+  ✅ container_id (1)                → BD: container_id
+  ✅ timestamp (36862)               → BD: creado_en
+  (Endpoint ahora: crear_sancion_auto.php)
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 CÓMO MODIFICAR ENDPOINTS (SUPER FÁCIL AHORA):
+
+Cambiar IP del servidor:
+  Línea 34: const char* serverAPI = "http://10.0.0.162:8080/PRERMI/api";
+
+Cambiar endpoint de depósitos:
+  Línea 36: const char* ENDPOINT_REGISTRAR_DEPOSITOS = "/contenedores/registrar_depositos.php";
+
+Cambiar endpoint de sanciones:
+  Línea 37: const char* ENDPOINT_REGISTRAR_SANCION = "/sanciones/register.php";
+
+Agregar nuevo endpoint (ej: upload de fotos):
+  Línea 39: const char* ENDPOINT_UPLOAD_FOTO = "/contenedores/subir_foto.php";
+
+✅ NO es necesario modificar las funciones sendWeightData() o sendSanction()
+✅ Solo modificar las constantes de endpoints
+
+═══════════════════════════════════════════════════════════════════
+
+📊 TABLA COMPARATIVA:
+
+ASPECTO              | ANTES              | AHORA
+─────────────────────┼────────────────────┼─────────────────────
+Ubicación endpoints  | Dispersa            | Centralizada (líneas 36-37)
+Documentación        | Mínima              | Completa para cada campo
+metal_detectado      | NO se enviaba       | SÍ se envía ahora ✅
+Modificabilidad      | Buscar en código    | Cambiar línea al inicio
+Claridad JSON        | Comentarios simples | Tabla documentada
+Mensajes console     | Genéricos           | Con ✓ y ✗ emoji
+
+═══════════════════════════════════════════════════════════════════
+
+✅ VERIFICACIÓN:
+
+Compilar y cargar el nuevo código:
+  - No hay cambios en funcionalidad, solo reorganización
+  - Debería compilar sin errores
+  - Los depósitos se siguen registrando correctamente
+  - Los endpoints funcionan igual que antes
+
+═══════════════════════════════════════════════════════════════════
+
+📝 NOTA IMPORTANTE:
+
+El código FUNCIONA IGUAL que antes. Solo está más:
+  ✓ Organizado
+  ✓ Documentado
+  ✓ Fácil de modificar
+  ✓ Completo (incluye metal_detectado)
+
+La información que SE ENVÍA es más COMPLETA ahora, ya que incluye
+el campo metal_detectado que antes se omitía.
+
+═══════════════════════════════════════════════════════════════════

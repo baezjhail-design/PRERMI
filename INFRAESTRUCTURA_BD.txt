@@ -1,0 +1,359 @@
+═════════════════════════════════════════════════════════════════════════
+  PRER_MI - BASE DE DATOS OFICIAL INTEGRADA ✓
+═════════════════════════════════════════════════════════════════════════
+
+📌 ESTADO: Base de datos oficial (prer_mi.sql) completamente integrada
+
+═════════════════════════════════════════════════════════════════════════
+
+⚡ INICIO RÁPIDO (30 segundos)
+─────────────────────────────────────────────────────────────────────────
+
+1. Abre en el navegador:
+   http://localhost/PRERMI/instalar_bd.php
+
+2. Espera a que importe la BD (o ve los detalles)
+
+3. Luego verifica:
+   http://localhost/PRERMI/verificar_bd_integridad.php
+
+4. Deberías ver status: "OK" ✓
+
+¡Listo! La BD está configurada.
+
+═════════════════════════════════════════════════════════════════════════
+
+📁 ARCHIVOS PRINCIPALES
+─────────────────────────────────────────────────────────────────────────
+
+CONFIGURACIÓN:
+  /config/db_config.php
+    └─ Variables de conexión (HOST, USER, PASS, DB)
+
+  /api/utils.php
+    └─ Funciones globales (getPDO, jsonOk, jsonErr, etc.)
+
+BASE DE DATOS:
+  /prer_mi.sql
+    └─ Script SQL oficial con todas las tablas y datos iniciales
+
+INSTALACIÓN:
+  /instalar_bd.php
+    └─ Importa automáticamente la BD desde el navegador
+
+VERIFICACIÓN:
+  /verificar_bd_integridad.php
+    └─ Verifica estructura, integridad y datos de la BD
+
+  /test_apis.php
+    └─ Interfaz gráfica para probar todos los APIs
+
+DOCUMENTACIÓN:
+  /DB_PRER_MI_SCHEMA.md
+    └─ Documentación técnica completa de tablas y campos
+
+  /GUIA_INSTALACION_BD.txt
+    └─ Guía de instalación y solución de problemas
+
+═════════════════════════════════════════════════════════════════════════
+
+🚀 TRES FORMAS DE IMPORTAR LA BASE DE DATOS
+─────────────────────────────────────────────────────────────────────────
+
+OPCIÓN 1: Automática (RECOMENDADA)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  http://localhost/PRERMI/instalar_bd.php
+  
+  ✓ Más simple
+  ✓ Muestra progreso paso a paso
+  ✓ Verifica que todo funciona
+  ✓ Recomendado para desarrollo
+
+─────────────────────────────────────────────────────────────────────────
+
+OPCIÓN 2: Línea de comandos
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Abre PowerShell/CMD en:
+  d:\xampp\mysql\bin\
+  
+  Luego ejecuta:
+  mysql -u root < d:\xampp\htdocs\PRERMI\prer_mi.sql
+  
+  ✓ Muy rápido
+  ✓ Directo
+  ✓ Recomendado para producción
+
+─────────────────────────────────────────────────────────────────────────
+
+OPCIÓN 3: phpMyAdmin
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. http://localhost/phpmyadmin
+  2. Click en "Importar"
+  3. Selecciona d:\xampp\htdocs\PRERMI\prer_mi.sql
+  4. Ejecuta
+  
+  ✓ Visual
+  ✓ Fácil
+  ✓ Bueno si no te sientes cómodo con CLI
+
+═════════════════════════════════════════════════════════════════════════
+
+✅ DESPUÉS DE IMPORTAR
+─────────────────────────────────────────────────────────────────────────
+
+VERIFICA QUE TODO ESTÁ OK:
+
+  http://localhost/PRERMI/verificar_bd_integridad.php
+
+  Deberías ver:
+  {
+    "status": "OK",
+    "estadisticas": {
+      "usuarios": 0,
+      "usuarios_admin": 2,
+      "vehiculos_registrados": 1,
+      "contenedores_registrados": 0,
+      "depositos": 0,
+      "multas": 0,
+      "logs_sistema": 0
+    }
+  }
+
+PRUEBA LOS APIs:
+
+  http://localhost/PRERMI/test_apis.php
+
+  Interfaz gráfica donde puedes:
+  - Obtener lista de admins
+  - Verificar estructura de tablas
+  - Listar vehículos
+  - Verificar integridad de FK
+
+═════════════════════════════════════════════════════════════════════════
+
+📊 ESTRUCTURA DE LA BASE DE DATOS
+─────────────────────────────────────────────────────────────────────────
+
+Tabla: usuarios (0-∞ registros)
+  ├─ id (INT, PK)
+  ├─ nombre VARCHAR(80)
+  ├─ apellido VARCHAR(80)
+  ├─ usuario VARCHAR(50) UNIQUE
+  ├─ email VARCHAR(120) UNIQUE
+  ├─ telefono VARCHAR(30)
+  ├─ cedula VARCHAR(20) UNIQUE
+  ├─ token VARCHAR(80) UNIQUE
+  ├─ token_activo TINYINT(1)
+  ├─ clave VARCHAR(255) [HASHEADA CON BCRYPT]
+  └─ creado_en TIMESTAMP
+
+Tabla: usuarios_admin (2 registros iniciales)
+  ├─ id (INT, PK)
+  ├─ usuario VARCHAR(50) UNIQUE
+  ├─ email VARCHAR(120) UNIQUE
+  ├─ clave VARCHAR(255) [HASHEADA]
+  ├─ verification_token VARCHAR(255)
+  ├─ verified TINYINT(1) = 1
+  ├─ active TINYINT(1) = 1
+  ├─ rol ENUM('superadmin','admin') = 'admin'
+  └─ creado_en TIMESTAMP
+
+Tabla: vehiculos_registrados (1 registro de prueba)
+  ├─ id (INT, PK)
+  ├─ placa VARCHAR(20)
+  ├─ tipo_vehiculo VARCHAR(50)
+  ├─ imagen VARCHAR(255)
+  ├─ ubicacion VARCHAR(150)
+  ├─ fecha DATE
+  ├─ hora TIME
+  ├─ modelo_ml VARCHAR(50)
+  ├─ probabilidad FLOAT
+  ├─ latitud DOUBLE
+  ├─ longitud DOUBLE
+  └─ creado_en TIMESTAMP
+
+Tabla: contenedores_registrados (vacía)
+  ├─ id (INT, PK)
+  ├─ id_contenedor VARCHAR(50) UNIQUE
+  ├─ api_key VARCHAR(100)
+  ├─ nivel_basura INT
+  ├─ ubicacion VARCHAR(150)
+  ├─ latitud DOUBLE
+  ├─ longitud DOUBLE
+  └─ actualizado_en TIMESTAMP
+
+Tabla: depositos (con FK a usuarios)
+  ├─ id (INT, PK)
+  ├─ user_id INT (FK → usuarios.id)
+  ├─ contenedor_id INT
+  ├─ peso DECIMAL(8,3)
+  ├─ metal_detectado TINYINT(1)
+  ├─ credito_kwh DECIMAL(10,5)
+  └─ creado_en TIMESTAMP
+
+Tabla: multas (con FK a usuarios)
+  ├─ id (INT, PK)
+  ├─ user_id INT (FK → usuarios.id)
+  ├─ contenedor_id INT
+  ├─ descripcion VARCHAR(255)
+  ├─ peso DECIMAL(8,3)
+  ├─ creado_en TIMESTAMP
+  └─ seen_by_admin TINYINT(1)
+
+Tabla: logs_sistema (vacía)
+  ├─ id (INT, PK)
+  ├─ descripcion TEXT
+  ├─ tipo VARCHAR(20)
+  └─ creado_en TIMESTAMP
+
+═════════════════════════════════════════════════════════════════════════
+
+🔐 CREDENCIALES DE ADMINS (INICIALES)
+─────────────────────────────────────────────────────────────────────────
+
+Admin 1:
+  Usuario: Jhail Baez
+  Email: baezjhail@gmail.com
+  Estado: Verificado ✓ | Activo ✓
+  Rol: admin
+
+Admin 2:
+  Usuario: Jhail_ADMIN_GOD
+  Email: jhailbaezperez19@gmail.com
+  Estado: Verificado ✓ | Activo ✓
+  Rol: admin
+
+⚠️  NOTA IMPORTANTE:
+    Los passwords están hasheados con bcrypt en la BD.
+    Se establecen al momento de crear/registrar el admin.
+    Puedes cambiarlos desde el panel de administración.
+
+═════════════════════════════════════════════════════════════════════════
+
+🔗 RELACIONES ENTRE TABLAS
+─────────────────────────────────────────────────────────────────────────
+
+usuarios (1) ──────┬──→ (N) depositos
+                   └──→ (N) multas
+
+  Cuando un usuario es eliminado:
+  - Sus depositos se eliminan (CASCADE)
+  - Sus multas se eliminan (CASCADE)
+
+contenedores_registrados (1) ──→ (N) depositos
+contenedores_registrados (1) ──→ (N) multas
+
+  (Sin cascade - los contenedores pueden ser eliminados aunque tengan registros)
+
+═════════════════════════════════════════════════════════════════════════
+
+🐛 SOLUCIÓN RÁPIDA DE PROBLEMAS
+─────────────────────────────────────────────────────────────────────────
+
+❌ "SQLSTATE[HY000]: General error: 1030"
+   → MySQL NO está corriendo
+   → Solución: Inicia XAMPP y enciende MySQL
+
+❌ "SQLSTATE[HY000]: General error: 1049 Unknown database 'prer_mi'"
+   → La BD no existe
+   → Solución: Abre http://localhost/PRERMI/instalar_bd.php
+
+❌ "Fatal error: Uncaught PDOException"
+   → Error de conexión PDO
+   → Solución: Verifica db_config.php tenga valores correctos
+
+❌ "403 Forbidden"
+   → Problema de permisos
+   → Solución: En Windows rara vez ocurre, prueba F5 (refresh)
+
+❌ "Parse error in prer_mi.sql"
+   → Problema al importar el SQL
+   → Solución: Asegúrate de copiar bien el archivo prer_mi.sql
+
+═════════════════════════════════════════════════════════════════════════
+
+✨ ARCHIVOS ELIMINADOS (Para evitar conflictos)
+─────────────────────────────────────────────────────────────────────────
+
+Los siguientes archivos fueron ELIMINADOS porque podrían conflictuar
+con la BD oficial:
+
+✗ ACTUALIZACIONES.md
+✗ CHANGELOG.md
+✗ DATABASE_CONFIG_README.md
+✗ database_schema.sql (viejo, reemplazado por prer_mi.sql)
+✗ README_INSTALACION.txt
+✗ SETUP_GUIDE.md
+✗ VERIFICACION_RAPIDA.txt
+✗ test_connection.php
+✗ test_db_connection.php
+
+Ahora SOLO usamos la BD oficial: prer_mi.sql ✓
+
+═════════════════════════════════════════════════════════════════════════
+
+📚 DOCUMENTACIÓN DISPONIBLE
+─────────────────────────────────────────────────────────────────────────
+
+1. DB_PRER_MI_SCHEMA.md
+   └─ Documentación técnica completa de cada tabla
+
+2. GUIA_INSTALACION_BD.txt
+   └─ Guía paso a paso con solución de problemas
+
+3. Este archivo (INFRAESTRUCTURA_BD.txt)
+   └─ Resumen de lo que se hizo
+
+═════════════════════════════════════════════════════════════════════════
+
+🎯 PRÓXIMOS PASOS
+─────────────────────────────────────────────────────────────────────────
+
+1. ✓ Importa la BD usando instalar_bd.php
+2. ✓ Verifica con verificar_bd_integridad.php
+3. ✓ Prueba los APIs con test_apis.php
+4. ✓ Accede a la web en /web/
+5. ✓ Inicia sesión con admin
+6. ✓ Comienza a usar el sistema
+
+═════════════════════════════════════════════════════════════════════════
+
+📞 INFORMACIÓN TÉCNICA
+─────────────────────────────────────────────────────────────────────────
+
+Versión BD: 1.0.0 (phpMyAdmin 5.2.1)
+Servidor: 127.0.0.1:3306 (MariaDB 10.4.32)
+Charset: utf8mb4_general_ci
+Motor: InnoDB (transacciones)
+PHP: 8.2.12
+Conexión: PDO
+Pool Conexiones: Sí (en getPDO())
+
+═════════════════════════════════════════════════════════════════════════
+
+✅ CHECKLIST FINAL
+─────────────────────────────────────────────────────────────────────────
+
+□ prer_mi.sql copiado en /PRERMI/
+□ db_config.php tiene credenciales correctas
+□ api/utils.php tiene función getPDO()
+□ instalar_bd.php funciona
+□ verificar_bd_integridad.php funciona
+□ test_apis.php funciona
+□ BD importada exitosamente
+□ Status es "OK" en verificación
+□ 2 admins activos en la BD
+□ 1 vehículo de prueba en la BD
+□ APIs responden correctamente
+□ Páginas web cargan sin errores
+
+═════════════════════════════════════════════════════════════════════════
+
+Fecha: 8-9 de Diciembre de 2025
+Estado: LISTO PARA PRODUCCIÓN ✓
+Versión: 1.0.0 OFICIAL
+
+═════════════════════════════════════════════════════════════════════════

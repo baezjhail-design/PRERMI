@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" role="img" aria-label="Logo PRERMI principal">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a4f8f"/>
+      <stop offset="1" stop-color="#1ea9d8"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#0ea5a8"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="204" height="204" rx="46" fill="url(#bg)"/>
+  <circle cx="110" cy="110" r="70" fill="#ffffff" opacity="0.95"/>
+  <path d="M58 126c19-28 40-40 66-40 13 0 25 4 39 13" fill="none" stroke="#0a4f8f" stroke-width="10" stroke-linecap="round"/>
+  <path d="M67 149h86" stroke="#0a4f8f" stroke-width="10" stroke-linecap="round"/>
+  <path d="M120 65c15 8 22 21 20 40-18-3-32-14-40-31 6-6 12-9 20-9z" fill="url(#leaf)"/>
+  <circle cx="77" cy="90" r="11" fill="#1ea9d8"/>
+  <circle cx="148" cy="131" r="8" fill="#22c55e"/>
+  <text x="110" y="190" text-anchor="middle" font-family="Sora,Arial,sans-serif" font-size="28" font-weight="800" fill="#ffffff">PRERMI</text>
+</svg>

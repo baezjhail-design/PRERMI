@@ -1,0 +1,16 @@
+{
+    "command": "start_generacion",
+    "raw": "start_generacion",
+    "created_at": "2026-03-07T18:26:39+01:00",
+    "sent_at": null,
+    "command_id": 113,
+    "bypass_temp": false,
+    "bypass_fan": false,
+    "bypass_heater": false,
+    "bypass_current": false,
+    "system_off": false,
+    "kill_temp": false,
+    "kill_fan": false,
+    "kill_heater": false,
+    "kill_current": false
+}

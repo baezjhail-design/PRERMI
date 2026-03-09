@@ -1,0 +1,26 @@
+# PRERMI API - Acceso permitido para endpoints
+# Resolver 403 en InfinityFree
+
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
+
+# CORS headers para todas las respuestas API
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-API-KEY, X-Requested-With"
+    Header always set Access-Control-Max-Age "3600"
+</IfModule>
+
+# Manejar preflight OPTIONS directamente
+RewriteEngine On
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# PHP como handler principal
+<IfModule mod_mime.c>
+    AddType application/x-httpd-php .php
+</IfModule>
+
+Options -Indexes

@@ -1,0 +1,510 @@
+/**
+ * PRERMI - Mobile & Responsive Styles
+ * Optimized for mobile-first experience
+ */
+
+/* ===== BASE MOBILE ===== */
+html, body {
+    height: 100%;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+}
+
+body {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== TOUCH TARGETS (min 48px) ===== */
+.btn, .nav-link, a.btn, button, .form-control, select {
+    min-height: 44px;
+}
+
+.nav-link {
+    padding: 12px 14px;
+}
+
+/* ===== PREVENT HORIZONTAL OVERFLOW ===== */
+img, video, iframe, table {
+    max-width: 100%;
+}
+
+.container, .container-fluid, .container-main {
+    overflow-x: hidden;
+}
+
+/* ===== NAVBAR MOBILE ===== */
+@media (max-width: 991px) {
+    .navbar {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .navbar-brand {
+        font-size: 1.2rem !important;
+    }
+
+    .navbar-brand i {
+        font-size: 1.4rem !important;
+    }
+
+    .navbar-collapse {
+        background: rgba(0, 0, 0, 0.95);
+        border-radius: 0 0 12px 12px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .navbar-collapse .nav-link {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        margin-left: 0 !important;
+        font-size: 1rem;
+    }
+
+    .navbar-collapse .nav-link:last-child {
+        border-bottom: none;
+    }
+
+    .navbar-toggler {
+        border: 2px solid rgba(255,255,255,0.5);
+        padding: 8px 10px;
+    }
+
+    .navbar-user {
+        padding: 0.75rem 1rem !important;
+    }
+
+    .navbar-user .user-info {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        justify-content: center;
+    }
+
+    .navbar-user .user-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+    }
+
+    .navbar-user .logout-btn,
+    .navbar-user .facial-btn,
+    .navbar-user .btn-outline-light {
+        font-size: 0.85rem;
+        padding: 8px 12px;
+    }
+}
+
+/* ===== FORMS MOBILE ===== */
+@media (max-width: 576px) {
+    .form-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    .form-control {
+        font-size: 16px !important; /* Prevents iOS zoom on focus */
+        padding: 14px 12px;
+    }
+
+    .form-label {
+        font-size: 0.95rem;
+    }
+
+    .register-wrapper,
+    .login-wrapper {
+        padding: 1rem 0.75rem;
+        align-items: flex-start;
+        padding-top: 1.5rem;
+    }
+
+    .register-card,
+    .login-card {
+        border-radius: 12px;
+    }
+
+    .register-header,
+    .login-header {
+        padding: 1.75rem 1.25rem;
+    }
+
+    .register-header h1,
+    .login-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .register-header i,
+    .login-header i {
+        font-size: 1.8rem;
+    }
+
+    .register-body,
+    .login-body {
+        padding: 1.5rem 1.25rem;
+    }
+
+    .register-footer,
+    .login-footer {
+        padding: 1.25rem;
+    }
+
+    .btn-register,
+    .btn-login {
+        padding: 14px;
+        font-size: 1rem;
+    }
+
+    .back-link {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+}
+
+/* ===== DASHBOARD / STATS MOBILE ===== */
+@media (max-width: 768px) {
+    .stat-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.75rem;
+    }
+
+    .stat-box {
+        padding: 1.25rem 0.75rem;
+    }
+
+    .stat-icon {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.4rem;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+    }
+
+    .container-main {
+        padding: 1rem 0.75rem;
+    }
+
+    .card-custom {
+        margin-bottom: 1rem;
+    }
+
+    .card-header-custom {
+        padding: 1.25rem;
+    }
+
+    .card-header-custom h3 {
+        font-size: 1.1rem;
+    }
+
+    .chart-container {
+        height: 220px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem;
+    }
+
+    .stat-box {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        text-align: left;
+        padding: 1rem;
+    }
+
+    .stat-box .stat-icon {
+        font-size: 1.6rem;
+        margin-bottom: 0;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    .stat-box .stat-value {
+        font-size: 1.3rem;
+        margin: 0;
+    }
+
+    .stat-box .stat-label {
+        font-size: 0.75rem;
+        margin: 0;
+    }
+}
+
+/* ===== TABLES MOBILE ===== */
+@media (max-width: 768px) {
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 10px;
+    }
+
+    .table-container table {
+        min-width: 600px;
+    }
+
+    .table-container thead th {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .table-container tbody td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .table th, .table td {
+        padding: 0.6rem 0.5rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* ===== PAGE HEADER MOBILE ===== */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 1.5rem !important;
+    }
+
+    .page-title i {
+        font-size: 1.7rem !important;
+    }
+
+    .page-subtitle {
+        font-size: 0.95rem;
+    }
+}
+
+/* ===== CARDS MOBILE ===== */
+@media (max-width: 576px) {
+    .card {
+        border-radius: 10px;
+    }
+
+    .card-body {
+        padding: 1.25rem;
+    }
+
+    .card-header {
+        padding: 1rem;
+        font-size: 1rem;
+    }
+}
+
+/* ===== USER DASHBOARD SPECIFIC ===== */
+@media (max-width: 991px) {
+    .row > .col-lg-6 {
+        margin-bottom: 1rem;
+    }
+}
+
+/* ===== MODALS MOBILE ===== */
+@media (max-width: 576px) {
+    .modal-dialog {
+        margin: 0.75rem;
+    }
+
+    .modal-body {
+        padding: 1.25rem;
+    }
+
+    .modal-footer {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .modal-footer .btn {
+        flex: 1 1 auto;
+        min-width: 120px;
+    }
+
+    .facial-modal-img {
+        max-height: 280px !important;
+    }
+}
+
+/* ===== ALERTS MOBILE ===== */
+@media (max-width: 576px) {
+    .alert {
+        padding: 12px 14px;
+        font-size: 0.9rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 6px;
+    }
+}
+
+/* ===== FOOTER MOBILE ===== */
+@media (max-width: 576px) {
+    footer {
+        padding: 25px 15px;
+        margin-top: 30px;
+    }
+
+    footer p {
+        font-size: 0.85rem;
+    }
+
+    .footer-links {
+        font-size: 0.85rem;
+    }
+}
+
+/* ===== HERO / INDEX MOBILE ===== */
+@media (max-width: 768px) {
+    .hero {
+        padding: 1.5rem;
+        min-height: 60vh;
+    }
+
+    .hero h1 {
+        font-size: 1.8rem;
+    }
+
+    .hero p {
+        font-size: 1rem;
+    }
+
+    .hero-buttons {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .hero-buttons .btn-hero {
+        width: 100%;
+        padding: 14px 22px;
+        font-size: 1rem;
+        border-radius: 12px;
+        text-align: center;
+    }
+}
+
+/* ===== FEATURE CARDS MOBILE ===== */
+@media (max-width: 768px) {
+    .feature-card {
+        padding: 20px;
+    }
+
+    .login-container {
+        grid-template-columns: 1fr !important;
+    }
+
+    .login-box {
+        padding: 20px;
+    }
+
+    .login-box h3 {
+        font-size: 1.4rem;
+    }
+}
+
+/* ===== ANIMATIONS REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ===== BIORES DASHBOARD MOBILE ===== */
+@media (max-width: 768px) {
+    .card-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .dashboard-container {
+        width: 95% !important;
+        padding: 0.5rem;
+    }
+}
+
+/* ===== ADMIN PANELS MOBILE ===== */
+@media (max-width: 768px) {
+    .admin-container, .panel-container {
+        padding: 1rem 0.5rem;
+    }
+
+    .admin-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* ===== ESTILOS USUARIO PAGES (legacy) MOBILE ===== */
+@media (max-width: 576px) {
+    .form-container {
+        width: 95% !important;
+        margin: 15px auto !important;
+        padding: 18px !important;
+    }
+
+    .form-container h2 {
+        font-size: 1.3rem;
+    }
+
+    .input-group input {
+        font-size: 16px !important;
+        padding: 10px;
+    }
+
+    .card-grid {
+        flex-direction: column !important;
+    }
+
+    .card-grid > * {
+        width: 100% !important;
+    }
+}
+
+/* ===== VERIFICATION PAGE MOBILE ===== */
+@media (max-width: 576px) {
+    .verification-card {
+        padding: 30px 20px !important;
+        margin: 10px;
+    }
+
+    .verification-card .success-icon,
+    .verification-card .error-icon {
+        font-size: 60px !important;
+    }
+
+    .verification-card h1 {
+        font-size: 22px !important;
+    }
+
+    .btn-back {
+        padding: 12px 30px;
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* ===== SAFE AREA (notch devices) ===== */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .navbar {
+        padding-top: env(safe-area-inset-top);
+    }
+
+    footer {
+        padding-bottom: calc(25px + env(safe-area-inset-bottom));
+    }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    .navbar, footer, .btn, .logout-btn, .facial-btn {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+        color: black !important;
+    }
+}

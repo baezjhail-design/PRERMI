@@ -1,0 +1,4 @@
+[2025-12-09T02:42:17+01:00] UserMailError: SMTP Error: Could not authenticate.
+[2025-12-09T02:43:10+01:00] UserMailError: SMTP Error: Could not authenticate.
+[2025-12-09T02:43:10+01:00] UserMailRetryError: SMTP Error: Could not authenticate.
+[2026-01-27T12:02:00+01:00] RegistrationConfirmationError: SMTP Error: Could not authenticate.

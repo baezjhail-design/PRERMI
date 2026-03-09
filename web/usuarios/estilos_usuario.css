@@ -1,0 +1,127 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom, #0099cc, #00cc88);
+    color: #fff;
+    min-height: 100vh;
+}
+
+header {
+    text-align: center;
+    padding: 20px 15px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 40px;
+    font-weight: bold;
+}
+
+.form-container {
+    background: #ffffffcc;
+    max-width: 450px;
+    width: 92%;
+    margin: 30px auto;
+    padding: 25px;
+    border-radius: 10px;
+    color: #000;
+    box-sizing: border-box;
+}
+
+.form-container h2 {
+    text-align: center;
+    color: #006699;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #00aacc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+.btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #00aa77;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    min-height: 44px;
+}
+
+.btn:hover {
+    background-color: #008855;
+}
+
+.link {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.link a {
+    color: #006699;
+}
+
+#msg {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    word-break: break-word;
+}
+
+.msg-verify {
+    background: #fff3cd;
+    color: #856404;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ffc107;
+}
+
+.msg-success {
+    background: #d4edda;
+    color: #155724;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #c3e6cb;
+}
+
+.msg-error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #f5c6cb;
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 28px;
+    }
+
+    .form-container {
+        width: 95%;
+        padding: 18px 15px;
+        margin: 15px auto;
+    }
+
+    .input-group input {
+        font-size: 16px;
+        padding: 12px 10px;
+    }
+}

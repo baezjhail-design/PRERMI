@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>BIORSM - Control BIOMASA</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:20px}
+    .status{display:flex;gap:20px}
+    .card{padding:12px;border:1px solid #ddd;border-radius:6px}
+    button{padding:10px 14px;margin:6px}
+  </style>
+</head>
+<body>
+  <h1>BIORSM - Control BIOMASA</h1>
+  <div class="status">
+    <div class="card"><strong>Temperatura</strong><div id="temp">-</div></div>
+    <div class="card"><strong>Corriente</strong><div id="corr">-</div></div>
+    <div class="card"><strong>Calentador</strong><div id="heat">-</div></div>
+    <div class="card"><strong>Ventilador</strong><div id="fan">-</div></div>
+  </div>
+
+  <h2>Controles</h2>
+  <div>
+    <button onclick="sendCmd('start_generacion')">Iniciar Generación</button>
+    <button onclick="sendCmd('stop_generacion')">Detener Generación</button>
+    <button onclick="sendCmd('emergency_off')" style="background:#f44;color:#fff">Apagado de Emergencia</button>
+  </div>
+
+  <script>
+    const API_BASE = '/PRERMI/api';
+
+    async function fetchStatus(){
+      try{
+        const res = await fetch(API_BASE + '/status.php');
+        const j = await res.json();
+        const s = j.status || {};
+        document.getElementById('temp').innerText = s.temperatura ?? '-';
+        document.getElementById('corr').innerText = s.corriente ?? '-';
+        document.getElementById('heat').innerText = (s.calentador==1)?'ON':'OFF';
+        document.getElementById('fan').innerText = (s.ventilador==1)?'ON':'OFF';
+      }catch(e){ console.warn('status error',e); }
+    }
+
+    async function sendCmd(cmd){
+      try{
+        const res = await fetch(API_BASE + '/control.php', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({command:cmd})
+        });
+        const j = await res.json();
+        console.log(j);
+        await fetchStatus();
+      }catch(e){ console.warn('cmd error',e); }
+    }
+
+    setInterval(fetchStatus,3000);
+    fetchStatus();
+  </script>
+</body>
+</html>

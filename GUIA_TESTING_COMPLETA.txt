@@ -1,0 +1,725 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║            🧪 GUÍA COMPLETA DE TESTING - PRER_MI                          ║
+║                                                                           ║
+║     Verifica que todo funciona correctamente paso a paso                  ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  ANTES DE EMPEZAR
+═══════════════════════════════════════════════════════════════════════════════
+
+REQUISITOS:
+  ✓ XAMPP con MySQL corriendo
+  ✓ BD prer_mi.sql importada
+  ✓ PHP 8.2+
+  ✓ Navegador actualizado
+  ✓ Curl o Postman (para testing avanzado)
+
+VERIFICACIÓN RÁPIDA:
+  □ ¿MySQL está corriendo?
+    → Abre XAMPP y verifica que MySQL esté encendido (checkbox verde)
+  
+  □ ¿BD está importada?
+    → Abre http://localhost/phpmyadmin y busca "prer_mi"
+
+Si no está importada, primero haz esto:
+  → http://localhost/PRERMI/instalar_bd.php
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  NIVEL 1: VERIFICACIÓN BÁSICA (5 MINUTOS)
+═══════════════════════════════════════════════════════════════════════════════
+
+TEST 1: Verificación de BD
+───────────────────────────────────────────────────────────────────────────
+
+URL: http://localhost/PRERMI/verificar_bd_integridad.php
+
+PASOS:
+  1. Abre la URL en el navegador
+  2. Espera a que cargue (~3-5 segundos)
+  3. Busca "status": "OK"
+
+RESULTADO ESPERADO:
+  {
+    "status": "OK",
+    "verificaciones": {
+      "tablas_existentes": {
+        "usuarios": "✓",
+        "usuarios_admin": "✓",
+        "vehiculos_registrados": "✓",
+        "contenedores_registrados": "✓",
+        "depositos": "✓",
+        "multas": "✓",
+        "logs_sistema": "✓"
+      },
+      "admin_activo": "✓ (2)"
+    },
+    "estadisticas": {
+      "usuarios": 0,
+      "usuarios_admin": 2,
+      "vehiculos_registrados": 1,
+      "contenedores_registrados": 0,
+      "depositos": 0,
+      "multas": 0,
+      "logs_sistema": 0
+    }
+  }
+
+✅ SI VES ESTO: BD funcionando perfectamente
+❌ SI VES ERRORES: Revisa las secciones de "Solución de Problemas"
+
+
+TEST 2: Conectividad PDO
+───────────────────────────────────────────────────────────────────────────
+
+Código PHP rápido (copia en un archivo temporal):
+
+  <?php
+  require_once __DIR__ . '/config/db_config.php';
+  require_once __DIR__ . '/api/utils.php';
+  
+  try {
+    $pdo = getPDO();
+    echo "✓ Conexión PDO exitosa";
+    
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM usuarios_admin");
+    $stmt->execute();
+    $result = $stmt->fetch();
+    echo "\n✓ Admins en BD: " . $result['total'];
+    
+  } catch (Exception $e) {
+    echo "✗ Error: " . $e->getMessage();
+  }
+  ?>
+
+RESULTADO ESPERADO:
+  ✓ Conexión PDO exitosa
+  ✓ Admins en BD: 2
+
+✅ SI VES ESTO: PDO funcionando
+❌ SI NO: Revisa db_config.php
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  NIVEL 2: TESTING DE APIs (15 MINUTOS)
+═══════════════════════════════════════════════════════════════════════════════
+
+OPCIÓN A: Usar la interfaz gráfica (más fácil)
+───────────────────────────────────────────────────────────────────────────
+
+URL: http://localhost/PRERMI/test_apis.php
+
+PASOS:
+  1. Abre la URL
+  2. Haz clic en los botones "Ejecutar"
+  3. Verifica que los resultados sean exitosos
+
+TESTS DISPONIBLES:
+  ✓ Obtener Admins (debe devolver 2)
+  ✓ Estructura de Usuarios (todos los campos ✓)
+  ✓ Listar Vehículos (debe devolver 1)
+  ✓ Integridad de Foreign Keys (todas válidas)
+
+RESULTADO ESPERADO:
+  Todos deben mostrar ✓ OK
+
+
+OPCIÓN B: Usar Curl (terminal)
+───────────────────────────────────────────────────────────────────────────
+
+TEST 2.1: Obtener Admins
+  $ curl http://localhost/PRERMI/api/admin/obtener_admins.php
+
+  RESULTADO ESPERADO:
+  {
+    "success": true,
+    "data": {
+      "admins": [
+        {
+          "id": 2,
+          "usuario": "Jhail Baez",
+          "email": "baezjhail@gmail.com",
+          "verified": 1,
+          "active": 1,
+          "rol": "admin"
+        },
+        {
+          "id": 3,
+          "usuario": "Jhail_ADMIN_GOD",
+          "email": "jhailbaezperez19@gmail.com",
+          "verified": 1,
+          "active": 1,
+          "rol": "admin"
+        }
+      ]
+    }
+  }
+
+  ✅ ÉXITO: 2 admins retornados
+
+
+TEST 2.2: Listar Vehículos
+  $ curl http://localhost/PRERMI/api/vehiculos/vehiculos_registrados.php
+
+  RESULTADO ESPERADO:
+  {
+    "success": true,
+    "data": {
+      "vehiculos": [
+        {
+          "id": 1,
+          "placa": "DESCONOCIDA",
+          "tipo_vehiculo": "civil",
+          "imagen": "veh_DESCONOCIDA_20251124_121425_367.jpg",
+          "ubicacion": "Santiago de los Caballeros",
+          "fecha": "2025-11-24",
+          "hora": "12:14:25",
+          "modelo_ml": "TinyML",
+          "probabilidad": 0,
+          "latitud": 19.451,
+          "longitud": -70.6894,
+          "creado_en": "2025-11-24 11:14:25"
+        }
+      ]
+    }
+  }
+
+  ✅ ÉXITO: 1 vehículo retornado
+
+
+TEST 2.3: Login de Admin (POST)
+  $ curl -X POST http://localhost/PRERMI/api/admin/loginA_submit.php \
+    -d "usuario=Jhail Baez&clave=PASSWORD_REAL"
+
+  NOTA: Reemplaza PASSWORD_REAL con la contraseña real del admin
+  
+  RESULTADO ESPERADO:
+  {
+    "success": true,
+    "data": {
+      "msg": "Login exitoso"
+    }
+  }
+
+  ✅ ÉXITO: Login funcionando
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  NIVEL 3: TESTING DE PÁGINAS WEB (20 MINUTOS)
+═══════════════════════════════════════════════════════════════════════════════
+
+TEST 3.1: Página Principal
+───────────────────────────────────────────────────────────────────────────
+
+URL: http://localhost/PRERMI/web/index.php
+
+VERIFICACIONES:
+  □ La página carga sin errores
+  □ Se ven los estilos CSS (colores, fuentes)
+  □ Las imágenes cargan
+  □ Los botones responden al pasar el mouse
+  □ El menú de navegación funciona
+  □ No hay errores en la consola del navegador (F12)
+
+RESULTADO ESPERADO:
+  ✓ Página con diseño profesional
+  ✓ Todos los elementos visibles
+  ✓ Sin errores en consola
+
+
+TEST 3.2: Página de Login de Usuarios
+───────────────────────────────────────────────────────────────────────────
+
+URL: http://localhost/PRERMI/web/login.html
+
+VERIFICACIONES:
+  □ Carga sin errores
+  □ Formulario visible con campos:
+    - Usuario
+    - Contraseña
+    - Botón "Ingresar"
+  □ Los campos son interactivos
+  □ CSS aplicado correctamente
+
+INTENTA ESTO:
+  1. Ingresa usuario inválido: "test"
+  2. Ingresa contraseña: "test"
+  3. Haz clic en "Ingresar"
+  4. Deberías ver un error (usuario no existe)
+
+RESULTADO ESPERADO:
+  ✓ Formulario funcional
+  ✓ Validaciones funcionando
+
+
+TEST 3.3: Página de Registro
+───────────────────────────────────────────────────────────────────────────
+
+URL: http://localhost/PRERMI/web/register.html
+
+VERIFICACIONES:
+  □ Página carga correctamente
+  □ Formulario con campos:
+    - Nombre
+    - Apellido
+    - Usuario
+    - Email
+    - Teléfono
+    - Cédula
+    - Contraseña
+    - Confirmar Contraseña
+  □ Todos los campos son editables
+  □ Botón "Registrar" visible
+
+INTENTA ESTO:
+  1. Completa el formulario con datos:
+     - Nombre: Test
+     - Apellido: User
+     - Usuario: testuser001
+     - Email: test@example.com
+     - Teléfono: 1234567890
+     - Cédula: 12345678901
+     - Contraseña: Test123456
+     - Confirmar: Test123456
+  2. Haz clic en "Registrar"
+  3. Deberías ver confirmación
+
+RESULTADO ESPERADO:
+  ✓ Registro procesado correctamente
+  ✓ Usuario creado en BD
+
+
+TEST 3.4: Dashboard (requiere login)
+───────────────────────────────────────────────────────────────────────────
+
+URL: http://localhost/PRERMI/web/dashboard.php
+
+IMPORTANTE: Primero debes iniciar sesión
+
+PASOS:
+  1. Abre http://localhost/PRERMI/web/login.html
+  2. Ingresa un usuario existente (o crea uno nuevo)
+  3. Si el login es exitoso, serás redirigido al dashboard
+  4. Verifica que veas:
+     - Información del usuario
+     - Menú de opciones
+     - Datos personales
+     - Historiales
+
+RESULTADO ESPERADO:
+  ✓ Dashboard carga con datos del usuario
+  ✓ Sesión activa
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  NIVEL 4: TESTING AVANZADO (30 MINUTOS)
+═══════════════════════════════════════════════════════════════════════════════
+
+TEST 4.1: Estructura de BD con phpMyAdmin
+───────────────────────────────────────────────────────────────────────────
+
+URL: http://localhost/phpmyadmin
+
+PASOS:
+  1. Abre phpMyAdmin
+  2. Selecciona BD "prer_mi" en el lado izquierdo
+  3. Deberías ver 8 tablas:
+     - usuarios
+     - usuarios_admin
+     - vehiculos_registrados
+     - contenedores_registrados
+     - depositos
+     - multas
+     - logs_sistema
+     - configuracion (opcional)
+
+PARA CADA TABLA:
+  1. Haz clic en el nombre
+  2. Verifica estructura (tab "Estructura")
+  3. Verifica que tenga los campos correctos
+  4. Verifica índices
+  5. Verifica Foreign Keys (tab "Relaciones")
+
+RESULTADO ESPERADO:
+  ✓ 8 tablas presentes
+  ✓ Estructura correcta
+  ✓ Índices presentes
+  ✓ FK configuradas
+
+
+TEST 4.2: Integridad de Foreign Keys
+───────────────────────────────────────────────────────────────────────────
+
+En phpMyAdmin, para tabla "depositos":
+  1. Haz clic en "depositos"
+  2. Ve a tab "Relaciones"
+  3. Deberías ver:
+     - user_id → usuarios.id (ON DELETE CASCADE)
+
+Para tabla "multas":
+  1. Haz clic en "multas"
+  2. Ve a tab "Relaciones"
+  3. Deberías ver:
+     - user_id → usuarios.id (ON DELETE CASCADE)
+
+RESULTADO ESPERADO:
+  ✓ ForeignKey user_id → usuarios
+  ✓ ON DELETE CASCADE configurado
+
+
+TEST 4.3: Datos Iniciales
+───────────────────────────────────────────────────────────────────────────
+
+En phpMyAdmin:
+
+TABLA: usuarios_admin
+  1. Haz clic en "usuarios_admin"
+  2. Tab "Examinar"
+  3. Deberías ver 2 registros:
+     
+     id | usuario            | email                    | active | verified
+     ---|--------------------|-----------------------  |--------|----------
+     2  | Jhail Baez         | baezjhail@gmail.com      | 1      | 1
+     3  | Jhail_ADMIN_GOD    | jhailbaezperez19@...     | 1      | 1
+
+TABLA: vehiculos_registrados
+  1. Haz clic en "vehiculos_registrados"
+  2. Tab "Examinar"
+  3. Deberías ver 1 registro:
+     - placa: DESCONOCIDA
+     - tipo_vehiculo: civil
+     - ubicacion: Santiago de los Caballeros
+
+RESULTADO ESPERADO:
+  ✓ 2 admins activos y verificados
+  ✓ 1 vehículo de prueba
+  ✓ Todos los datos correctos
+
+
+TEST 4.4: Charset UTF-8
+───────────────────────────────────────────────────────────────────────────
+
+En phpMyAdmin:
+
+PARA BD:
+  1. Haz clic en "prer_mi"
+  2. Ve a tab "Operaciones"
+  3. Busca "Cotejamiento"
+  4. Deberías ver: utf8mb4_general_ci
+
+PARA CADA TABLA:
+  1. Haz clic en nombre de tabla
+  2. Ve a tab "Operaciones"
+  3. Verifica "Cotejamiento": utf8mb4_general_ci
+
+RESULTADO ESPERADO:
+  ✓ BD: utf8mb4_general_ci
+  ✓ Todas las tablas: utf8mb4_general_ci
+
+
+TEST 4.5: Índices
+───────────────────────────────────────────────────────────────────────────
+
+En phpMyAdmin, tab "Estructura":
+
+TABLA: usuarios
+  Deberías ver índices:
+  - PRIMARY (id)
+  - UNIQUE (usuario)
+  - UNIQUE (email)
+  - UNIQUE (cedula)
+  - UNIQUE (token)
+
+TABLA: usuarios_admin
+  Deberías ver índices:
+  - PRIMARY (id)
+  - UNIQUE (usuario)
+  - UNIQUE (email)
+
+TABLA: contenedores_registrados
+  Deberías ver índice:
+  - UNIQUE (id_contenedor)
+
+RESULTADO ESPERADO:
+  ✓ Todos los índices presentes
+  ✓ Índices UNIQUE donde corresponde
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  NIVEL 5: TESTING DE SEGURIDAD (15 MINUTOS)
+═══════════════════════════════════════════════════════════════════════════════
+
+TEST 5.1: SQL Injection
+───────────────────────────────────────────────────────────────────────────
+
+INTENTA ESTO EN LOGIN:
+  Usuario: admin' OR '1'='1
+  Contraseña: anything
+
+RESULTADO ESPERADO:
+  ✗ No deberías poder ingresar
+  (Porque usamos Prepared Statements)
+
+INTENTA ESTO:
+  Usuario: Jhail Baez
+  Contraseña: ' OR '1'='1
+
+RESULTADO ESPERADO:
+  ✗ Error: "Clave incorrecta"
+
+
+TEST 5.2: Password Hashing
+───────────────────────────────────────────────────────────────────────────
+
+En phpMyAdmin, tabla "usuarios_admin":
+  1. Haz clic en "usuarios_admin"
+  2. Tab "Examinar"
+  3. Busca campo "clave"
+  4. Deberías ver algo como:
+     
+     $2y$10$OE.UgJottp35eG81uHIf4e4TJjmRxGWYrIYr2Kw4XULoxqepOgKaG
+
+RESULTADO ESPERADO:
+  ✓ Password hasheado con bcrypt
+  ✓ NO está en texto plano
+  ✓ Hash comienza con $2y$ (bcrypt)
+
+
+TEST 5.3: Session Management
+───────────────────────────────────────────────────────────────────────────
+
+INTENTA ACCEDER AL DASHBOARD SIN SESIÓN:
+  URL: http://localhost/PRERMI/web/dashboard.php
+
+RESULTADO ESPERADO:
+  ✗ Deberías ser redirigido a login
+  (porque necesitas sesión activa)
+
+INICIA SESIÓN:
+  1. Ve a login
+  2. Ingresa credenciales válidas
+  3. Serás redirigido a dashboard
+  4. Verifica que haya datos de usuario
+
+CIERRA SESIÓN:
+  1. Busca botón "Cerrar sesión" o "Logout"
+  2. Haz clic
+  3. Intenta acceder a dashboard nuevamente
+  4. Deberías ser redirigido a login
+
+RESULTADO ESPERADO:
+  ✓ No acceso sin sesión
+  ✓ Acceso con sesión válida
+  ✓ Logout funciona
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  PRUEBA DE CARGA Y RENDIMIENTO (10 MINUTOS)
+═══════════════════════════════════════════════════════════════════════════════
+
+TEST 6.1: Tiempo de Respuesta
+───────────────────────────────────────────────────────────────────────────
+
+En el navegador (F12 → Network):
+
+1. Abre DevTools (F12)
+2. Ve a tab "Network"
+3. Abre URL: http://localhost/PRERMI/api/admin/obtener_admins.php
+4. Verifica tiempo de respuesta
+
+RESULTADO ESPERADO:
+  < 200ms en red local
+
+
+TEST 6.2: Tamaño de Respuestas
+───────────────────────────────────────────────────────────────────────────
+
+En Network tab:
+
+API: obtener_admins.php
+  RESULTADO ESPERADO:
+  - Tamaño: < 1 KB
+  - Rápido: < 100ms
+
+API: vehiculos_registrados.php
+  RESULTADO ESPERADO:
+  - Tamaño: < 2 KB
+  - Rápido: < 100ms
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  CHECKLIST COMPLETO
+═══════════════════════════════════════════════════════════════════════════════
+
+NIVEL 1 - BÁSICO:
+  □ Verificación de BD (verificar_bd_integridad.php): OK
+  □ Conectividad PDO: OK
+  □ Sin errores en logs
+
+NIVEL 2 - APIs:
+  □ Obtener Admins: OK (2 resultados)
+  □ Listar Vehículos: OK (1 resultado)
+  □ Login: OK (sin contraseña real)
+  □ Estructura validada: OK
+  □ Foreign Keys: OK
+
+NIVEL 3 - WEB:
+  □ Página Principal: OK (carga, estilos, sin errores)
+  □ Login página: OK (formulario funcional)
+  □ Registro: OK (crear usuario)
+  □ Dashboard: OK (con sesión activa)
+  □ Logout: OK (cierra sesión)
+
+NIVEL 4 - AVANZADO:
+  □ 8 tablas en BD: OK
+  □ Estructura correcta: OK
+  □ Índices presentes: OK
+  □ Foreign Keys: OK
+  □ 2 admins iniciales: OK
+  □ 1 vehículo inicial: OK
+  □ UTF-8 mb4: OK
+
+NIVEL 5 - SEGURIDAD:
+  □ SQL Injection: Bloqueado ✓
+  □ Password hashing: Bcrypt ✓
+  □ Session management: Funciona ✓
+  □ Prepared statements: Activos ✓
+
+NIVEL 6 - RENDIMIENTO:
+  □ Tiempo respuesta: < 200ms
+  □ Tamaño respuestas: Optimizado
+  □ Sin lag: OK
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  SOLUCIÓN RÁPIDA DE PROBLEMAS
+═══════════════════════════════════════════════════════════════════════════════
+
+❌ Error: "Unknown database 'prer_mi'"
+───────────────────────────────────────────────────────────────────────────
+SOLUCIÓN:
+  1. Abre http://localhost/PRERMI/instalar_bd.php
+  2. Espera a que importe
+  3. Intenta de nuevo
+
+
+❌ Error: "Connection refused"
+───────────────────────────────────────────────────────────────────────────
+SOLUCIÓN:
+  1. Abre XAMPP
+  2. Enciende MySQL (botón verde)
+  3. Intenta de nuevo
+
+
+❌ Error: "PDOException"
+───────────────────────────────────────────────────────────────────────────
+SOLUCIÓN:
+  1. Verifica db_config.php tenga valores correctos:
+     - DB_HOST = localhost
+     - DB_USER = root
+     - DB_PASS = (vacío)
+     - DB_NAME = prer_mi
+  2. Intenta de nuevo
+
+
+❌ Error: "403 Forbidden"
+───────────────────────────────────────────────────────────────────────────
+SOLUCIÓN (Windows):
+  1. Haz F5 para refrescar
+  2. Espera unos segundos
+  3. Intenta nuevamente
+
+
+❌ Error: "Parse error in prer_mi.sql"
+───────────────────────────────────────────────────────────────────────────
+SOLUCIÓN:
+  1. Asegúrate que prer_mi.sql está en /PRERMI/
+  2. Intenta usar phpmyadmin para importar
+
+
+❌ Página en blanco
+───────────────────────────────────────────────────────────────────────────
+SOLUCIÓN:
+  1. Abre DevTools (F12)
+  2. Ve a Console
+  3. Ve qué error hay
+  4. Si es JS: revisa que carpeta /web/assets/ exista
+  5. Si es PHP: revisa logs de Apache/PHP
+
+
+❌ Login no funciona
+───────────────────────────────────────────────────────────────────────────
+SOLUCIÓN:
+  1. Verifica usuario correcto: "Jhail Baez"
+  2. Verifica que BD esté importada
+  3. Intenta en phpmyadmin ver usuarios_admin
+
+
+❌ Registro no funciona
+───────────────────────────────────────────────────────────────────────────
+SOLUCIÓN:
+  1. Verifica que carpeta /uploads/ exista y tenga permisos
+  2. Verifica que usuario/email no exista ya
+  3. Verifica que BD tenga tabla "usuarios"
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  HERRAMIENTAS ÚTILES
+═══════════════════════════════════════════════════════════════════════════════
+
+Para Testing:
+
+1. NAVEGADOR (DevTools - F12)
+   - Ver Network
+   - Ver Console (errores JS)
+   - Ver Storage (cookies, localStorage)
+
+2. POSTMAN (para APIs REST)
+   - Descargar: https://www.postman.com/
+   - Importar colección de APIs
+   - Probar endpoints con diferentes parámetros
+
+3. phpMyAdmin
+   - Administrar BD
+   - Ver datos
+   - Ejecutar queries SQL
+   - Ver relaciones
+
+4. CURL (línea de comandos)
+   - Probar APIs rápidamente
+   - No requiere instalación
+
+5. VS Code Extensions
+   - REST Client
+   - SQLTools
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  RESUMEN
+═══════════════════════════════════════════════════════════════════════════════
+
+Si completaste TODOS los tests:
+
+  ✅ BD funcionando perfectamente
+  ✅ APIs respondiendo correctamente
+  ✅ Páginas web cargando
+  ✅ Seguridad implementada
+  ✅ Rendimiento óptimo
+  ✅ SISTEMA 100% FUNCIONAL
+
+
+SIGUIENTE PASO:
+  ✓ Comienza a usar el sistema
+  ✓ Crea usuarios
+  ✓ Prueba todas las funcionalidades
+  ✓ Reporta cualquier error
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Última Actualización: 9 de Diciembre de 2025
+Versión: 1.0.0 OFICIAL

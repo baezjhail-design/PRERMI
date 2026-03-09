@@ -1,0 +1,250 @@
+═════════════════════════════════════════════════════════════════════════
+  PRER_MI - GUÍA DE INSTALACIÓN CON BASE DE DATOS OFICIAL
+═════════════════════════════════════════════════════════════════════════
+
+📋 RESUMEN RÁPIDO
+─────────────────────────────────────────────────────────────────────────
+
+✓ Base de Datos: prer_mi.sql (estructura oficial)
+✓ 8 tablas: usuarios, usuarios_admin, vehiculos_registrados, etc.
+✓ Datos iniciales: 2 admins activos
+✓ Charset: utf8mb4 (Unicode)
+✓ Motor: InnoDB (transacciones y FK)
+
+═════════════════════════════════════════════════════════════════════════
+
+🚀 INSTALACIÓN EN 3 PASOS
+─────────────────────────────────────────────────────────────────────────
+
+PASO 1: Importar Base de Datos
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Opción A: Automáticamente desde el navegador
+  1. Abre: http://localhost/PRERMI/instalar_bd.php
+  2. Verás el estado de importación
+  3. Listo ✓
+
+Opción B: Desde línea de comandos
+  $ mysql -u root < d:\xampp\htdocs\PRERMI\prer_mi.sql
+
+Opción C: Desde phpMyAdmin
+  1. http://localhost/phpmyadmin
+  2. "Importar"
+  3. Selecciona prer_mi.sql
+  4. Ejecuta
+
+─────────────────────────────────────────────────────────────────────────
+
+PASO 2: Verificar Instalación
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Abre: http://localhost/PRERMI/verificar_bd_integridad.php
+
+Debes ver:
+{
+  "status": "OK",
+  "estadisticas": {
+    "usuarios": 0,
+    "usuarios_admin": 2,
+    "vehiculos_registrados": 1,
+    ...
+  },
+  "verificaciones": {
+    "tablas_existentes": {
+      "usuarios": "✓",
+      "usuarios_admin": "✓",
+      ...
+    }
+  }
+}
+
+─────────────────────────────────────────────────────────────────────────
+
+PASO 3: Probar APIs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Usa curl o Postman para probar:
+
+TEST 1: Login de Admin
+  POST http://localhost/PRERMI/api/admin/loginA_submit.php
+  
+  usuario=Jhail Baez&clave=PASSWORD
+  
+  Respuesta esperada:
+  {
+    "success": true,
+    "data": {
+      "msg": "Login exitoso"
+    }
+  }
+
+TEST 2: Obtener Admins
+  GET http://localhost/PRERMI/api/admin/obtener_admins.php
+  
+  Respuesta esperada:
+  {
+    "success": true,
+    "data": {
+      "admins": [
+        {"id": 2, "usuario": "Jhail Baez", "verified": 1, "active": 1},
+        {"id": 3, "usuario": "Jhail_ADMIN_GOD", "verified": 1, "active": 1}
+      ]
+    }
+  }
+
+TEST 3: Listar Vehículos
+  GET http://localhost/PRERMI/api/vehiculos/vehiculos_registrados.php
+  
+  Respuesta esperada:
+  {
+    "success": true,
+    "data": {
+      "vehiculos": [
+        {"id": 1, "placa": "DESCONOCIDA", "tipo_vehiculo": "civil", ...}
+      ]
+    }
+  }
+
+═════════════════════════════════════════════════════════════════════════
+
+📁 ARCHIVOS CLAVE
+─────────────────────────────────────────────────────────────────────────
+
+/config/db_config.php
+  ├─ $DB_HOST = "localhost"
+  ├─ $DB_USER = "root"
+  ├─ $DB_PASS = ""
+  └─ $DB_NAME = "prer_mi"
+
+/api/utils.php
+  ├─ getPDO() - Crea conexión PDO
+  ├─ jsonOk($data) - Respuesta exitosa
+  ├─ jsonErr($msg, $code) - Respuesta error
+  ├─ registrarLog($desc, $tipo) - Logging
+  └─ requireAdminSession() - Protección admin
+
+/prer_mi.sql
+  └─ Script SQL oficial con todas las tablas
+
+/instalar_bd.php
+  └─ Importa automáticamente la BD
+
+/verificar_bd_integridad.php
+  └─ Verifica estructura y datos
+
+/DB_PRER_MI_SCHEMA.md
+  └─ Documentación de tablas y campos
+
+═════════════════════════════════════════════════════════════════════════
+
+🔐 CREDENCIALES DEFAULT
+─────────────────────────────────────────────────────────────────────────
+
+Admin 1:
+  Usuario: Jhail Baez
+  Email: baezjhail@gmail.com
+  Rol: admin
+  Estado: Verificado y Activo
+
+Admin 2:
+  Usuario: Jhail_ADMIN_GOD
+  Email: jhailbaezperez19@gmail.com
+  Rol: admin
+  Estado: Verificado y Activo
+
+⚠️  NOTA: Los passwords están hasheados con bcrypt en la BD
+    Se proporcionan al momento de registro/creación
+
+═════════════════════════════════════════════════════════════════════════
+
+📊 ESTRUCTURA DE TABLAS
+─────────────────────────────────────────────────────────────────────────
+
+1. USUARIOS (usuarios)
+   - id, nombre, apellido, usuario, email, telefono, cedula
+   - token, token_activo, clave, creado_en
+   - Única por: usuario, email, cedula
+
+2. ADMINS (usuarios_admin)
+   - id, usuario, email, clave, verification_token
+   - verified, active, rol, creado_en
+   - Única por: usuario, email
+
+3. VEHÍCULOS (vehiculos_registrados)
+   - id, placa, tipo_vehiculo, imagen, ubicacion
+   - fecha, hora, modelo_ml, probabilidad, latitud, longitud, creado_en
+
+4. CONTENEDORES (contenedores_registrados)
+   - id, id_contenedor, api_key, nivel_basura
+   - ubicacion, latitud, longitud, actualizado_en
+   - Única por: id_contenedor
+
+5. DEPÓSITOS (depositos)
+   - id, user_id (FK→usuarios), contenedor_id
+   - peso, metal_detectado, credito_kwh, creado_en
+
+6. MULTAS (multas)
+   - id, user_id (FK→usuarios), contenedor_id
+   - descripcion, peso, creado_en, seen_by_admin
+
+7. LOGS (logs_sistema)
+   - id, descripcion, tipo, creado_en
+
+8. CONFIGURACIÓN (configuracion) [OPCIONAL]
+   - id, clave, valor, actualizado_en
+
+═════════════════════════════════════════════════════════════════════════
+
+🐛 SOLUCIÓN DE PROBLEMAS
+─────────────────────────────────────────────────────────────────────────
+
+Problema: "SQLSTATE[HY000]: General error: 1030 Got error..."
+  Solución: Verifica que MySQL está corriendo
+           Abre http://localhost/phpmyadmin para confirmarlo
+
+Problema: "SQLSTATE[HY000]: General error: 1049 Unknown database 'prer_mi'"
+  Solución: Importa prer_mi.sql
+           Abre http://localhost/PRERMI/instalar_bd.php
+
+Problema: "403 Forbidden en /api/..."
+  Solución: Verifica que los archivos tienen permisos de lectura
+           En Windows generalmente no hay problemas
+
+Problema: "Fatal error: Uncaught PDOException"
+  Solución: Revisa los logs de PHP en /logs/ (si existe)
+           O abre verificar_bd_integridad.php para ver detalles
+
+═════════════════════════════════════════════════════════════════════════
+
+✅ CHECKLIST PRE-PRODUCCIÓN
+─────────────────────────────────────────────────────────────────────────
+
+□ Base de datos importada (verificar con instalar_bd.php)
+□ Integridad verificada (verificar_bd_integridad.php OK)
+□ APIs responden correctamente (test con curl)
+□ Páginas web cargan sin errores
+□ Login de admin funciona
+□ Sesiones funcionan
+□ Uploads funcionan (carpetas con permisos)
+□ Base de datos en UTF-8 mb4
+□ Backups regulares configurados
+□ Cambiar credenciales en producción
+□ HTTPS habilitado en producción
+□ Logs habilitados para auditoría
+
+═════════════════════════════════════════════════════════════════════════
+
+📞 INFORMACIÓN TÉCNICA
+─────────────────────────────────────────────────────────────────────────
+
+Versión BD: 1.0.0 (prer_mi.sql)
+Servidor: 127.0.0.1:3306
+Motor: InnoDB
+Charset: utf8mb4_general_ci
+PHP: 8.2+
+MySQL/MariaDB: 10.4+
+
+═════════════════════════════════════════════════════════════════════════
+
+Fecha de Actualización: 9 de Diciembre de 2025
+Estado: LISTO PARA PRODUCCIÓN

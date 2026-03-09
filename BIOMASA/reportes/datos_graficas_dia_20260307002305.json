@@ -1,0 +1,16 @@
+{
+    "periodo": "dia",
+    "fechaInicio": "2026-03-06",
+    "fechaFin": "2026-03-06",
+    "generado": "2026-03-07 00:23:05",
+    "resumen": {
+        "temperaturaPromedio": 0,
+        "temperaturaMax": -999,
+        "temperaturaMin": 999,
+        "energiaGenerada_kWh": 0,
+        "energiaConsumida_kWh": 0,
+        "energiaNeta_kWh": 0,
+        "gananciaMonetaria_DOP": 0
+    },
+    "totalRegistros": 0
+}

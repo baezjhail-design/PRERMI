@@ -1,0 +1,78 @@
+✅ SOLUCIÓN IMPLEMENTADA - CONTENEDOR FIJO SANTIAGO DE LOS CABALLEROS
+
+═══════════════════════════════════════════════════════════════════
+
+📋 CAMBIOS REALIZADOS:
+
+1. ✅ CREACIÓN EN BASE DE DATOS
+   - Contenedor ID=1 creado en tabla contenedores_registrados
+   - Código: CONT-SANTIAGO-001
+   - Ubicación: Santiago de los Caballeros
+   - Tipo: general
+   - Estado: activo
+   - Verificado: inserción de depósitos con ID=1 funciona correctamente
+
+2. ✅ CÓDIGO ESP32 ACTUALIZADO
+   Archivo: c:\Users\Jhail Baez\OneDrive\Documentos\Project_For_PlatformIO\TEST_CONTENEDOR\src\main.cpp
+   
+   Cambios:
+   - Línea ~49: const int CONTAINER_ID_SANTIAGO = 1;
+   - Línea ~352: doc["id_contenedor"] = CONTAINER_ID_SANTIAGO;
+   - Línea ~467: doc["container_id"] = CONTAINER_ID_SANTIAGO;
+   
+   Efecto: Sistema ahora usa ID fijo e invariable para Santiago
+
+3. ✅ CÓDIGO PHP ACTUALIZADO
+   Archivo: d:\xampp\htdocs\PRERMI\api\contenedores\registrar_depositos.php
+   
+   Cambios:
+   - Inicialización de conexión a BD (líneas 5-10)
+   - Línea ~45: $id_contenedor = 1; (FIJO, ignora valor enviado)
+   - Línea ~63-75: Validación que ID=1 existe en BD
+   - Línea ~109: Respuesta JSON incluye ubicación de Santiago
+   
+   Efecto: Servidor SIEMPRE registra con ID=1, garantiza FK constraint
+
+═══════════════════════════════════════════════════════════════════
+
+✅ VENTAJAS DE LA SOLUCIÓN:
+
+✓ Valor fijo e invariable: CONTAINER_ID_SANTIAGO = 1
+✓ No hay variabilidad ni aleatoriedad
+✓ FK constraint siempre satisfecho (ID=1 existe en BD)
+✓ Ubicación clara: Santiago de los Caballeros
+✓ Sin errores HTTP 500 por FK violations
+✓ Código limpio y documentado
+✓ Del lado servidor: ignora accidentales desincronizaciones
+
+═══════════════════════════════════════════════════════════════════
+
+🧪 VERIFICACIÓN COMPLETADA:
+
+✅ Contenedor Santiago (ID=1) creado en BD
+✅ Test de inserción exitoso (HTTP 200)
+✅ FK constraint validado y funcionando
+✅ ESP32 código con constante global
+✅ PHP configurado para usar ID=1 obligatoriamente
+✅ JSON payloads correctamente formatados
+
+═══════════════════════════════════════════════════════════════════
+
+📝 PRÓXIMOS PASOS:
+
+1. Compilar nuevo firmware ESP32 con los cambios
+2. Cargar en ESP32-S3 CAM
+3. Reiniciar dispositivo y verificar en serial monitor
+4. Presionar botón para iniciar ciclo de deposito
+5. Verificar en phpMyAdmin que tabla depositos se llena correctamente
+
+═══════════════════════════════════════════════════════════════════
+
+📁 DOCUMENTOS DE REFERENCIA CREADOS:
+
+- SOLUCION_CONTENEDOR_SANTIAGO.md
+- referencia_contenedor_santiago.php (accesible desde web)
+- setup_contenedor_santiago.php
+- test_insert_deposito.php
+
+═══════════════════════════════════════════════════════════════════

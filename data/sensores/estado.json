@@ -1,0 +1,17 @@
+{
+    "temperatura": {
+        "estado": "apagado",
+        "valor": "N/A",
+        "timestamp": "2026-02-22 12:00:00"
+    },
+    "ventilador": {
+        "estado": "apagado",
+        "valor": "N/A",
+        "timestamp": "2026-02-22 12:00:00"
+    },
+    "corriente": {
+        "estado": "apagado",
+        "valor": "N/A",
+        "timestamp": "2026-02-22 12:00:00"
+    }
+}

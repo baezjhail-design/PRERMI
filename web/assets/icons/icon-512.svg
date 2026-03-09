@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <style>
+      .bg { fill: #667eea; }
+      .icon { fill: #ffffff; }
+    </style>
+  </defs>
+  <rect class="bg" width="512" height="512"/>
+  <g class="icon" transform="translate(128, 128)">
+    <!-- Trash/Waste Icon -->
+    <path d="M 128 0 L 128 32 L 0 32 L 0 42 L 21 42 L 32 256 Q 32 267 43 267 L 213 267 Q 224 267 224 256 L 235 42 L 256 42 L 256 32 L 128 32 Z M 74 85 L 85 245 L 171 245 L 181 85 Z M 117 85 L 117 245 L 139 245 L 139 85 Z"/>
+  </g>
+</svg>
