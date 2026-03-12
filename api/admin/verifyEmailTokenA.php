@@ -26,7 +26,11 @@ try {
     // Marcar como verificado
     $stmt = $pdo->prepare("UPDATE usuarios_admin SET verified = 1, verification_token = NULL WHERE id = ?");
     $stmt->execute([$admin['id']]);
-    
+
+    // Notificar que está pendiente de aprobación por superadmin
+    require_once __DIR__ . '/../../config/mailer.php';
+    sendWelcomeEmail($admin['email'], $admin['usuario'], 'admin_pending');
+
     registrarLog("Email verificado para admin: {$admin['usuario']}", "info");
     showVerificationPage(true, "¡Tu correo ha sido verificado! Tu cuenta está pendiente de aprobación por un superadministrador.");
     

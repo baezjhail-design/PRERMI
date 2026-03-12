@@ -60,51 +60,19 @@ function getPDO() {
 }
 
 // =====================================
-// CONEXIÓN A BASE DE DATOS REMOTA - INFINITYFREE (PDO)
+// CONEXIÓN REMOTA - DESACTIVADA TEMPORALMENTE
+// InfinityFree no está en uso. Solo localhost activo.
 // =====================================
 function getPDORemote() {
-    global $DB_HOST_REMOTE, $DB_NAME_REMOTE, $DB_USER_REMOTE, $DB_PASS_REMOTE, $isInfinityFree;
-
-    // sql208.infinityfree.com solo es accesible desde la red de InfinityFree.
-    // Desde localhost, el ESP32 envía datos a ambos servidores directamente.
-    if (!$isInfinityFree) {
-        return null;
-    }
-
-    if (!isset($DB_HOST_REMOTE) || !isset($DB_NAME_REMOTE) || !isset($DB_USER_REMOTE) || !isset($DB_PASS_REMOTE)) {
-        return null; // Silencioso: si no hay config remota, no falla
-    }
-
-    $dsn = "mysql:host=$DB_HOST_REMOTE;dbname=$DB_NAME_REMOTE;charset=utf8mb4";
-
-    try {
-        return new PDO($dsn, $DB_USER_REMOTE, $DB_PASS_REMOTE, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_EMULATE_PREPARES => false
-        ]);
-    }
-    catch (PDOException $e) {
-        error_log("[REMOTE DB] Error de conexión: " . $e->getMessage());
-        return null;
-    }
+    return null; // Desactivado temporalmente
 }
 
-// =====================================
-// OBTENER AMBAS CONEXIONES (local + remota)
-// =====================================
 function getAllPDO() {
     $connections = [];
-    
     $local = getPDO();
     if ($local) {
         $connections['local'] = $local;
     }
-    
-    $remote = getPDORemote();
-    if ($remote) {
-        $connections['remote'] = $remote;
-    }
-    
     return $connections;
 }
 

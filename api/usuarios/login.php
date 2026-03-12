@@ -27,16 +27,21 @@ $clave = $input['clave'];
 
 try {
     $pdo = getPDO();
-    $stmt = $pdo->prepare("SELECT id,nombre,apellido,usuario,email,telefono,cedula,token,token_activo,clave,verified FROM usuarios WHERE usuario = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id,nombre,apellido,usuario,email,telefono,cedula,token,token_activo,clave,verified,activo FROM usuarios WHERE usuario = ? LIMIT 1");
     $stmt->execute([$usuario]);
     $user = $stmt->fetch();
     
     if (!$user) jsonErr('Usuario no existe',404);
     if (!password_verify($clave, $user['clave'])) jsonErr('Clave incorrecta',401);
+
+    // Verificar que no esté baneado
+    if (intval($user['activo']) === 0) {
+        jsonErr('Tu cuenta ha sido suspendida. Contacta al administrador para más información.', 403);
+    }
     
     // Verificar que el email ha sido confirmado
     if (isset($user['verified']) && intval($user['verified']) === 0) {
-        jsonErr('Debes verificar tu correo electr\u00f3nico antes de iniciar sesi\u00f3n. Revisa tu bandeja de entrada.', 403);
+        jsonErr('Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.', 403);
     }
     
     // Set session

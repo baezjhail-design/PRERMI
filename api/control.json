@@ -1,9 +1,9 @@
 {
     "command": "start_generacion",
     "raw": "start_generacion",
-    "created_at": "2026-03-07T18:26:39+01:00",
+    "created_at": "2026-03-11T21:51:05+01:00",
     "sent_at": null,
-    "command_id": 113,
+    "command_id": 130,
     "bypass_temp": false,
     "bypass_fan": false,
     "bypass_heater": false,

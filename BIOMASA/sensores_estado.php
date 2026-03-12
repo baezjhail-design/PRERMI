@@ -45,6 +45,56 @@ if (!isset($control['kill_current'])) $control['kill_current'] = false;
 
 // If GET: return combined status for UI
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+
+    // =============================================
+    // ACCESO DIRECTO POR URL DESDE ESP (?esp=1)
+    // =============================================
+    if (isset($_GET['esp'])) {
+        // Si vienen datos de sensores en la URL, guardarlos
+        if (isset($_GET['temperatura']) || isset($_GET['corriente'])) {
+            if (isset($_GET['temperatura'])) $status['temperatura'] = floatval($_GET['temperatura']);
+            if (isset($_GET['corriente'])) $status['corriente'] = floatval($_GET['corriente']);
+            if (isset($_GET['ventilador'])) $status['ventilador'] = intval($_GET['ventilador']);
+            if (isset($_GET['calentador'])) $status['calentador'] = intval($_GET['calentador']);
+            if (isset($_GET['energia_generada'])) $status['energia_generada'] = floatval($_GET['energia_generada']);
+            if (isset($_GET['sistema_activo'])) $status['sistema_activo'] = intval($_GET['sistema_activo']);
+            $status['updated_at'] = date(DATE_ATOM);
+            file_put_contents($apiStatus, json_encode($status, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+            // Guardar en historial de mediciones
+            $mediciones = [];
+            if (file_exists($medicionesFile)) {
+                $mediciones = json_decode(file_get_contents($medicionesFile), true);
+                if (!is_array($mediciones)) $mediciones = [];
+            }
+            $mediciones[] = [
+                'temperatura' => $status['temperatura'],
+                'corriente' => $status['corriente'],
+                'ventilador' => $status['ventilador'],
+                'calentador' => $status['calentador'],
+                'energia_generada' => $status['energia_generada'],
+                'timestamp' => $status['updated_at']
+            ];
+            if (count($mediciones) > 1000) $mediciones = array_slice($mediciones, -1000);
+            file_put_contents($medicionesFile, json_encode($mediciones, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        }
+
+        // Responder con comandos en formato ESP-friendly
+        $respuesta = [
+            'status' => 'ok',
+            'accion' => $control['command'] ?? 'none',
+            'raw' => $control['raw'] ?? 'none',
+            'command_id' => intval($control['command_id'] ?? 0),
+            'bypass_temp' => (bool)($control['bypass_temp'] ?? $control['kill_temp'] ?? false),
+            'bypass_fan' => (bool)($control['bypass_fan'] ?? $control['kill_fan'] ?? false),
+            'bypass_heater' => (bool)($control['bypass_heater'] ?? $control['kill_heater'] ?? false),
+            'bypass_current' => (bool)($control['bypass_current'] ?? $control['kill_current'] ?? false),
+            'system_off' => (bool)($control['system_off'] ?? false)
+        ];
+        echo json_encode($respuesta);
+        exit;
+    }
+
     $sistema_activo = (isset($status['sistema_activo']) && intval($status['sistema_activo']) === 1);
     $ts = isset($status['updated_at']) ? $status['updated_at'] : null;
 

@@ -48,7 +48,11 @@ try {
         // Activar admin (usuario ya verificado)
         $stmt = $pdo->prepare("UPDATE usuarios_admin SET active = 1 WHERE id = ?");
         $stmt->execute([$admin_id]);
-        
+
+        // Correo de bienvenida al admin aprobado
+        require_once __DIR__ . '/../../config/mailer.php';
+        sendWelcomeEmail($target_admin['email'], $target_admin['usuario'], 'admin_approved');
+
         registrarLog("Administrador aprobado: {$target_admin['usuario']}", "info");
         jsonOk(['message' => "Administrador {$target_admin['usuario']} aprobado exitosamente"]);
         

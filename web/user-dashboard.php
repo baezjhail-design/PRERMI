@@ -52,6 +52,22 @@ try {
     }
     $totalMultas = $activeCount;
 
+    // Tarifa eléctrica y cálculos de ahorro en pesos dominicanos (RD$)
+    $tarifaKwhRD = 11.50; // RD$ por kWh — tarifa residencial promedio República Dominicana
+    $consumoPromedioMensualKwh = 200; // kWh promedio mensual hogar dominicano
+    $ahorroTotalRD = $totalCredito * $tarifaKwhRD;
+    $mesesEquivalentes = ($consumoPromedioMensualKwh > 0) ? ($totalCredito / $consumoPromedioMensualKwh) : 0;
+
+    $mesActual = date('Y-m');
+    $ahorroMesActualKwh = 0;
+    foreach ($monthly as $m) {
+        if ($m['ym'] === $mesActual) {
+            $ahorroMesActualKwh = floatval($m['energy']);
+            break;
+        }
+    }
+    $ahorroMesActualRD = $ahorroMesActualKwh * $tarifaKwhRD;
+
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -380,6 +396,143 @@ try {
                 padding-right: 0;
             }
         }
+
+        /* ========================================================
+           SECCIÓN POTENCIAL DE AHORRO EN PESOS DOMINICANOS
+        ======================================================== */
+        .savings-section-header {
+            background: linear-gradient(135deg, #0f9b8e 0%, #11998e 40%, #38ef7d 100%);
+            color: white;
+            padding: 2rem 2.5rem;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 40px rgba(17, 153, 142, 0.35);
+        }
+
+        .savings-section-header h2 {
+            font-weight: 700;
+            font-size: 1.7rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .savings-section-header p {
+            opacity: 0.9;
+            font-size: 0.97rem;
+            margin: 0;
+        }
+
+        .savings-stat-box {
+            background: white;
+            padding: 1.8rem 1.2rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border-top: 4px solid #11998e;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .savings-stat-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(17,153,142,0.22);
+        }
+
+        .savings-icon {
+            font-size: 2.3rem;
+            color: #11998e;
+            margin-bottom: 0.7rem;
+        }
+
+        .savings-value {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .savings-value.highlight {
+            font-size: 1.9rem;
+            color: #0f9b8e;
+        }
+
+        .savings-label {
+            color: #666;
+            font-size: 0.88rem;
+            margin-top: 0.4rem;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border-left: 5px solid #11998e;
+            height: 100%;
+        }
+
+        .info-card.blue  { border-left-color: #667eea; }
+        .info-card.orange { border-left-color: #fd7e14; }
+
+        .info-card h6 {
+            font-weight: 700;
+            margin-bottom: 0.9rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+
+        .info-card p, .info-card li {
+            font-size: 0.9rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .rate-badge {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            color: white;
+            padding: 0.35rem 1.1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: inline-block;
+            margin: 0.4rem 0;
+            box-shadow: 0 3px 10px rgba(17,153,142,0.3);
+        }
+
+        .savings-progress-wrap {
+            background: #e9ecef;
+            border-radius: 50px;
+            height: 10px;
+            margin: 0.5rem 0;
+            overflow: hidden;
+        }
+
+        .savings-progress-bar {
+            background: linear-gradient(90deg, #11998e, #38ef7d);
+            height: 100%;
+            border-radius: 50px;
+            transition: width 1.6s ease-in-out;
+        }
+
+        .savings-tip-box {
+            background: linear-gradient(135deg, rgba(17,153,142,0.08), rgba(56,239,125,0.08));
+            border: 1px solid rgba(17,153,142,0.25);
+            border-radius: 10px;
+            padding: 1rem 1.4rem;
+            font-size: 0.9rem;
+            color: #0f6b64;
+        }
+
+        .savings-tip-box i { color: #11998e; }
+
+        @media (max-width: 768px) {
+            .savings-value      { font-size: 1.3rem; }
+            .savings-value.highlight { font-size: 1.5rem; }
+            .savings-icon       { font-size: 1.8rem; }
+            .savings-section-header { padding: 1.3rem; }
+            .savings-section-header h2 { font-size: 1.2rem; }
+        }
     </style>
 </head>
 <body>
@@ -500,6 +653,167 @@ try {
                 </div>
             </div>
         </div>
+
+        <!-- ================================================================
+             SECCIÓN: POTENCIAL DE AHORRO EN PESOS DOMINICANOS
+        ================================================================ -->
+
+        <!-- Encabezado de sección -->
+        <div class="savings-section-header">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div style="font-size: 3rem; line-height: 1;">💰</div>
+                <div>
+                    <h2><i class="fas fa-piggy-bank me-2"></i>Potencial de Ahorro en tu Factura Eléctrica</h2>
+                    <p>Visualiza cuánto dinero podrías reducir en tu factura de luz con la energía generada a partir de tus depósitos de biomasa.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cajas de estadísticas de ahorro -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="savings-stat-box">
+                    <div class="savings-icon"><i class="fas fa-bolt"></i></div>
+                    <div class="savings-value"><?php echo number_format($totalCredito, 3); ?> kWh</div>
+                    <div class="savings-label">Energía Total Generada</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="savings-stat-box" style="border-top-color: #fd7e14;">
+                    <div class="savings-icon" style="color:#fd7e14;"><i class="fas fa-money-bill-wave"></i></div>
+                    <div class="savings-value highlight">RD$ <?php echo number_format($ahorroTotalRD, 2); ?></div>
+                    <div class="savings-label">Ahorro Total Acumulado</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="savings-stat-box" style="border-top-color: #764ba2;">
+                    <div class="savings-icon" style="color:#764ba2;"><i class="fas fa-calendar-check"></i></div>
+                    <div class="savings-value">RD$ <?php echo number_format($ahorroMesActualRD, 2); ?></div>
+                    <div class="savings-label">Ahorro Este Mes</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="savings-stat-box" style="border-top-color: #38ef7d;">
+                    <div class="savings-icon" style="color:#38ef7d;"><i class="fas fa-home"></i></div>
+                    <div class="savings-value"><?php echo number_format($mesesEquivalentes, 3); ?></div>
+                    <div class="savings-label">Meses de Luz Equivalentes</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficas de ahorro -->
+        <div class="row g-3 mb-4">
+            <!-- Gráfica de barras: ahorro mensual en RD$ -->
+            <div class="col-lg-7">
+                <div class="card-custom h-100">
+                    <div class="card-header-custom" style="background: linear-gradient(135deg, #0f9b8e 0%, #38ef7d 100%);">
+                        <h3><i class="fas fa-chart-bar"></i> Ahorro Mensual en Pesos Dominicanos</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="savingsChart"></canvas>
+                        </div>
+                        <p class="text-muted text-center small mt-2">
+                            <i class="fas fa-info-circle"></i>
+                            Calculado con tarifa residencial de <strong>RD$<?php echo number_format($tarifaKwhRD, 2); ?>/kWh</strong>
+                            &mdash; valor orientativo, puede variar según tu distribuidora (EDEESTE, EDENORTE, EDESUR).
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfica de dona: % del mes cubierto -->
+            <div class="col-lg-5">
+                <div class="card-custom h-100">
+                    <div class="card-header-custom" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <h3><i class="fas fa-chart-pie"></i> Cobertura del Consumo Mensual</h3>
+                    </div>
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                        <div style="max-width: 240px; width: 100%; position: relative;">
+                            <canvas id="energyDonutChart"></canvas>
+                        </div>
+                        <p class="text-muted text-center small mt-3 mb-0">
+                            Comparado con el consumo promedio mensual de un hogar dominicano
+                            (<strong><?php echo $consumoPromedioMensualKwh; ?> kWh/mes</strong>).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjetas informativas -->
+        <div class="row g-3 mb-4">
+            <!-- Cómo se calcula -->
+            <div class="col-md-4">
+                <div class="info-card blue">
+                    <h6><i class="fas fa-calculator" style="color:#667eea;"></i> ¿Cómo se calcula el ahorro?</h6>
+                    <p>Cada kilogramo de biomasa depositada genera un crédito en kWh según el sistema PRERMI. Ese kWh se convierte en dinero usando la tarifa eléctrica:</p>
+                    <div class="text-center my-2">
+                        <span class="rate-badge" style="background: linear-gradient(135deg,#667eea,#764ba2);">RD$<?php echo number_format($tarifaKwhRD, 2); ?> / kWh</span>
+                    </div>
+                    <p class="mb-2"><strong>Fórmula:</strong></p>
+                    <div class="savings-tip-box">
+                        <code style="color:#0f6b64; font-size:0.88rem;">Ahorro = kWh generados &times; RD$<?php echo number_format($tarifaKwhRD, 2); ?></code>
+                    </div>
+                    <p class="mt-2 mb-0 text-muted" style="font-size:0.83rem;">Tu acumulado: <strong><?php echo number_format($totalCredito, 3); ?> kWh &times; <?php echo number_format($tarifaKwhRD, 2); ?> = RD$<?php echo number_format($ahorroTotalRD, 2); ?></strong></p>
+                </div>
+            </div>
+
+            <!-- Equivalencias -->
+            <div class="col-md-4">
+                <div class="info-card orange">
+                    <h6><i class="fas fa-lightbulb" style="color:#fd7e14;"></i> ¿Qué equivale tu energía?</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> <strong>1 kWh</strong> = ~6 horas de bombillo LED 20 W</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> <strong>5 kWh</strong> = 1 día de ventilador de techo (8 hrs)</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> <strong>10 kWh</strong> = 1 día de A/C 1 ton (8 hrs)</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> <strong>200 kWh</strong> = un mes completo de luz en casa</li>
+                        <li class="pt-1 border-top">
+                            <i class="fas fa-star text-warning me-1"></i>
+                            <strong>Tú generaste:</strong> <?php echo number_format($totalCredito, 3); ?> kWh
+                            &mdash; equivalente a
+                            <strong><?php echo number_format($totalCredito * 5, 1); ?> horas</strong> de bombillo LED
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Impacto ambiental -->
+            <div class="col-md-4">
+                <div class="info-card">
+                    <h6><i class="fas fa-leaf" style="color:#11998e;"></i> Impacto Ambiental</h6>
+                    <p>Al generar energía renovable con biomasa, evitas emisiones de CO₂ que produciría la misma energía con combustibles fósiles:</p>
+                    <div class="text-center my-2">
+                        <div style="font-size:2rem; font-weight:700; color:#11998e;">
+                            <?php echo number_format($totalCredito * 0.37, 3); ?> kg
+                        </div>
+                        <small class="text-muted">de CO₂ no emitido<br><em>(0.37 kg CO₂/kWh, factor promedio RD)</em></small>
+                    </div>
+                    <div class="savings-progress-wrap mt-2">
+                        <div class="savings-progress-bar" id="co2ProgressBar"
+                             data-width="<?php echo min(100, ($totalCredito / $consumoPromedioMensualKwh) * 100); ?>"
+                             style="width: 0%;"></div>
+                    </div>
+                    <small class="text-muted">
+                        <?php echo number_format(min(100, ($totalCredito / $consumoPromedioMensualKwh) * 100), 2); ?>%
+                        hacia la meta de <?php echo $consumoPromedioMensualKwh; ?> kWh mensuales
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tip motivacional -->
+        <div class="savings-tip-box mb-4 d-flex align-items-center gap-3">
+            <i class="fas fa-rocket fa-2x"></i>
+            <div>
+                <strong>¿Sabías que…?</strong> Si depositas regularmente, podrías alcanzar hasta
+                <strong>RD$<?php echo number_format($consumoPromedioMensualKwh * $tarifaKwhRD, 2); ?>/mes</strong>
+                en reducción de factura — el equivalente a un mes de luz para un hogar dominicano promedio.
+                ¡Sigue reciclando y maximiza tu ahorro!
+            </div>
+        </div>
+
+        <!-- FIN SECCIÓN AHORRO -->
 
         <!-- Deposits History -->
         <div class="card-custom">
@@ -655,6 +969,120 @@ try {
                     y: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'Depósitos' } },
                     y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: 'kWh' } }
                 }
+            }
+        });
+
+        // =====================================================================
+        // GRÁFICAS DE AHORRO EN PESOS DOMINICANOS
+        // =====================================================================
+        const tarifaKwhRD   = <?php echo json_encode($tarifaKwhRD); ?>;
+        const consumoMensual = <?php echo json_encode($consumoPromedioMensualKwh); ?>;
+        const totalEnergyGen = <?php echo json_encode($totalCredito); ?>;
+
+        // --- Gráfica de barras: ahorro mensual en RD$ ---
+        const savingsData   = monthly.map(m => parseFloat((parseFloat(m.energy) * tarifaKwhRD).toFixed(2)));
+        const savingsColors = savingsData.map((_, i) => {
+            const hue = Math.floor((i * 53 + 150) % 360);
+            return `hsl(${hue}deg 62% 52%)`;
+        });
+
+        const savingsCtx = document.getElementById('savingsChart').getContext('2d');
+        new Chart(savingsCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Ahorro en RD$',
+                    data: savingsData,
+                    backgroundColor: savingsColors,
+                    borderColor: savingsColors.map(c => c.replace('52%)', '38%)')),
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `RD$ ${ctx.parsed.y.toFixed(2)}`,
+                            afterLabel: ctx => `(${(ctx.parsed.y / tarifaKwhRD).toFixed(4)} kWh)`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Pesos Dominicanos (RD$)' },
+                        ticks: { callback: v => `RD$ ${v.toFixed(2)}` }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // --- Gráfica de dona: % del consumo mensual cubierto ---
+        const energyForDonut    = Math.min(totalEnergyGen, consumoMensual);
+        const remainingForDonut = Math.max(0, consumoMensual - energyForDonut);
+        const coveragePct       = consumoMensual > 0 ? Math.min(100, (totalEnergyGen / consumoMensual) * 100) : 0;
+
+        const donutCtx = document.getElementById('energyDonutChart').getContext('2d');
+        new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Energía Reciclada (kWh)', 'Restante para 1 mes (kWh)'],
+                datasets: [{
+                    data: [energyForDonut > 0 ? energyForDonut : 0, remainingForDonut],
+                    backgroundColor: ['#11998e', '#e9ecef'],
+                    borderColor: ['#0d7a71', '#dee2e6'],
+                    borderWidth: 2,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { size: 12 }, padding: 14 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.label}: ${parseFloat(ctx.parsed).toFixed(4)} kWh`
+                        }
+                    }
+                }
+            },
+            plugins: [{
+                id: 'centerText',
+                afterDraw(chart) {
+                    const { ctx: c, chartArea: { width, height, left, top } } = chart;
+                    c.save();
+                    const cx = left + width / 2;
+                    const cy = top + height / 2;
+                    c.font = 'bold 24px Segoe UI, sans-serif';
+                    c.fillStyle = '#0f9b8e';
+                    c.textAlign = 'center';
+                    c.textBaseline = 'middle';
+                    c.fillText(coveragePct.toFixed(1) + '%', cx, cy - 11);
+                    c.font = '12px Segoe UI, sans-serif';
+                    c.fillStyle = '#666';
+                    c.fillText('del mes cubierto', cx, cy + 13);
+                    c.restore();
+                }
+            }]
+        });
+
+        // Animar barra de progreso CO₂ al cargar
+        window.addEventListener('load', () => {
+            const bar = document.getElementById('co2ProgressBar');
+            if (bar) {
+                const target = parseFloat(bar.dataset.width) || 0;
+                setTimeout(() => { bar.style.width = target + '%'; }, 300);
             }
         });
 

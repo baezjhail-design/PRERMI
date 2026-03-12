@@ -571,6 +571,254 @@
                 height: 46px;
             }
         }
+
+        /* ── PROCESOS DEL SISTEMA ── */
+        .flow-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.38rem 0.85rem;
+            border-radius: 999px;
+            background: linear-gradient(130deg, #7c3aed, #06b6d4);
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.8rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 0.6rem;
+        }
+
+        .flow-diagram {
+            margin-top: 1.5rem;
+        }
+
+        .flow-row {
+            display: grid;
+            grid-template-columns: 1fr 340px 1fr;
+            align-items: center;
+            gap: 0.9rem;
+        }
+
+        .flow-cell-side {
+            display: flex;
+        }
+
+        .flow-cell-left { justify-content: flex-end; }
+        .flow-cell-right { justify-content: flex-start; }
+
+        .flow-cell-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .flow-node {
+            width: 100%;
+            border-radius: 14px;
+            padding: 0.9rem 1.2rem;
+            text-align: center;
+            font-family: Sora, sans-serif;
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: #fff;
+            line-height: 1.4;
+        }
+
+        .flow-node-pill {
+            border-radius: 999px;
+            padding: 0.75rem 1.6rem;
+            background: linear-gradient(130deg, #7c3aed 0%, #38bdf8 100%);
+        }
+
+        .flow-node-teal {
+            background: linear-gradient(130deg, #06b6d4 0%, #38bdf8 100%);
+        }
+
+        .flow-node-green {
+            background: linear-gradient(130deg, #22c55e 0%, #06b6d4 100%);
+        }
+
+        .flow-node-purple {
+            background: linear-gradient(130deg, #7c3aed 0%, #4f46e5 100%);
+        }
+
+        .flow-node-web {
+            background: linear-gradient(130deg, #22c55e 0%, #2dd4bf 100%);
+        }
+
+        .flow-node-db {
+            background: rgba(56, 189, 248, 0.12);
+            border: 1.5px solid rgba(56, 189, 248, 0.5);
+            color: #0f4f82;
+            border-radius: 14px;
+        }
+
+        .flow-connector {
+            padding: 3px 0;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .flow-arrow-line {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .flow-arrow-line .stem {
+            width: 2px;
+            height: 28px;
+            background: linear-gradient(to bottom, #38bdf8, #7c3aed);
+        }
+
+        .flow-arrow-line .head {
+            width: 0; height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 9px solid #7c3aed;
+        }
+
+        .flow-callout {
+            max-width: 200px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 0.65rem 0.8rem;
+            font-size: 0.79rem;
+            color: #214668;
+            line-height: 1.5;
+        }
+
+        .flow-callout strong {
+            display: block;
+            font-family: Sora, sans-serif;
+            font-size: 0.8rem;
+            color: #7c3aed;
+            margin-bottom: 0.25rem;
+        }
+
+        .flow-contact-callout {
+            max-width: 200px;
+            background: var(--grad-soft);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 12px;
+            padding: 0.65rem 0.8rem;
+            font-size: 0.8rem;
+            color: #17395f;
+            font-weight: 700;
+            line-height: 1.75;
+        }
+
+        @media (max-width: 768px) {
+            .flow-row { grid-template-columns: 1fr; }
+            .flow-cell-side { display: none; }
+        }
+
+        /* ── GUÍA DE USO ── */
+        .guide-wrap {
+            margin-top: 1.5rem;
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.88);
+        }
+
+        .guide-tab-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .gtab-btn {
+            background: none;
+            border: none;
+            padding: 1rem 1.2rem;
+            font-family: Sora, sans-serif;
+            font-weight: 700;
+            font-size: 0.93rem;
+            color: var(--muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border-bottom: 3px solid transparent;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .gtab-btn:hover { background: rgba(56, 189, 248, 0.06); }
+
+        .gtab-btn.gtab-user-active {
+            color: #15803d;
+            background: rgba(34, 197, 94, 0.08);
+            border-bottom-color: #22c55e;
+        }
+
+        .gtab-btn.gtab-admin-active {
+            color: #6d28d9;
+            background: rgba(124, 58, 237, 0.08);
+            border-bottom-color: #7c3aed;
+        }
+
+        .guide-pane { display: none; padding: 1.3rem; }
+        .guide-pane-show { display: block !important; }
+
+        .guide-steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 0.85rem;
+        }
+
+        .gstep {
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: #fff;
+            padding: 0.9rem;
+        }
+
+        .gstep-num {
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center; justify-content: center;
+            font-family: Sora, sans-serif;
+            font-weight: 800;
+            font-size: 0.78rem;
+            color: #fff;
+            margin-bottom: 0.45rem;
+        }
+
+        .gstep-num-user  { background: linear-gradient(130deg, #22c55e, #06b6d4); }
+        .gstep-num-admin { background: linear-gradient(130deg, #7c3aed, #38bdf8); }
+
+        .gstep-icon {
+            font-size: 1.2rem;
+            margin-bottom: 0.4rem;
+            display: block;
+        }
+
+        .gstep h4 {
+            font-family: Sora, sans-serif;
+            font-size: 0.86rem;
+            font-weight: 700;
+            margin: 0 0 0.3rem;
+        }
+
+        .gstep p {
+            color: var(--muted);
+            font-size: 0.79rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .gstep p code {
+            font-size: 0.74rem;
+            background: rgba(56, 189, 248, 0.12);
+            color: #0f4f82;
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -592,6 +840,8 @@
                     <li class="nav-item"><a class="nav-link" href="#impacto">Impacto</a></li>
                     <li class="nav-item"><a class="nav-link" href="#analitica">Analítica</a></li>
                     <li class="nav-item"><a class="nav-link" href="#acceso">Acceso</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#procesos">Procesos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#guia">Guía</a></li>
                     <li class="nav-item">
                         <a class="nav-link contact-nav-link" href="#contacto">
                             <img src="web/assets/img/image.png" alt="Logo Instituto Tecnológico México" class="contact-mini-logo">
@@ -787,6 +1037,254 @@
         </div>
     </section>
 
+    <!-- ═══════════ PROCESOS DEL SISTEMA ═══════════ -->
+    <section class="section" id="procesos">
+        <div class="container">
+            <span class="flow-badge"><i class="fa-solid fa-diagram-project"></i> Arquitectura operativa integrada</span>
+            <h2 class="section-title">Procesos del Sistema</h2>
+            <p class="section-sub">Flujo integrado desde la recolección inteligente de residuos hasta el almacenamiento seguro de datos, pasando por la generación de energía renovable y el monitoreo vehicular en tiempo real.</p>
+
+            <div class="flow-diagram">
+
+                <!-- Fila 1: Contenedores Inteligentes -->
+                <div class="flow-row">
+                    <div class="flow-cell-side flow-cell-left">
+                        <div class="flow-callout">
+                            <strong>Contenedores Inteligentes</strong>
+                            Sistema de depósitos de residuos orgánicos mediante el uso de contenedores con reconocimiento facial e información en tiempo real.
+                        </div>
+                    </div>
+                    <div class="flow-cell-center">
+                        <div class="flow-node flow-node-pill">
+                            <i class="fa-solid fa-trash-can"></i>&nbsp; Contenedores Inteligentes
+                        </div>
+                    </div>
+                    <div class="flow-cell-side flow-cell-right">
+                        <div class="flow-contact-callout">
+                            <i class="fa-brands fa-instagram" style="color:#7c3aed;"></i>&nbsp; @institutotecnologicomexico<br>
+                            <i class="fa-solid fa-phone" style="color:#06b6d4;"></i>&nbsp; +1(809)575-4270
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flecha -->
+                <div class="flow-row"><div class="flow-cell-side"></div><div class="flow-cell-center"><div class="flow-connector"><div class="flow-arrow-line"><div class="stem"></div><div class="head"></div></div></div></div><div class="flow-cell-side"></div></div>
+
+                <!-- Fila 2: Conversión de Residuos en Energía -->
+                <div class="flow-row">
+                    <div class="flow-cell-side flow-cell-left">
+                        <div class="flow-callout">
+                            Los residuos orgánicos recolectados se procesan mediante tecnologías de biomasa.
+                        </div>
+                    </div>
+                    <div class="flow-cell-center">
+                        <div class="flow-node flow-node-teal">
+                            <i class="fa-solid fa-fire-flame-curved"></i><br>
+                            <strong>Conversión de Residuos en Energía</strong><br>
+                            <small style="font-weight:600;opacity:0.9;">(Biomasa)</small>
+                        </div>
+                    </div>
+                    <div class="flow-cell-side"></div>
+                </div>
+
+                <!-- Flecha -->
+                <div class="flow-row"><div class="flow-cell-side"></div><div class="flow-cell-center"><div class="flow-connector"><div class="flow-arrow-line"><div class="stem"></div><div class="head"></div></div></div></div><div class="flow-cell-side"></div></div>
+
+                <!-- Fila 3: Monitoreo de Vehículos -->
+                <div class="flow-row">
+                    <div class="flow-cell-side"></div>
+                    <div class="flow-cell-center">
+                        <div class="flow-node flow-node-green">
+                            <i class="fa-solid fa-truck-fast"></i>&nbsp; Monitoreo de Vehículos Oficiales
+                        </div>
+                    </div>
+                    <div class="flow-cell-side flow-cell-right">
+                        <div class="flow-callout">
+                            Los camiones recolectores y vehículos del sistema cuentan con IA y cámaras que verifican sus rutas en tiempo real.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flecha -->
+                <div class="flow-row"><div class="flow-cell-side"></div><div class="flow-cell-center"><div class="flow-connector"><div class="flow-arrow-line"><div class="stem"></div><div class="head"></div></div></div></div><div class="flow-cell-side"></div></div>
+
+                <!-- Fila 4: Gestión del Tránsito -->
+                <div class="flow-row">
+                    <div class="flow-cell-side flow-cell-left">
+                        <div class="flow-callout">
+                            Integración de sistemas de control de tránsito y monitoreo en tiempo real.
+                        </div>
+                    </div>
+                    <div class="flow-cell-center">
+                        <div class="flow-node flow-node-purple">
+                            <i class="fa-solid fa-traffic-light"></i><br>
+                            <strong>Gestión del Tránsito en Emergencias</strong>
+                        </div>
+                    </div>
+                    <div class="flow-cell-side"></div>
+                </div>
+
+                <!-- Flecha -->
+                <div class="flow-row"><div class="flow-cell-side"></div><div class="flow-cell-center"><div class="flow-connector"><div class="flow-arrow-line"><div class="stem"></div><div class="head"></div></div></div></div><div class="flow-cell-side"></div></div>
+
+                <!-- Fila 5: Gestión Web -->
+                <div class="flow-row">
+                    <div class="flow-cell-side"></div>
+                    <div class="flow-cell-center">
+                        <div class="flow-node flow-node-web">
+                            <i class="fa-solid fa-desktop"></i>&nbsp; Gestión y control computarizado vía interfaz web
+                        </div>
+                    </div>
+                    <div class="flow-cell-side"></div>
+                </div>
+
+                <!-- Flecha -->
+                <div class="flow-row"><div class="flow-cell-side"></div><div class="flow-cell-center"><div class="flow-connector"><div class="flow-arrow-line"><div class="stem"></div><div class="head"></div></div></div></div><div class="flow-cell-side"></div></div>
+
+                <!-- Fila 6: Base de datos -->
+                <div class="flow-row">
+                    <div class="flow-cell-side"></div>
+                    <div class="flow-cell-center">
+                        <div class="flow-node flow-node-db">
+                            <i class="fa-solid fa-database"></i>&nbsp; Toda la información recolectada se almacena en una base de datos segura
+                        </div>
+                    </div>
+                    <div class="flow-cell-side"></div>
+                </div>
+
+            </div><!-- /flow-diagram -->
+        </div>
+    </section>
+
+    <!-- ═══════════ GUÍA DE USO ═══════════ -->
+    <section class="section" id="guia">
+        <div class="container">
+            <h2 class="section-title">Guía de uso de la plataforma</h2>
+            <p class="section-sub">Instrucciones didácticas paso a paso para navegar y aprovechar al máximo la interfaz PRERMI, tanto como usuario registrado como administrador del sistema.</p>
+
+            <div class="guide-wrap">
+                <!-- Pestañas -->
+                <div class="guide-tab-row">
+                    <button class="gtab-btn gtab-user-active" id="btnGuideUser" onclick="switchGuide('user')">
+                        <i class="fa-solid fa-user"></i> Para Usuarios
+                    </button>
+                    <button class="gtab-btn" id="btnGuideAdmin" onclick="switchGuide('admin')">
+                        <i class="fa-solid fa-user-shield"></i> Para Administradores
+                    </button>
+                </div>
+
+                <!-- Panel Usuario -->
+                <div class="guide-pane guide-pane-show" id="guide-user">
+                    <div class="guide-steps-grid">
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-user">1</span>
+                            <span class="gstep-icon" style="color:#22c55e;"><i class="fa-solid fa-user-plus"></i></span>
+                            <h4>Crear tu cuenta</h4>
+                            <p>Haz clic en "Registrarse" en la página de inicio. Completa el formulario con nombre, correo y contraseña, y sube tu foto facial para el reconocimiento biométrico.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-user">2</span>
+                            <span class="gstep-icon" style="color:#06b6d4;"><i class="fa-solid fa-envelope-circle-check"></i></span>
+                            <h4>Verificar tu correo</h4>
+                            <p>Revisa tu bandeja de entrada y haz clic en el enlace de verificación que te enviamos. Sin este paso tu cuenta permanecerá inactiva.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-user">3</span>
+                            <span class="gstep-icon" style="color:#38bdf8;"><i class="fa-solid fa-right-to-bracket"></i></span>
+                            <h4>Iniciar sesión</h4>
+                            <p>Ve a "Acceso Usuarios" e ingresa con tu correo y contraseña. También puedes autenticarte con tu foto facial si la registraste.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-user">4</span>
+                            <span class="gstep-icon" style="color:#22c55e;"><i class="fa-solid fa-gauge-high"></i></span>
+                            <h4>Tu panel principal</h4>
+                            <p>En tu dashboard verás un resumen de tu actividad: depósitos recientes, créditos verdes acumulados y notificaciones pendientes.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-user">5</span>
+                            <span class="gstep-icon" style="color:#06b6d4;"><i class="fa-solid fa-box-archive"></i></span>
+                            <h4>Ver tus depósitos</h4>
+                            <p>Navega a "Depósitos" para consultar el historial completo con fecha, peso y contenedor de cada residuo que has registrado en el sistema.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-user">6</span>
+                            <span class="gstep-icon" style="color:#f59e0b;"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                            <h4>Revisar sanciones</h4>
+                            <p>En la sección "Sanciones" puedes ver, detalle y responder cualquier multa asignada a tu cuenta. El sistema te notifica por correo electrónico automáticamente.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-user">7</span>
+                            <span class="gstep-icon" style="color:#7c3aed;"><i class="fa-solid fa-id-card"></i></span>
+                            <h4>Actualizar perfil</h4>
+                            <p>Desde "Mi Perfil" modifica tus datos personales, cambia tu contraseña y actualiza la foto facial para el reconocimiento biométrico en los contenedores.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-user">8</span>
+                            <span class="gstep-icon" style="color:#22c55e;"><i class="fa-solid fa-qrcode"></i></span>
+                            <h4>Tarjeta digital</h4>
+                            <p>Accede a tu tarjeta de identificación con código QR en la sección "Mi Tarjeta". Muéstrala en los contenedores inteligentes para registrar depósitos fácilmente.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Administrador -->
+                <div class="guide-pane" id="guide-admin">
+                    <div class="guide-steps-grid">
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-admin">1</span>
+                            <span class="gstep-icon" style="color:#7c3aed;"><i class="fa-solid fa-shield-halved"></i></span>
+                            <h4>Acceder al panel admin</h4>
+                            <p>Haz clic en "Acceso Administradores" o ingresa directamente en <code>/web/admin/loginA.php</code> con tus credenciales de administrador.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-admin">2</span>
+                            <span class="gstep-icon" style="color:#38bdf8;"><i class="fa-solid fa-user-check"></i></span>
+                            <h4>Aprobación de cuenta</h4>
+                            <p>Las cuentas admin nuevas requieren aprobación. Un super-administrador deberá validarla desde el módulo "Aprobación de Admins" antes del primer acceso.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-admin">3</span>
+                            <span class="gstep-icon" style="color:#06b6d4;"><i class="fa-solid fa-gauge-high"></i></span>
+                            <h4>Dashboard administrativo</h4>
+                            <p>El dashboard principal muestra estadísticas globales, alertas del sistema, últimos depósitos registrados y estado de los sensores IoT en tiempo real.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-admin">4</span>
+                            <span class="gstep-icon" style="color:#22c55e;"><i class="fa-solid fa-microchip"></i></span>
+                            <h4>Monitorear sensores / SCADA</h4>
+                            <p>Navega a "SCADA / Biomasa" para ver lecturas en tiempo real de temperatura, presión y caudal del biorreactor. Puedes enviar comandos de control directamente.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-admin">5</span>
+                            <span class="gstep-icon" style="color:#38bdf8;"><i class="fa-solid fa-users-gear"></i></span>
+                            <h4>Gestionar usuarios</h4>
+                            <p>En "Usuarios" visualiza, edita, suspende o elimina cuentas del sistema. Consulta el historial individual de depósitos y créditos por cada usuario registrado.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-admin">6</span>
+                            <span class="gstep-icon" style="color:#7c3aed;"><i class="fa-solid fa-camera"></i></span>
+                            <h4>Capturas vehiculares</h4>
+                            <p>En "Vehículos" revisa las capturas de las cámaras ESP32-CAM instaladas en camiones recolectores, con marca de tiempo y registro de ruta en cada toma.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-admin">7</span>
+                            <span class="gstep-icon" style="color:#f59e0b;"><i class="fa-solid fa-gavel"></i></span>
+                            <h4>Emitir sanciones</h4>
+                            <p>Desde "Sanciones" crea y envía multas a usuarios infractores. El sistema notifica automáticamente al usuario por correo y registra el evento con trazabilidad completa.</p>
+                        </div>
+                        <div class="gstep">
+                            <span class="gstep-num gstep-num-admin">8</span>
+                            <span class="gstep-icon" style="color:#06b6d4;"><i class="fa-solid fa-file-chart-column"></i></span>
+                            <h4>Generar reportes</h4>
+                            <p>En "Reportes" exporta informes de operaciones, energía recuperada, residuos procesados por nodo y cumplimiento por rango de fechas personalizado.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /guide-wrap -->
+        </div>
+    </section>
+
     <section class="section" id="contacto">
         <div class="container">
             <div class="contact-title-wrap">
@@ -953,6 +1451,24 @@
                 el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
+
+        function switchGuide(tab) {
+            const paneUser  = document.getElementById('guide-user');
+            const paneAdmin = document.getElementById('guide-admin');
+            const btnUser   = document.getElementById('btnGuideUser');
+            const btnAdmin  = document.getElementById('btnGuideAdmin');
+            if (tab === 'user') {
+                paneUser.classList.add('guide-pane-show');
+                paneAdmin.classList.remove('guide-pane-show');
+                btnUser.classList.add('gtab-user-active');
+                btnAdmin.classList.remove('gtab-admin-active');
+            } else {
+                paneAdmin.classList.add('guide-pane-show');
+                paneUser.classList.remove('guide-pane-show');
+                btnAdmin.classList.add('gtab-admin-active');
+                btnUser.classList.remove('gtab-user-active');
+            }
+        }
 
         const observer = new IntersectionObserver((entries, obs) => {
             entries.forEach((entry) => {

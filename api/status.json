@@ -1,9 +1,9 @@
 {
-    "temperatura": 50,
+    "temperatura": -127,
     "corriente": 0,
     "ventilador": 0,
     "calentador": 0,
-    "energia_generada": 0.06,
+    "energia_generada": -0.12,
     "sistema_activo": 0,
-    "updated_at": "2026-03-06T20:13:19+01:00"
+    "updated_at": "2026-03-11T18:06:54+01:00"
 }

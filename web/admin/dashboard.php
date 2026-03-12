@@ -26,9 +26,38 @@ try {
         vehiculo_id INT NOT NULL,
         marcado_por_admin_id INT NULL,
         nota VARCHAR(255) NULL,
+        imagen VARCHAR(255) NULL,
         creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_vehiculo_id (vehiculo_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Agregar columna imagen si no existe (migración)
+    $stmtColImg = $pdo->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'capturas_semaforo_rojo' AND COLUMN_NAME = 'imagen'");
+    $stmtColImg->execute();
+    if (intval($stmtColImg->fetchColumn()) === 0) {
+        $pdo->exec("ALTER TABLE capturas_semaforo_rojo ADD COLUMN imagen VARCHAR(255) NULL AFTER nota");
+    }
+
+    // Tabla de mensajes/notificaciones a usuarios (in-app + email)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS mensajes_usuarios (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        admin_id INT NOT NULL,
+        usuario_id INT NOT NULL,
+        tipo ENUM('mensaje','advertencia','ban') DEFAULT 'mensaje',
+        titulo VARCHAR(200) NOT NULL,
+        contenido TEXT NOT NULL,
+        leido TINYINT(1) DEFAULT 0,
+        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_mu_usuario (usuario_id),
+        INDEX idx_mu_admin (admin_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Columna 'activo' en usuarios para sistema de baneo
+    $stmtColActivo = $pdo->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'usuarios' AND COLUMN_NAME = 'activo'");
+    $stmtColActivo->execute();
+    if (intval($stmtColActivo->fetchColumn()) === 0) {
+        $pdo->exec("ALTER TABLE usuarios ADD COLUMN activo TINYINT(1) NOT NULL DEFAULT 1");
+    }
 
     $sancionesTable = tableExists($pdo, 'sanciones') ? 'sanciones' : 'multas';
 
@@ -42,8 +71,13 @@ try {
 
             if ($vehiculoId > 0) {
                 if ($marcar === 1) {
-                    $stmt = $pdo->prepare("INSERT INTO capturas_semaforo_rojo (vehiculo_id, marcado_por_admin_id, nota) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE marcado_por_admin_id = VALUES(marcado_por_admin_id), nota = VALUES(nota)");
-                    $stmt->execute([$vehiculoId, intval($_SESSION['admin_id']), 'Marcado manualmente desde dashboard']);
+                    // Copiar imagen del vehículo al registro de captura en rojo
+                    $stmtVehImg = $pdo->prepare("SELECT imagen FROM vehiculos_registrados WHERE id = ? LIMIT 1");
+                    $stmtVehImg->execute([$vehiculoId]);
+                    $vehImagen = $stmtVehImg->fetchColumn() ?: null;
+
+                    $stmt = $pdo->prepare("INSERT INTO capturas_semaforo_rojo (vehiculo_id, marcado_por_admin_id, nota, imagen) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE marcado_por_admin_id = VALUES(marcado_por_admin_id), nota = VALUES(nota), imagen = COALESCE(imagen, VALUES(imagen))");
+                    $stmt->execute([$vehiculoId, intval($_SESSION['admin_id']), 'Marcado manualmente desde dashboard', $vehImagen]);
                     $flash = ['type' => 'success', 'msg' => 'Captura marcada en semaforo rojo'];
                 } else {
                     $stmt = $pdo->prepare("DELETE FROM capturas_semaforo_rojo WHERE vehiculo_id = ?");
@@ -87,6 +121,123 @@ try {
                 $flash = ['type' => 'danger', 'msg' => 'Sancion eliminada'];
             }
         }
+
+        // === GESTIÓN DE ADMINISTRADORES (solo superadmin) ===
+        if (in_array($accion, ['aprobar_admin', 'rechazar_admin', 'cambiar_rol_admin'], true)) {
+            $stmtRolCheck = $pdo->prepare("SELECT rol FROM usuarios_admin WHERE id = ? LIMIT 1");
+            $stmtRolCheck->execute([intval($_SESSION['admin_id'])]);
+            $rolActual = $stmtRolCheck->fetchColumn();
+
+            if ($rolActual === 'superadmin') {
+                $targetAdminId = intval($_POST['admin_id'] ?? 0);
+                if ($targetAdminId > 0 && $targetAdminId !== intval($_SESSION['admin_id'])) {
+                    if ($accion === 'aprobar_admin') {
+                        $stmt = $pdo->prepare("UPDATE usuarios_admin SET active = 1 WHERE id = ?");
+                        $stmt->execute([$targetAdminId]);
+                        // Enviar correo de bienvenida al admin aprobado
+                        $stmtAdmData = $pdo->prepare("SELECT usuario, email FROM usuarios_admin WHERE id = ? LIMIT 1");
+                        $stmtAdmData->execute([$targetAdminId]);
+                        $admData = $stmtAdmData->fetch(PDO::FETCH_ASSOC);
+                        if ($admData && !empty($admData['email'])) {
+                            require_once __DIR__ . '/../../config/mailer.php';
+                            sendWelcomeEmail($admData['email'], $admData['usuario'], 'admin_approved');
+                        }
+                        $flash = ['type' => 'success', 'msg' => 'Administrador aprobado y activado correctamente'];
+                    } elseif ($accion === 'rechazar_admin') {
+                        $stmt = $pdo->prepare("UPDATE usuarios_admin SET active = 0 WHERE id = ?");
+                        $stmt->execute([$targetAdminId]);
+                        $flash = ['type' => 'warning', 'msg' => 'Administrador desactivado del sistema'];
+                    } elseif ($accion === 'cambiar_rol_admin') {
+                        $nuevoRol = (($_POST['nuevo_rol'] ?? '') === 'superadmin') ? 'superadmin' : 'admin';
+                        $stmt = $pdo->prepare("UPDATE usuarios_admin SET rol = ? WHERE id = ?");
+                        $stmt->execute([$nuevoRol, $targetAdminId]);
+                        $flash = ['type' => 'info', 'msg' => 'Rol del administrador actualizado'];
+                    }
+                } elseif ($targetAdminId === intval($_SESSION['admin_id'])) {
+                    $flash = ['type' => 'warning', 'msg' => 'No puedes modificar tu propia cuenta desde aquí'];
+                }
+            } else {
+                $flash = ['type' => 'danger', 'msg' => 'Acceso denegado: solo superadministradores pueden gestionar admins'];
+            }
+        }
+
+        // === GESTIÓN DE USUARIOS ===
+        if ($accion === 'ban_usuario') {
+            $targetUserId = intval($_POST['usuario_id'] ?? 0);
+            if ($targetUserId > 0) {
+                // Obtener datos del usuario antes de banear
+                $stmtBanUser = $pdo->prepare("SELECT email, nombre, apellido, usuario FROM usuarios WHERE id = ?");
+                $stmtBanUser->execute([$targetUserId]);
+                $bannedUser = $stmtBanUser->fetch(PDO::FETCH_ASSOC);
+
+                $stmt = $pdo->prepare("UPDATE usuarios SET activo = 0 WHERE id = ?");
+                $stmt->execute([$targetUserId]);
+
+                // Enviar correo de notificación de baneo
+                if ($bannedUser && !empty($bannedUser['email'])) {
+                    require_once __DIR__ . '/../../config/mailer.php';
+                    $nombreCompleto = trim(($bannedUser['nombre'] ?? '') . ' ' . ($bannedUser['apellido'] ?? ''));
+                    $nombreMostrar  = $nombreCompleto ?: $bannedUser['usuario'];
+                    sendBanEmail($bannedUser['email'], $nombreMostrar);
+                }
+
+                // Registrar log
+                $pdo->prepare("INSERT INTO logs_sistema (descripcion, tipo) VALUES (?, 'warning')")
+                    ->execute(["Admin #" . intval($_SESSION['admin_id']) . " baneó al usuario #$targetUserId"]);
+                $flash = ['type' => 'warning', 'msg' => 'Usuario baneado y notificado por correo'];
+            }
+        }
+
+        if ($accion === 'desbanear_usuario') {
+            $targetUserId = intval($_POST['usuario_id'] ?? 0);
+            if ($targetUserId > 0) {
+                $stmt = $pdo->prepare("UPDATE usuarios SET activo = 1 WHERE id = ?");
+                $stmt->execute([$targetUserId]);
+                $pdo->prepare("INSERT INTO logs_sistema (descripcion, tipo) VALUES (?, 'info')")
+                    ->execute(["Admin #" . intval($_SESSION['admin_id']) . " reactivó al usuario #$targetUserId"]);
+                $flash = ['type' => 'success', 'msg' => 'Usuario reactivado correctamente'];
+            }
+        }
+
+        if ($accion === 'enviar_mensaje') {
+            $targetUserId = intval($_POST['usuario_id'] ?? 0);
+            $titulo       = trim($_POST['titulo'] ?? '');
+            $contenido    = trim($_POST['contenido'] ?? '');
+            $tipo         = in_array($_POST['tipo'] ?? '', ['mensaje', 'advertencia', 'ban'], true) ? $_POST['tipo'] : 'mensaje';
+
+            if ($targetUserId > 0 && $titulo !== '' && $contenido !== '') {
+                // Guardar notificación in-app
+                $stmtMsg = $pdo->prepare("INSERT INTO mensajes_usuarios (admin_id, usuario_id, tipo, titulo, contenido) VALUES (?, ?, ?, ?, ?)");
+                $stmtMsg->execute([intval($_SESSION['admin_id']), $targetUserId, $tipo, $titulo, $contenido]);
+
+                // Enviar correo al usuario
+                $stmtDestUser = $pdo->prepare("SELECT nombre, apellido, email FROM usuarios WHERE id = ? LIMIT 1");
+                $stmtDestUser->execute([$targetUserId]);
+                $destUser = $stmtDestUser->fetch(PDO::FETCH_ASSOC);
+                if ($destUser && !empty($destUser['email'])) {
+                    $nombreDest = htmlspecialchars(trim(($destUser['nombre'] ?? '') . ' ' . ($destUser['apellido'] ?? '')));
+                    $tipoLabels = ['mensaje' => 'Mensaje', 'advertencia' => '⚠️ Advertencia', 'ban' => '🚫 Aviso de Suspensión'];
+                    $asuntoEmail = '[PRERMI] ' . ($tipoLabels[$tipo] ?? 'Notificación') . ': ' . $titulo;
+                    $bodyEmail   = "
+                        <div style='font-family:sans-serif;max-width:600px;margin:auto;'>
+                        <div style='background:linear-gradient(135deg,#667eea,#764ba2);padding:24px;border-radius:12px 12px 0 0;text-align:center;'>
+                            <h2 style='color:white;margin:0;'>🛡️ PRERMI</h2>
+                        </div>
+                        <div style='background:#f9fafb;padding:28px;border-radius:0 0 12px 12px;border:1px solid #e5e7eb;'>
+                            <p>Estimado/a <strong>{$nombreDest}</strong>,</p>
+                            <p>{$contenido}</p>
+                            <hr style='border-color:#e5e7eb;'>
+                            <p style='color:#6b7280;font-size:12px;'>Este mensaje fue enviado desde el panel administrativo de PRERMI. Para consultas contacte a soporte.</p>
+                        </div></div>";
+                    enviarCorreo($destUser['email'], $asuntoEmail, $bodyEmail);
+                }
+                $pdo->prepare("INSERT INTO logs_sistema (descripcion, tipo) VALUES (?, 'info')")
+                    ->execute(["Admin #" . intval($_SESSION['admin_id']) . " envió mensaje tipo '$tipo' al usuario #$targetUserId"]);
+                $flash = ['type' => 'success', 'msg' => 'Mensaje enviado al usuario por notificación app y correo electrónico'];
+            } else {
+                $flash = ['type' => 'danger', 'msg' => 'Complete el título y contenido del mensaje'];
+            }
+        }
     }
 
     // Filtros en listado de sanciones
@@ -103,9 +254,9 @@ try {
     $vehiculos = $stmtVehiculos->fetchAll(PDO::FETCH_ASSOC);
 
     $rojoMap = [];
-    $rojoStmt = $pdo->query("SELECT vehiculo_id FROM capturas_semaforo_rojo");
+    $rojoStmt = $pdo->query("SELECT vehiculo_id, imagen FROM capturas_semaforo_rojo");
     foreach ($rojoStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-        $rojoMap[intval($row['vehiculo_id'])] = true;
+        $rojoMap[intval($row['vehiculo_id'])] = ['imagen' => $row['imagen']];
     }
 
     $capturasRojo = [];
@@ -114,6 +265,8 @@ try {
         $texto = strtolower(($v['tipo_vehiculo'] ?? '') . ' ' . ($v['ubicacion'] ?? '') . ' ' . ($v['placa'] ?? ''));
         $heuristicaRojo = strpos($texto, 'rojo') !== false || strpos($texto, 'semaforo') !== false || strpos($texto, 'infractor') !== false || strpos($texto, 'violacion') !== false;
         if (isset($rojoMap[$vehId]) || $heuristicaRojo) {
+            // Usar la imagen almacenada en la captura, con fallback a la imagen del vehículo
+            $v['imagen_rojo'] = $rojoMap[$vehId]['imagen'] ?? $v['imagen'];
             $capturasRojo[] = $v;
         }
     }
@@ -175,6 +328,66 @@ try {
     // Logs
     $stmtLogs = $pdo->query("SELECT id, descripcion, tipo, creado_en FROM logs_sistema ORDER BY creado_en DESC LIMIT 40");
     $logs = $stmtLogs->fetchAll(PDO::FETCH_ASSOC);
+
+    // ===== AHORROS ELÉCTRICOS (sistema completo) =====
+    $TARIFA_RD_KWH = 14.00;
+    $savingsMonthLabels = [];
+    $savingsMonthRD     = [];
+    $savingsMonthKwh    = [];
+    $savingsTotalKwh    = 0;
+    $savingsTotalRD     = 0;
+    $savingsMesRD       = 0;
+    $savingsMesKwh      = 0;
+
+    $stmtSav = $pdo->query("
+        SELECT
+            DATE_FORMAT(COALESCE(creado_en, fecha_hora), '%Y-%m') AS mes,
+            SUM(COALESCE(credito_kwh, 0)) AS kwh_total
+        FROM depositos
+        WHERE COALESCE(creado_en, fecha_hora) >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+        GROUP BY mes
+        ORDER BY mes ASC
+    ");
+    $savRows = $stmtSav->fetchAll(PDO::FETCH_ASSOC);
+    $savMap = [];
+    foreach ($savRows as $r) { $savMap[$r['mes']] = (float)$r['kwh_total']; }
+
+    for ($i = 5; $i >= 0; $i--) {
+        $ts    = strtotime("-$i months");
+        $key   = date('Y-m', $ts);
+        $label = date('M Y', $ts);
+        $kwh   = $savMap[$key] ?? 0;
+        $rd    = round($kwh * $TARIFA_RD_KWH, 2);
+        $savingsMonthLabels[] = $label;
+        $savingsMonthKwh[]    = $kwh;
+        $savingsMonthRD[]     = $rd;
+        $savingsTotalKwh     += $kwh;
+        $savingsTotalRD      += $rd;
+    }
+    $curKey      = date('Y-m');
+    $savingsMesKwh = $savMap[$curKey] ?? 0;
+    $savingsMesRD  = round($savingsMesKwh * $TARIFA_RD_KWH, 2);
+
+    // Top usuarios por ahorro
+    $stmtTopUser = $pdo->query("
+        SELECT u.nombre, u.apellido, u.usuario,
+               SUM(COALESCE(d.credito_kwh,0)) AS kwh_total
+        FROM depositos d
+        LEFT JOIN usuarios u ON u.id = d.id_usuario
+        GROUP BY d.id_usuario
+        ORDER BY kwh_total DESC
+        LIMIT 8
+    ");
+    $topUsers = $stmtTopUser->fetchAll(PDO::FETCH_ASSOC);
+
+    // ===== PANEL DE CONTROL: ADMINS Y USUARIOS =====
+    $isSuperAdmin = ($admin['rol'] === 'superadmin');
+
+    $stmtAllAdmins = $pdo->query("SELECT id, usuario, nombre, apellido, email, verified, active, rol, creado_en FROM usuarios_admin ORDER BY creado_en DESC");
+    $allAdmins = $stmtAllAdmins->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmtTodosUsuarios = $pdo->query("SELECT id, nombre, apellido, usuario, email, telefono, verified, COALESCE(activo, 1) AS activo, creado_en FROM usuarios ORDER BY creado_en DESC");
+    $todosUsuarios = $stmtTodosUsuarios->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
     die("Error de conexiÃ³n: " . $e->getMessage());
@@ -490,6 +703,91 @@ try {
                 height: 120px;
             }
         }
+
+        /* ===== PANEL DE CONTROL: ADMINS Y USUARIOS ===== */
+        .mgmt-card {
+            background: white;
+            border-radius: 14px;
+            padding: 1.25rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            border: 1.5px solid #e8edf5;
+            transition: box-shadow 0.25s, transform 0.25s;
+            height: 100%;
+        }
+        .mgmt-card:hover {
+            box-shadow: 0 8px 28px rgba(102,126,234,0.2);
+            transform: translateY(-2px);
+        }
+        .mgmt-card-pending { border-color: #f97316; background: #fffbf5; }
+        .mgmt-card-super   { border-color: #7c3aed; background: #faf8ff; }
+
+        .mgmt-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+        .avatar-super   { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .avatar-admin   { background: linear-gradient(135deg, #2563eb, #7c3aed); }
+        .avatar-pending { background: linear-gradient(135deg, #f97316, #ea580c); }
+
+        .mgmt-avatar-sm {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+        .mgmt-name  { font-weight: 700; font-size: 0.97rem; color: #1e293b; }
+        .mgmt-email { font-size: 0.81rem; color: #64748b; word-break: break-all; }
+
+        .badge-tu {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 20px;
+            padding: 2px 9px;
+            letter-spacing: .5px;
+            white-space: nowrap;
+        }
+        .mgmt-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .badge-mgmt-ok      { background: #d1fae5; color: #065f46; }
+        .badge-mgmt-warn    { background: #fff3cd; color: #92400e; }
+        .badge-mgmt-info    { background: #dbeafe; color: #1e40af; }
+        .badge-mgmt-super   { background: #ede9fe; color: #5b21b6; }
+        .badge-mgmt-neutral { background: #f1f5f9; color: #475569; }
+
+        .ctrl-stat-card {
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+            color: #fff;
+            transition: transform 0.2s;
+        }
+        .ctrl-stat-card:hover { transform: translateY(-2px); }
+        .ctrl-stat-card .num  { font-size: 28px; font-weight: 800; }
+        .ctrl-stat-card .lbl  { font-size: 11px; opacity: .85; text-transform: uppercase; letter-spacing: 1px; }
     </style>
 </head>
 <body>
@@ -564,6 +862,11 @@ try {
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="savings-tab" data-bs-toggle="tab" data-bs-target="#savings" type="button" role="tab">
+                        <i class="fas fa-bolt"></i> Ahorro Eléctrico (RD$)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button" role="tab">
                         <i class="fas fa-list"></i> Logs del Sistema
                     </button>
@@ -589,7 +892,7 @@ try {
                     <div class="red-capture-grid">
                         <?php foreach ($capturasRojo as $cap): ?>
                             <div class="capture-card">
-                                <img src="/PRERMI/uploads/vehiculos/<?php echo htmlspecialchars($cap['imagen']); ?>" alt="Captura en rojo" onerror="this.src='https://via.placeholder.com/400x250?text=Sin+Imagen';">
+                                <img src="/PRERMI/uploads/vehiculos/<?php echo htmlspecialchars($cap['imagen_rojo'] ?? $cap['imagen']); ?>" alt="Captura en rojo" onerror="this.src='https://placehold.co/400x250?text=Sin+Imagen';">
                                 <div class="capture-body">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <strong><?php echo htmlspecialchars($cap['placa']); ?></strong>
@@ -879,6 +1182,98 @@ try {
                     <?php endif; ?>
                 </div>
 
+                <!-- ===== TAB: AHORRO ELÉCTRICO ===== -->
+                <div class="tab-pane fade" id="savings" role="tabpanel">
+                    <div class="section-header" style="border-left-color:#06b6d4;">
+                        <h2 style="color:#06b6d4;"><i class="fas fa-bolt"></i> Ahorro en Electricidad — Sistema PRERMI (Pesos Dominicanos)</h2>
+                    </div>
+
+                    <!-- KPIs -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3 col-sm-6">
+                            <div style="background:linear-gradient(135deg,#0e7490,#06b6d4);border-radius:14px;padding:22px;text-align:center;box-shadow:0 4px 18px #06b6d440;">
+                                <div style="font-size:28px;">💡</div>
+                                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.75);margin:6px 0;">Este mes</div>
+                                <div style="font-size:26px;font-weight:800;color:#fff;">RD$ <?php echo number_format($savingsMesRD,2); ?></div>
+                                <div style="font-size:12px;color:rgba(255,255,255,0.7);"><?php echo number_format($savingsMesKwh,3); ?> kWh generados</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div style="background:linear-gradient(135deg,#065f46,#10b981);border-radius:14px;padding:22px;text-align:center;box-shadow:0 4px 18px #10b98140;">
+                                <div style="font-size:28px;">🌿</div>
+                                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.75);margin:6px 0;">Ahorro total (6 meses)</div>
+                                <div style="font-size:26px;font-weight:800;color:#fff;">RD$ <?php echo number_format($savingsTotalRD,2); ?></div>
+                                <div style="font-size:12px;color:rgba(255,255,255,0.7);"><?php echo number_format($savingsTotalKwh,3); ?> kWh totales</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div style="background:linear-gradient(135deg,#5b21b6,#7c3aed);border-radius:14px;padding:22px;text-align:center;box-shadow:0 4px 18px #7c3aed40;">
+                                <div style="font-size:28px;">⚡</div>
+                                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.75);margin:6px 0;">Tarifa referencia</div>
+                                <div style="font-size:26px;font-weight:800;color:#fff;">RD$ <?php echo number_format($TARIFA_RD_KWH,2); ?></div>
+                                <div style="font-size:12px;color:rgba(255,255,255,0.7);">por kWh (EDENORTE/EDESUR)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div style="background:linear-gradient(135deg,#9a3412,#f97316);border-radius:14px;padding:22px;text-align:center;box-shadow:0 4px 18px #f9731640;">
+                                <div style="font-size:28px;">📦</div>
+                                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.75);margin:6px 0;">Total depósitos</div>
+                                <div style="font-size:26px;font-weight:800;color:#fff;"><?php echo count($depositos); ?></div>
+                                <div style="font-size:12px;color:rgba(255,255,255,0.7);">registros verificados</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gráficas -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-lg-8">
+                            <div style="background:#1e293b;border-radius:16px;padding:24px;border:1px solid rgba(6,182,212,0.2);box-shadow:0 6px 24px rgba(0,0,0,0.25);">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                                    <h6 style="color:#e2e8f0;margin:0;font-weight:700;"><i class="fas fa-chart-bar" style="color:#06b6d4;"></i> Reducción mensual de costo eléctrico (últimos 6 meses)</h6>
+                                    <span style="background:linear-gradient(90deg,#06b6d4,#10b981);color:#fff;font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;">RD$ / kWh</span>
+                                </div>
+                                <canvas id="adminSavingsChart" height="120"></canvas>
+                                <p style="text-align:center;font-size:11px;color:#475569;margin-top:12px;">
+                                    Crédito: 0.5 kWh por kg depositado × tarifa de referencia RD$ <?php echo number_format($TARIFA_RD_KWH,2); ?>/kWh
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div style="background:#1e293b;border-radius:16px;padding:24px;border:1px solid rgba(124,58,237,0.2);box-shadow:0 6px 24px rgba(0,0,0,0.25);">
+                                <h6 style="color:#e2e8f0;margin:0 0 16px;font-weight:700;"><i class="fas fa-trophy" style="color:#7c3aed;"></i> Top usuarios por kWh</h6>
+                                <canvas id="adminTopUsersChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla resumen mensual -->
+                    <div class="table-container">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Mes</th>
+                                    <th>kWh Generados</th>
+                                    <th>Ahorro Estimado (RD$)</th>
+                                    <th>Equivalencia (días sin luz)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ($savingsMonthLabels as $idx => $lbl): ?>
+                                <tr>
+                                    <td><strong><?php echo htmlspecialchars($lbl); ?></strong></td>
+                                    <td><?php echo number_format($savingsMonthKwh[$idx],4); ?> kWh</td>
+                                    <td><strong style="color:#10b981;">RD$ <?php echo number_format($savingsMonthRD[$idx],2); ?></strong></td>
+                                    <td><?php
+                                        $dias = $savingsMonthKwh[$idx] > 0 ? round($savingsMonthKwh[$idx] / 1.2, 1) : 0;
+                                        echo $dias . ' hrs equiv.';
+                                    ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="tab-pane fade" id="logs" role="tabpanel">
                     <div class="section-header">
                         <h2><i class="fas fa-list"></i> Logs del Sistema</h2>
@@ -901,18 +1296,249 @@ try {
                 </div>
 
                 <div class="tab-pane fade" id="admins" role="tabpanel">
-                    <div class="section-header">
-                        <h2><i class="fas fa-users-cog"></i> Panel de Administradores</h2>
-                        <a href="panel_admin_approval.php" class="btn btn-primary" style="float: right;">
-                            <i class="fas fa-cogs"></i> Gestionar Admins
-                        </a>
+
+                    <!-- KPIs del panel de control -->
+                    <div class="row g-3 mb-4 mt-1">
+                        <?php
+                        $admPendientes  = count(array_filter($allAdmins, fn($a) => !intval($a['active'])));
+                        $admActivos     = count(array_filter($allAdmins, fn($a)  => intval($a['active'])));
+                        $usrBaneados    = count(array_filter($todosUsuarios, fn($u) => !intval($u['activo'])));
+                        ?>
+                        <div class="col-6 col-md-3">
+                            <div class="ctrl-stat-card" style="background:linear-gradient(135deg,#667eea,#764ba2);box-shadow:0 4px 15px rgba(102,126,234,.35);">
+                                <div class="num"><?php echo count($allAdmins); ?></div>
+                                <div class="lbl"><i class="fas fa-user-tie"></i> Total Admins</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <?php if ($isSuperAdmin): ?>
+                            <div class="ctrl-stat-card" style="background:linear-gradient(135deg,#f97316,#ea580c);box-shadow:0 4px 15px rgba(249,115,22,.35);cursor:pointer;transition:transform .2s,box-shadow .2s;"
+                                 onclick="window.location.href='panel_admin_approval.php'"
+                                 onmouseenter="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 28px rgba(249,115,22,.55)'"
+                                 onmouseleave="this.style.transform='';this.style.boxShadow='0 4px 15px rgba(249,115,22,.35)'"
+                                 title="Ver admins pendientes de aprobación">
+                                <div class="num"><?php echo $admPendientes; ?></div>
+                                <div class="lbl"><i class="fas fa-clock"></i> Admins Pendientes</div>
+                                <?php if ($admPendientes > 0): ?>
+                                <div style="font-size:0.7rem;margin-top:4px;opacity:.85;"><i class="fas fa-arrow-right"></i> Revisar ahora</div>
+                                <?php endif; ?>
+                            </div>
+                            <?php else: ?>
+                            <div class="ctrl-stat-card" style="background:linear-gradient(135deg,#f97316,#ea580c);box-shadow:0 4px 15px rgba(249,115,22,.35);">
+                                <div class="num"><?php echo $admPendientes; ?></div>
+                                <div class="lbl"><i class="fas fa-clock"></i> Admins Pendientes</div>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="ctrl-stat-card" style="background:linear-gradient(135deg,#10b981,#065f46);box-shadow:0 4px 15px rgba(16,185,129,.35);">
+                                <div class="num"><?php echo count($todosUsuarios); ?></div>
+                                <div class="lbl"><i class="fas fa-users"></i> Total Usuarios</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="ctrl-stat-card" style="background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 4px 15px rgba(239,68,68,.35);">
+                                <div class="num"><?php echo $usrBaneados; ?></div>
+                                <div class="lbl"><i class="fas fa-ban"></i> Usuarios Baneados</div>
+                            </div>
+                        </div>
                     </div>
 
-                    <iframe
-                        src="panel_admin_approval.php"
-                        style="width: 100%; height: 800px; border: none; border-radius: 10px;"
-                        title="Panel de Administradores">
-                    </iframe>
+                    <!-- ===== SECCIÓN: VERIFICACIÓN DE ADMINISTRADORES ===== -->
+                    <?php if ($isSuperAdmin): ?>
+                    <div class="section-header" style="border-left-color:#667eea;">
+                        <h2 style="color:#667eea;"><i class="fas fa-user-shield"></i> Verificación y Control de Administradores</h2>
+                    </div>
+                    <p class="small-muted mb-3">
+                        <i class="fas fa-info-circle text-primary"></i>
+                        Como <strong>superadministrador</strong> puedes aprobar, desactivar y cambiar el rol de cada administrador del sistema.
+                        Los administradores deben ser aprobados antes de poder acceder.
+                    </p>
+
+                    <div class="row g-3 mb-4">
+                        <?php foreach ($allAdmins as $admEntry): ?>
+                        <?php
+                        $isPending  = !intval($admEntry['active']);
+                        $isVerified = intval($admEntry['verified']);
+                        $isSelf     = (intval($admEntry['id']) === intval($_SESSION['admin_id']));
+                        $initials   = strtoupper(substr($admEntry['usuario'] ?? 'A', 0, 2));
+                        $cardClass  = $isSelf ? '' : ($isPending ? 'mgmt-card-pending' : ($admEntry['rol'] === 'superadmin' ? 'mgmt-card-super' : ''));
+                        $avatarClass= $admEntry['rol'] === 'superadmin' ? 'avatar-super' : ($isPending ? 'avatar-pending' : 'avatar-admin');
+                        ?>
+                        <div class="col-xl-4 col-lg-6">
+                            <div class="mgmt-card <?php echo $cardClass; ?>">
+                                <div class="d-flex align-items-start gap-3 mb-3">
+                                    <div class="mgmt-avatar <?php echo $avatarClass; ?>">
+                                        <?php echo htmlspecialchars($initials); ?>
+                                    </div>
+                                    <div class="flex-grow-1 min-w-0">
+                                        <div class="mgmt-name d-flex align-items-center gap-2 flex-wrap">
+                                            <?php echo htmlspecialchars($admEntry['usuario']); ?>
+                                            <?php if ($isSelf): ?><span class="badge-tu">TÚ</span><?php endif; ?>
+                                        </div>
+                                        <div class="mgmt-email"><?php echo htmlspecialchars($admEntry['email']); ?></div>
+                                        <div class="small-muted mt-1">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            <?php echo date('d/m/Y', strtotime($admEntry['creado_en'])); ?>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex flex-wrap gap-1 mb-3">
+                                    <span class="mgmt-badge <?php echo intval($admEntry['active']) ? 'badge-mgmt-ok' : 'badge-mgmt-warn'; ?>">
+                                        <i class="fas fa-<?php echo intval($admEntry['active']) ? 'check-circle' : 'clock'; ?>"></i>
+                                        <?php echo intval($admEntry['active']) ? 'Activo' : 'Sin aprobar'; ?>
+                                    </span>
+                                    <span class="mgmt-badge <?php echo $isVerified ? 'badge-mgmt-info' : 'badge-mgmt-warn'; ?>">
+                                        <i class="fas fa-<?php echo $isVerified ? 'envelope-open-text' : 'envelope'; ?>"></i>
+                                        <?php echo $isVerified ? 'Email OK' : 'Email pendiente'; ?>
+                                    </span>
+                                    <span class="mgmt-badge <?php echo $admEntry['rol'] === 'superadmin' ? 'badge-mgmt-super' : 'badge-mgmt-neutral'; ?>">
+                                        <i class="fas fa-<?php echo $admEntry['rol'] === 'superadmin' ? 'crown' : 'user-tie'; ?>"></i>
+                                        <?php echo $admEntry['rol'] === 'superadmin' ? 'Super Admin' : 'Admin'; ?>
+                                    </span>
+                                </div>
+
+                                <?php if (!$isSelf): ?>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <?php if ($isPending): ?>
+                                    <form method="POST" class="d-inline">
+                                        <input type="hidden" name="accion" value="aprobar_admin">
+                                        <input type="hidden" name="admin_id" value="<?php echo intval($admEntry['id']); ?>">
+                                        <button class="btn btn-sm btn-success" type="submit">
+                                            <i class="fas fa-check"></i> Aprobar acceso
+                                        </button>
+                                    </form>
+                                    <?php else: ?>
+                                    <form method="POST" class="d-inline" onsubmit="return confirm('¿Desactivar el acceso de este administrador?');">
+                                        <input type="hidden" name="accion" value="rechazar_admin">
+                                        <input type="hidden" name="admin_id" value="<?php echo intval($admEntry['id']); ?>">
+                                        <button class="btn btn-sm btn-outline-warning" type="submit">
+                                            <i class="fas fa-ban"></i> Desactivar
+                                        </button>
+                                    </form>
+                                    <?php endif; ?>
+                                    <form method="POST" class="d-inline" onsubmit="return confirm('¿Cambiar el rol a <?php echo $admEntry['rol'] === 'superadmin' ? 'Admin regular' : 'SuperAdmin'; ?>?');">
+                                        <input type="hidden" name="accion" value="cambiar_rol_admin">
+                                        <input type="hidden" name="admin_id" value="<?php echo intval($admEntry['id']); ?>">
+                                        <input type="hidden" name="nuevo_rol" value="<?php echo $admEntry['rol'] === 'superadmin' ? 'admin' : 'superadmin'; ?>">
+                                        <button class="btn btn-sm btn-outline-primary" type="submit">
+                                            <i class="fas fa-<?php echo $admEntry['rol'] === 'superadmin' ? 'user-minus' : 'crown'; ?>"></i>
+                                            <?php echo $admEntry['rol'] === 'superadmin' ? 'Quitar Super' : 'Dar Super'; ?>
+                                        </button>
+                                    </form>
+                                </div>
+                                <?php else: ?>
+                                <div class="alert alert-light py-2 mb-0 small">
+                                    <i class="fas fa-info-circle text-primary"></i> Tu cuenta — no modificable desde aquí.
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                        <?php if (empty($allAdmins)): ?>
+                            <div class="col-12">
+                                <div class="alert alert-light border text-center py-4">
+                                    <i class="fas fa-users-cog fa-2x text-muted mb-2"></i>
+                                    <div>No hay administradores registrados.</div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <?php else: ?>
+                    <div class="alert alert-info d-flex align-items-center gap-3 mb-4">
+                        <i class="fas fa-lock fa-lg"></i>
+                        <span>La gestión de administradores es exclusiva para <strong>superadministradores</strong>. Contacta a un superadmin si necesitas cambios en accesos.</span>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- ===== SECCIÓN: GESTIÓN DE USUARIOS ===== -->
+                    <div class="section-header" style="border-left-color:#10b981;">
+                        <h2 style="color:#10b981;"><i class="fas fa-users-cog"></i> Gestión de Usuarios del Sistema</h2>
+                    </div>
+                    <p class="small-muted mb-3">
+                        <i class="fas fa-info-circle text-success"></i>
+                        Aquí puedes <strong>banear / reactivar</strong> usuarios y enviarles <strong>mensajes por app y correo electrónico</strong> directamente.
+                    </p>
+
+                    <div class="table-container">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Nombre</th>
+                                    <th>Usuario</th>
+                                    <th>Email</th>
+                                    <th>Teléfono</th>
+                                    <th>Estado</th>
+                                    <th>Registro</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($todosUsuarios as $usr): ?>
+                                <?php $banned = !intval($usr['activo']); ?>
+                                <tr class="<?php echo $banned ? 'table-danger' : ''; ?>">
+                                    <td><strong>#<?php echo intval($usr['id']); ?></strong></td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="mgmt-avatar-sm" style="background:<?php echo $banned ? 'linear-gradient(135deg,#ef4444,#b91c1c)' : 'linear-gradient(135deg,#667eea,#764ba2)'; ?>;">
+                                                <?php echo strtoupper(substr($usr['nombre'] ?? 'U', 0, 1)); ?>
+                                            </div>
+                                            <span><?php echo htmlspecialchars(trim($usr['nombre'] . ' ' . $usr['apellido'])); ?></span>
+                                        </div>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($usr['usuario']); ?></td>
+                                    <td class="small-muted"><?php echo htmlspecialchars($usr['email']); ?></td>
+                                    <td><?php echo htmlspecialchars($usr['telefono'] ?? '—'); ?></td>
+                                    <td>
+                                        <?php if ($banned): ?>
+                                            <span class="badge bg-danger"><i class="fas fa-ban"></i> Baneado</span>
+                                        <?php elseif (!intval($usr['verified'])): ?>
+                                            <span class="badge bg-warning text-dark"><i class="fas fa-clock"></i> Sin verificar</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-success"><i class="fas fa-check-circle"></i> Activo</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="small-muted"><?php echo date('d/m/Y', strtotime($usr['creado_en'])); ?></td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <button class="btn btn-sm btn-primary"
+                                                data-usuario-id="<?php echo intval($usr['id']); ?>"
+                                                data-usuario-nombre="<?php echo htmlspecialchars(trim($usr['nombre'] . ' ' . $usr['apellido']), ENT_QUOTES); ?>"
+                                                data-usuario-email="<?php echo htmlspecialchars($usr['email'], ENT_QUOTES); ?>"
+                                                onclick="abrirModalMensaje(this)"
+                                                title="Enviar mensaje por app y correo">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                            <?php if ($banned): ?>
+                                            <form method="POST" class="d-inline">
+                                                <input type="hidden" name="accion" value="desbanear_usuario">
+                                                <input type="hidden" name="usuario_id" value="<?php echo intval($usr['id']); ?>">
+                                                <button class="btn btn-sm btn-success" type="submit" title="Desbanear usuario">
+                                                    <i class="fas fa-user-check"></i> Desbanear
+                                                </button>
+                                            </form>
+                                            <?php else: ?>
+                                            <form method="POST" class="d-inline" onsubmit="return confirm('¿Banear a este usuario? No podrá ingresar al sistema.');">
+                                                <input type="hidden" name="accion" value="ban_usuario">
+                                                <input type="hidden" name="usuario_id" value="<?php echo intval($usr['id']); ?>">
+                                                <button class="btn btn-sm btn-danger" type="submit" title="Banear usuario">
+                                                    <i class="fas fa-user-slash"></i> Banear
+                                                </button>
+                                            </form>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                                <?php if (empty($todosUsuarios)): ?>
+                                    <tr><td colspan="8" class="text-center py-4"><em>No hay usuarios registrados</em></td></tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -928,6 +1554,59 @@ try {
                 <div class="modal-body">
                     <img id="modalImage" src="" alt="Captura" style="width: 100%; border-radius: 10px;">
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Enviar Mensaje a Usuario -->
+    <div class="modal fade" id="mensajeModal" tabindex="-1" aria-labelledby="mensajeModalLabel">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;">
+                    <h5 class="modal-title" id="mensajeModalLabel"><i class="fas fa-paper-plane"></i> Enviar Mensaje al Usuario</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST">
+                    <input type="hidden" name="accion" value="enviar_mensaje">
+                    <input type="hidden" name="usuario_id" id="msg_usuario_id">
+                    <div class="modal-body">
+                        <div class="alert alert-light border d-flex align-items-center gap-3 py-2 mb-3">
+                            <div class="mgmt-avatar-sm" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span>Enviando a: <strong id="msg_usuario_nombre">—</strong>
+                            &nbsp;<span class="small text-muted">&lt;<span id="msg_usuario_email"></span>&gt;</span></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Tipo de mensaje</label>
+                            <select class="form-select" name="tipo" id="msg_tipo" onchange="actualizarColorMensaje(this)">
+                                <option value="mensaje">💬 Mensaje General</option>
+                                <option value="advertencia">⚠️ Advertencia Oficial</option>
+                                <option value="ban">🚫 Aviso de Suspensión</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Asunto / Título</label>
+                            <input type="text" name="titulo" class="form-control" required
+                                placeholder="Ej: Actividad sospechosa en el sistema">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Contenido del mensaje</label>
+                            <textarea name="contenido" class="form-control" rows="5" required
+                                placeholder="Redacte aquí el contenido completo del mensaje para el usuario..."></textarea>
+                        </div>
+                        <div class="alert alert-info d-flex align-items-start gap-2 py-2 mb-0">
+                            <i class="fas fa-mail-bulk mt-1"></i>
+                            <small>El mensaje será entregado como <strong>notificación dentro de la app</strong>
+                            y también enviado al <strong>correo electrónico</strong> del usuario automáticamente.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Enviar Mensaje</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -1024,6 +1703,27 @@ try {
             document.getElementById('modalImage').src = '/PRERMI/uploads/vehiculos/' + imageName;
         }
 
+        function abrirModalMensaje(btn) {
+            document.getElementById('msg_usuario_id').value    = btn.dataset.usuarioId;
+            document.getElementById('msg_usuario_nombre').textContent = btn.dataset.usuarioNombre;
+            document.getElementById('msg_usuario_email').textContent  = btn.dataset.usuarioEmail;
+            // Reset form fields
+            document.getElementById('msg_tipo').value = 'mensaje';
+            actualizarColorMensaje(document.getElementById('msg_tipo'));
+            const modal = new bootstrap.Modal(document.getElementById('mensajeModal'));
+            modal.show();
+        }
+
+        function actualizarColorMensaje(sel) {
+            const header = document.querySelector('#mensajeModal .modal-header');
+            const colors = {
+                'mensaje':      'linear-gradient(135deg,#667eea,#764ba2)',
+                'advertencia':  'linear-gradient(135deg,#f97316,#ea580c)',
+                'ban':          'linear-gradient(135deg,#ef4444,#b91c1c)'
+            };
+            header.style.background = colors[sel.value] || colors['mensaje'];
+        }
+
         const hasReview = new URLSearchParams(window.location.search).get('review_id');
         if (hasReview) {
             const tabTrigger = document.querySelector('#fines-tab');
@@ -1032,6 +1732,88 @@ try {
                 tab.show();
             }
         }
+    // ===== ADMIN SAVINGS CHARTS =====
+    (function() {
+        const monthLabels  = <?php echo json_encode($savingsMonthLabels); ?>;
+        const monthRD      = <?php echo json_encode($savingsMonthRD); ?>;
+        const monthKwh     = <?php echo json_encode($savingsMonthKwh); ?>;
+        const topNames     = <?php echo json_encode(array_map(function($u){ $n = trim(($u['nombre']??'').' '.($u['apellido']??'')); return $n ?: $u['usuario']; }, $topUsers)); ?>;
+        const topKwh       = <?php echo json_encode(array_map(function($u){ return round((float)$u['kwh_total'],4); }, $topUsers)); ?>;
+
+        // Bar + Line chart
+        const sCtx = document.getElementById('adminSavingsChart');
+        if (sCtx) {
+            new Chart(sCtx, {
+                type: 'bar',
+                data: {
+                    labels: monthLabels,
+                    datasets: [
+                        {
+                            label: 'Ahorro RD$',
+                            data: monthRD,
+                            backgroundColor: monthRD.map((v,i) => `hsla(${180+i*25},80%,55%,0.75)`),
+                            borderColor:     monthRD.map((v,i) => `hsl(${180+i*25},80%,60%)`),
+                            borderWidth: 2, borderRadius: 8, yAxisID: 'yRD'
+                        },
+                        {
+                            label: 'kWh generados', data: monthKwh, type: 'line',
+                            borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.12)',
+                            pointBackgroundColor: '#10b981', pointRadius: 5,
+                            borderWidth: 2.5, fill: true, tension: 0.35, yAxisID: 'yKwh'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1', font: { size: 12 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: c => c.dataset.yAxisID === 'yRD'
+                                    ? ` Ahorro: RD$ ${c.parsed.y.toFixed(2)}`
+                                    : ` kWh: ${c.parsed.y.toFixed(4)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color:'#94a3b8' }, grid: { color:'rgba(255,255,255,0.05)' } },
+                        yRD:  { position:'left',  ticks: { color:'#06b6d4', callback: v=>'RD$'+v.toFixed(0) }, grid: { color:'rgba(6,182,212,0.1)' } },
+                        yKwh: { position:'right', ticks: { color:'#10b981', callback: v=>v.toFixed(3)+' kWh' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+        }
+
+        // Horizontal bar for top users
+        const tCtx = document.getElementById('adminTopUsersChart');
+        if (tCtx && topNames.length) {
+            const colors = ['#06b6d4','#10b981','#7c3aed','#f97316','#ec4899','#3b82f6','#a3e635','#facc15'];
+            new Chart(tCtx, {
+                type: 'bar',
+                data: {
+                    labels: topNames,
+                    datasets: [{
+                        label: 'kWh generados',
+                        data: topKwh,
+                        backgroundColor: topNames.map((_,i) => colors[i % colors.length] + 'bb'),
+                        borderColor:     topNames.map((_,i) => colors[i % colors.length]),
+                        borderWidth: 1.5, borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color:'#94a3b8', callback: v=>v+' kWh' }, grid: { color:'rgba(255,255,255,0.05)' } },
+                        y: { ticks: { color:'#cbd5e1', font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+    })();
+
     </script>
 </body>
 </html>

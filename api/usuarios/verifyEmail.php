@@ -27,6 +27,10 @@ try {
     $stmt = $pdo->prepare("UPDATE usuarios SET verified = 1, token_activo = 0, token = NULL WHERE id = ?");
     $stmt->execute([$user['id']]);
 
+    // Enviar correo de bienvenida
+    require_once __DIR__ . '/../../config/mailer.php';
+    sendWelcomeEmail($user['email'], $user['usuario'], 'usuario');
+
     registrarLog("Email verificado para usuario: {$user['usuario']}", "info");
     showVerificationPage(true, 'Tu correo ha sido verificado exitosamente. Ya puedes iniciar sesion.');
 
