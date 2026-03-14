@@ -55,7 +55,7 @@ try {
 <body>
 
 <header>
-    <h1>PRERMI</h1>
+    <img src="/PRERMI/uploads/LOGO/LOGO%20OFICIAL%20PRERMI.png" alt="PRERMI" class="header-logo">
 </header>
 
 <h2 style="color:white; text-align:center;">Sanciones Registradas</h2>

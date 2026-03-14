@@ -82,6 +82,8 @@ $monthKwhJson     = json_encode(array_values(array_values($monthKwh)));
     <meta charset="UTF-8">
     <title>Dashboard - Usuario PRERMI</title>
     <link rel="stylesheet" href="estilos_usuario.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>(function(){var t=localStorage.getItem('prermi_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <style>
@@ -275,49 +277,6 @@ $monthKwhJson     = json_encode(array_values(array_values($monthKwh)));
             cursor: pointer;
         }
     </style>
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.65);
-            z-index: 1100;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .facial-modal-content {
-            background: #fff;
-            border-radius: 12px;
-            max-width: 420px;
-            width: 100%;
-            padding: 18px;
-            text-align: center;
-            box-shadow: 0 8px 24px #00000055;
-        }
-
-        .facial-modal-content h3 {
-            margin: 0 0 12px;
-            color: #004466;
-        }
-
-        .facial-modal-content img {
-            width: 100%;
-            max-height: 420px;
-            object-fit: cover;
-            border-radius: 10px;
-            border: 2px solid #d7eef6;
-        }
-
-        .facial-modal-close {
-            margin-top: 14px;
-            border: none;
-            border-radius: 8px;
-            background: #cc0000;
-            color: #fff;
-            padding: 8px 16px;
-            cursor: pointer;
-        }
-    </style>
 </head>
 
 <body>
@@ -325,8 +284,9 @@ $monthKwhJson     = json_encode(array_values(array_values($monthKwh)));
 <button class="btn-facial" onclick="abrirModalFacial()">Ver Foto Facial</button>
 
 <header>
-    <h1>PRERMI</h1>
+    <img src="/PRERMI/uploads/LOGO/LOGO%20OFICIAL%20PRERMI.png" alt="PRERMI" class="header-logo">
     <p>Dashboard de Usuario</p>
+    <button id="btnTheme" class="btn-theme-user" onclick="toggleTheme()" title="Cambiar tema"><i class="fas fa-moon"></i></button>
 </header>
 
 <div class="dashboard-container">
@@ -511,6 +471,7 @@ function cerrarModalFacial(event) {
     });
 })();
 </script>
+<script src="/PRERMI/web/assets/js/theme.js"></script>
 
 </body>
 </html>

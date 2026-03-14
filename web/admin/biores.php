@@ -1,5 +1,9 @@
-<?php
+﻿<?php
 session_start();
+if (!isset($_SESSION['admin_id'])) {
+    header("Location: loginA.php");
+    exit;
+}
 
 /* Usar configuración centralizada */
 require_once __DIR__ . '/../../config/db_config.php';
@@ -72,6 +76,9 @@ $fechaAnioActual = date('Y');
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/PRERMI/web/assets/css/theme.css">
+<script>(function(){var t=localStorage.getItem('prermi_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
 
 <style>
 body{
@@ -689,10 +696,39 @@ canvas{
         font-size:1.4rem;
     }
 }
+
+/* NAVBAR ADMIN */
+.navbar-admin{background:linear-gradient(135deg,#1e40af 0%,#6d28d9 100%);padding:.75rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;box-shadow:0 4px 20px rgba(30,64,175,.4);}
+.nav-brand{color:#fff;font-weight:800;font-size:1.25rem;text-decoration:none;white-space:nowrap;}
+.nav-links{display:flex;gap:.25rem;flex-wrap:wrap;flex:1;}
+.nav-link-item{color:rgba(255,255,255,.8);padding:.4rem .75rem;border-radius:6px;text-decoration:none;font-size:.88rem;font-weight:500;transition:all .2s;white-space:nowrap;}
+.nav-link-item:hover,.nav-link-item.active{background:rgba(255,255,255,.2);color:#fff;}
+.nav-right{display:flex;align-items:center;gap:.5rem;}
+.nav-user{color:#fff;font-weight:600;font-size:.9rem;}
+.btn-logout{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:.35rem .75rem;border-radius:6px;text-decoration:none;font-size:.85rem;}
+.btn-logout:hover{background:#ef4444;border-color:#ef4444;color:#fff;}
 </style>
 </head>
 
 <body>
+
+<nav class="navbar-admin">
+  <a class="nav-brand" href="dashboard.php"><img src="/PRERMI/uploads/LOGO/LOGO%20OFICIAL%20PRERMI.png" alt="PRERMI" class="nav-logo-img"></a>
+  <div class="nav-links">
+    <a href="dashboard.php" class="nav-link-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+    <a href="monitoreo.php" class="nav-link-item"><i class="fas fa-video"></i> Monitoreo</a>
+    <a href="depositos.php" class="nav-link-item"><i class="fas fa-box-open"></i> Depositos</a>
+    <a href="sanciones.php" class="nav-link-item"><i class="fas fa-exclamation-triangle"></i> Sanciones</a>
+    <a href="administradores.php" class="nav-link-item"><i class="fas fa-users-cog"></i> Administradores</a>
+    <a href="biores.php" class="nav-link-item active"><i class="fas fa-leaf"></i> BIOMASA</a>
+    <a href="ahorro_electrico.php" class="nav-link-item"><i class="fas fa-bolt"></i> Ahorro</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-theme" id="btnTheme" onclick="toggleTheme()" title="Cambiar tema"><i class="fas fa-moon"></i></button>
+    <span class="nav-user"><i class="fas fa-user-circle"></i> <?php echo htmlspecialchars($_SESSION['admin_user'] ?? 'Admin'); ?></span>
+    <a href="../../api/admin/logout.php" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Salir</a>
+  </div>
+</nav>
 
 <div class="dashboard-container container">
 
@@ -1601,6 +1637,6 @@ function descargarDatos() {
 
 
 </script>
-
+<script src="/PRERMI/web/assets/js/theme.js"></script>
 </body>
 </html>

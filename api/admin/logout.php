@@ -231,7 +231,7 @@ if (isset($_COOKIE[session_name()])) {
             </div>
 
             <div class="logout-footer">
-                Si no se redirige automÃ¡ticamente, <a href="../../index.php" style="color: #ff6b6b; text-decoration: none; font-weight: 600;">haz clic aquÃ­</a>
+                Si no se redirige automáticamente, <a href="../../web/admin/loginA.php" style="color: #ff6b6b; text-decoration: none; font-weight: 600;">haz clic aquí</a>
             </div>
         </div>
     </div>
@@ -275,7 +275,7 @@ if (isset($_COOKIE[session_name()])) {
                 // Redirigir con animaciÃ³n de salida
                 document.querySelector('.logout-card').style.animation = 'slideIn 0.6s ease-out reverse forwards';
                 setTimeout(() => {
-                    window.location.href = '../../index.php';
+                    window.location.href = '../../web/admin/loginA.php';
                 }, 600);
             }
         }, 1000);

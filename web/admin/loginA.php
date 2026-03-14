@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/PRERMI/web/assets/css/style.css">
+    <link rel="stylesheet" href="/PRERMI/web/assets/css/theme.css">
     <style>
         .login-wrapper {
             min-height: 100vh;
@@ -180,6 +181,7 @@
             margin-top: 0.5rem;
         }
     </style>
+    <script>(function(){var t=localStorage.getItem('prermi_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
     <div class="login-wrapper">
@@ -188,11 +190,19 @@
                 <i class="fas fa-arrow-left"></i> Volver al inicio
             </a>
 
+            <!-- Theme toggle button -->
+            <div style="text-align:right;margin-bottom:.5rem;">
+              <button onclick="toggleTheme()" id="btnTheme" title="Cambiar tema" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.35);padding:.4rem .85rem;border-radius:8px;cursor:pointer;font-size:.88rem;font-weight:600;transition:all .2s;">
+                <i class="fas fa-moon"></i> Tema
+              </button>
+            </div>
+
             <div class="login-card">
                 <div class="login-header">
-                    <h1>
-                        <i class="fas fa-shield-alt"></i> Administrador
-                    </h1>
+                    <div class="mb-3">
+                        <img src="/PRERMI/uploads/LOGO/LOGO%20OFICIAL%20PRERMI.png" alt="PRERMI" style="height:80px;width:auto;background:#fff;border-radius:12px;padding:6px 10px;box-shadow:0 4px 15px rgba(0,0,0,.25);">
+                    </div>
+                    <h1>Administrador</h1>
                     <p>Panel de control exclusivo</p>
                     <span class="admin-badge">ACCESO RESTRINGIDO</span>
                 </div>
@@ -246,6 +256,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/PRERMI/web/assets/js/theme.js"></script>
     <script>
         document.getElementById("loginForm").addEventListener("submit", async function(e){
             e.preventDefault();

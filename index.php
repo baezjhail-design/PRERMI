@@ -819,7 +819,46 @@
             padding: 0.1rem 0.3rem;
             border-radius: 4px;
         }
+
+        /* ── Dark mode overrides for index ── */
+        [data-theme="dark"] {
+            --bg-deep: #0f172a;
+            --bg-mid:  #1e293b;
+            --panel:   #1e293b;
+            --panel-soft: rgba(30,41,59,0.92);
+            --line:    #334155;
+            --txt:     #e2e8f0;
+            --muted:   #94a3b8;
+        }
+        [data-theme="dark"] body {
+            background: radial-gradient(1200px 560px at 92% -10%,rgba(14,30,60,.4),transparent 60%),
+                radial-gradient(900px 540px at -8% 14%,rgba(30,15,60,.3),transparent 56%),
+                linear-gradient(180deg,#0f172a 0%,#0c1a30 100%) !important;
+        }
+        [data-theme="dark"] .navbar-prermi {
+            background: rgba(10,20,40,0.92) !important;
+            border-bottom-color: rgba(56,189,248,.18) !important;
+        }
+        [data-theme="dark"] .nav-link { color: #94a3b8 !important; }
+        [data-theme="dark"] .nav-link:hover { color: #38bdf8 !important; }
+        [data-theme="dark"] .brand-name { color: #e2e8f0 !important; }
+        [data-theme="dark"] .brand-sub  { color: #94a3b8 !important; }
+        [data-theme="dark"] .btn-theme-index { background: rgba(255,255,255,.12) !important; color: #e2e8f0 !important; border-color: rgba(255,255,255,.22) !important; }
+        [data-theme="dark"] .bg-grid { opacity: 0.07; }
+        .btn-theme-index {
+            background: rgba(0,0,0,.07);
+            color: #1e3a5f;
+            border: 1.5px solid rgba(0,0,0,.15);
+            padding: .33rem .7rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: .9rem;
+            transition: background .2s, color .2s;
+            line-height: 1.2;
+        }
+        .btn-theme-index:hover { background: rgba(0,0,0,.14); }
     </style>
+    <script>(function(){var t=localStorage.getItem('prermi_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
     <div class="bg-grid"></div>
@@ -827,7 +866,7 @@
     <nav class="navbar navbar-expand-lg navbar-prermi">
         <div class="container">
             <a class="brand-wrap" href="#inicio">
-                <img src="web/assets/img/logo-prermi-main.svg" alt="Logo PRERMI">
+                <img src="/PRERMI/uploads/LOGO/LOGO%20OFICIAL%20PRERMI.png" alt="Logo PRERMI" style="height:44px;width:auto;background:#fff;border-radius:8px;padding:3px 8px;box-shadow:0 2px 8px rgba(0,0,0,.2);">
                 <span class="brand-name">PRERMI<span class="brand-sub">Feria Proindustria</span></span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Menu">
@@ -850,6 +889,9 @@
                     </li>
                     <li class="nav-item ms-lg-1"><a href="web/register.php" class="btn-outline-soft">Crear Cuenta</a></li>
                     <li class="nav-item ms-lg-2"><a href="web/login.php" class="btn-main">Entrar</a></li>
+                    <li class="nav-item ms-lg-2">
+                        <button id="btnTheme" class="btn-theme-index" onclick="toggleTheme()" title="Cambiar tema"><i class="fas fa-moon"></i></button>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -1484,5 +1526,6 @@
 
         renderCharts();
     </script>
+    <script src="web/assets/js/theme.js"></script>
 </body>
 </html>

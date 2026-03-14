@@ -31,7 +31,7 @@ if (!isset($_SESSION['usuario_id'])) {
 <body>
 
 <header>
-    <h1>PRERMI</h1>
+    <img src="/PRERMI/uploads/LOGO/LOGO%20OFICIAL%20PRERMI.png" alt="PRERMI" class="header-logo">
 </header>
 
 <div class="perfil-box">

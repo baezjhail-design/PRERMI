@@ -17,6 +17,15 @@ header h1 {
     font-weight: bold;
 }
 
+header .header-logo {
+    height: 72px;
+    width: auto;
+    background: #fff;
+    border-radius: 10px;
+    padding: 4px 10px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.22);
+}
+
 .form-container {
     background: #ffffffcc;
     max-width: 450px;
@@ -107,6 +116,72 @@ header h1 {
     padding: 12px;
     border-radius: 8px;
     border: 1px solid #f5c6cb;
+}
+
+/* ── Header theme button ── */
+header { position: relative; }
+.btn-theme-user {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,.22);
+    color: #fff;
+    border: 1.5px solid rgba(255,255,255,.4);
+    padding: .32rem .68rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .92rem;
+    transition: background .2s;
+    line-height: 1.2;
+}
+.btn-theme-user:hover { background: rgba(255,255,255,.4); }
+
+/* ── Dark Theme Overrides (user area) ── */
+[data-theme="dark"] body {
+    background: linear-gradient(to bottom, #0c1f35, #0a2318) !important;
+    color: #e2e8f0;
+}
+[data-theme="dark"] header { background: rgba(0,0,0,.15); }
+[data-theme="dark"] .form-container {
+    background: rgba(15,23,42,0.93) !important;
+    color: #e2e8f0 !important;
+}
+[data-theme="dark"] .form-container h2 { color: #7dd3fc !important; }
+[data-theme="dark"] .input-group label { color: #94a3b8 !important; }
+[data-theme="dark"] .input-group input,
+[data-theme="dark"] .input-group select {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+[data-theme="dark"] .card {
+    background: #1e293b !important;
+    color: #7dd3fc !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,.5) !important;
+}
+[data-theme="dark"] .card:hover { background: #243449 !important; }
+[data-theme="dark"] .welcome { color: #e2e8f0; }
+[data-theme="dark"] table { background: #1e293b !important; color: #e2e8f0 !important; }
+[data-theme="dark"] th { background: #0e7490 !important; }
+[data-theme="dark"] td { border-color: #334155 !important; }
+[data-theme="dark"] .btn {
+    background: #0e7490 !important;
+    color: #fff !important;
+}
+[data-theme="dark"] .msg-verify { background: #1e3a3a; color: #6ee7b7; border-color: #0e7490; }
+[data-theme="dark"] .msg-error { background: #3b1a1f; color: #fca5a5; border-color: #7f1d1d; }
+[data-theme="dark"] .msg-success { background: #1a2e1e; color: #86efac; border-color: #166534; }
+[data-theme="dark"] .savings-chart-box { background: rgba(5,10,20,0.9) !important; }
+[data-theme="dark"] .perfil-box {
+    background: rgba(15,23,42,0.93) !important;
+    color: #e2e8f0 !important;
+}
+[data-theme="dark"] .perfil-box h2,
+[data-theme="dark"] .perfil-box h3 { color: #7dd3fc !important; }
+[data-theme="dark"] .qr-box {
+    background: rgba(15,23,42,0.93) !important;
+    color: #e2e8f0 !important;
 }
 
 @media (max-width: 480px) {

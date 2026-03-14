@@ -34,8 +34,8 @@ $tempPath = $tempDir . 'face_temp_' . time() . '.jpg';
 file_put_contents($tempPath, base64_decode($imgBase64));
 
 // Ejecutar Python
-$pythonExe = "C:\\Users\\Jhail Baez\\AppData\\Local\\Programs\\Python\\Python312\\python.exe";
-$pythonScript = "D:\\xampp\\htdocs\\PRERMI\\python\\face_verify.py";
+$pythonExe = "C:\\Users\\jhail\\AppData\\Local\\Programs\\Python\\Python314\\python.exe";
+$pythonScript = "C:\\xampp\\htdocs\\PRERMI\\python\\face_verify.py";
 $cmd = '"' . $pythonExe . '" "' . $pythonScript . '" "' . $tempPath . '" 2>&1';
 $output = shell_exec($cmd);
 
@@ -65,17 +65,14 @@ if (!$result) {
     exit;
 }
 
-// Si éxito, validar usuario existe
+// Si éxito, validar que el rostro esté registrado en la tabla rostros
 if ($result["success"]) {
     $user_id = intval($result["user_id"]);
     $expectedFilename = "face_" . $user_id . ".jpg";
     $stmt = $conn->prepare(
-        "SELECT u.id
-         FROM usuarios u
-         INNER JOIN rostros r ON r.user_id = u.id
-         WHERE u.id = ? AND r.filename = ?
-         ORDER BY r.id DESC
-         LIMIT 1"
+        "SELECT user_id FROM rostros
+         WHERE user_id = ? AND filename = ?
+         ORDER BY id DESC LIMIT 1"
     );
     $stmt->bind_param("is", $user_id, $expectedFilename);
     $stmt->execute();
@@ -88,7 +85,7 @@ if ($result["success"]) {
             "probability" => $result["probability"]
         ]);
     } else {
-        echo json_encode(["success" => false, "message" => "User not found"]);
+        echo json_encode(["success" => false, "message" => "User not found in face registry"]);
     }
 } else {
     echo json_encode(["success" => false]);

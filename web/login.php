@@ -169,9 +169,10 @@
 
             <div class="login-card">
                 <div class="login-header">
-                    <h1>
-                        <i class="fas fa-user-circle"></i> Usuario
-                    </h1>
+                    <div class="mb-3">
+                        <img src="/PRERMI/uploads/LOGO/LOGO%20OFICIAL%20PRERMI.png" alt="PRERMI" style="height:80px;width:auto;background:#fff;border-radius:12px;padding:6px 10px;box-shadow:0 4px 15px rgba(0,0,0,.25);">
+                    </div>
+                    <h1>Usuario</h1>
                     <p>Acceso a tu cuenta</p>
                 </div>
 

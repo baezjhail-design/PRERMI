@@ -36,4 +36,4 @@ $_SESSION['admin_id'] = $user['id'];
 $_SESSION['admin_user'] = $user['usuario'];
 $_SESSION['admin_rol'] = $user['rol'];
 
-header("Location: admin_panelA.php");
+header("Location: admin/dashboard.php");

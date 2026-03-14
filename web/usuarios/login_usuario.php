@@ -8,13 +8,14 @@ session_start();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - PRERMI</title>
-    <link rel="stylesheet" href="estilos_usuario.css">
-</head>
+    <link rel="stylesheet" href="estilos_usuario.css">    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>(function(){var t=localStorage.getItem('prermi_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script></head>
 <body>
 
 <header>
-    <h1>PRERMI</h1>
+    <img src="/PRERMI/uploads/LOGO/LOGO%20OFICIAL%20PRERMI.png" alt="PRERMI" class="header-logo">
     <p>Acceso de Usuarios</p>
+    <button id="btnTheme" class="btn-theme-user" onclick="toggleTheme()" title="Cambiar tema"><i class="fas fa-moon"></i></button>
 </header>
 
 <section class="form-container">
@@ -83,5 +84,6 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
 });
 </script>
 
+<script src="/PRERMI/web/assets/js/theme.js"></script>
 </body>
 </html>

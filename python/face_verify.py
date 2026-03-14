@@ -1,263 +1,216 @@
-"""
-face_verify.py - Verificacion facial tolerante para ESP32-S3 CAM
-Usa OpenCV + dlib directamente (sin face_recognition) para manejar
-imagenes de baja calidad, poca iluminacion y resolucion reducida.
+﻿"""
+face_verify.py - Verificacion facial para ESP32-S3 CAM
+Usa OpenCV LBPH (LBPHFaceRecognizer) - sin dlib, compatible con Python 3.12, 3.13, 3.14.
+Requisitos: pip install opencv-contrib-python numpy
+
+Para registrar un rostro, guarda el archivo como face_<user_id>.jpg en uploads/rostros/
 """
 import sys
 import os
+import re
 import json
 import cv2
-import dlib
 import numpy as np
 
 # ===== RUTAS =====
-BASE_PATH = r"D:\xampp\htdocs\PRERMI"
-ROSTROS_PATH = os.path.join(BASE_PATH, "uploads", "rostros")
-MODELS_PATH = r"C:\Users\Jhail Baez\AppData\Local\Programs\Python\Python312\Lib\site-packages\face_recognition_models\models"
+BASE_PATH = r"C:\xampp\htdocs\PRERMI"
+ROSTROS_PATH    = os.path.join(BASE_PATH, "uploads", "rostros")
+CAPTURAS_PATH   = os.path.join(BASE_PATH, "uploads", "capturas_cam")
 
-SHAPE_PREDICTOR_PATH = os.path.join(MODELS_PATH, "shape_predictor_68_face_landmarks.dat")
-FACE_REC_MODEL_PATH = os.path.join(MODELS_PATH, "dlib_face_recognition_resnet_model_v1.dat")
+# ===== TOLERANCIA LBPH =====
+# LBPH retorna "confianza" donde valores MAS BAJOS = mejor match.
+# < 80: match excelente, < 140: aceptable para ESP32 CAM con 1 imagen de entrenamiento.
+# Nota: con mas imagenes de entrenamiento por usuario se puede bajar a 100-110.
+MATCH_THRESHOLD = 140.0
 
-# ===== TOLERANCIA =====
-# 0.55 = equilibrio entre seguridad y tolerancia para ESP32 CAM con low-light.
-# Matches reales tipicamente tienen distancia 0.25-0.50, falsos positivos > 0.60.
-MATCH_TOLERANCE = 0.55
-
-# ===== INICIALIZAR MODELOS DLIB =====
-hog_detector = dlib.get_frontal_face_detector()
-shape_predictor = dlib.shape_predictor(SHAPE_PREDICTOR_PATH)
-face_rec_model = dlib.face_recognition_model_v1(FACE_REC_MODEL_PATH)
-
-# Haar Cascade de OpenCV como detector primario (mas tolerante)
+# ===== DETECTOR HAAR =====
 CASCADE_PATH = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-haar_cascade = cv2.CascadeClassifier(CASCADE_PATH)
+_cascade = cv2.CascadeClassifier(CASCADE_PATH)
 
 
-def adjust_gamma(image, gamma=0.4):
-    """Correccion gamma para aclarar imagenes muy oscuras. gamma < 1 = mas brillante."""
-    table = np.array([(i / 255.0) ** gamma * 255 for i in range(256)]).astype("uint8")
+# ===== UTILIDADES DE IMAGEN =====
+
+def adjust_gamma(image, gamma=0.5):
+    """Correccion gamma para aclarar imagenes oscuras. gamma < 1 = mas brillante."""
+    table = np.array([(i / 255.0) ** gamma * 255
+                      for i in range(256)], dtype="uint8")
     return cv2.LUT(image, table)
 
 
-def preprocess_image(img):
-    """Mejora calidad de imagen para camaras ESP32 de baja resolucion y poca luz."""
-    if img is None:
-        return None
-
-    # Detectar si la imagen es muy oscura (promedio de brillo bajo)
-    gray_check = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    mean_brightness = np.mean(gray_check)
-
-    # Si la imagen es oscura (brillo promedio < 80), aplicar correccion gamma agresiva
-    if mean_brightness < 80:
-        gamma_value = 0.3 if mean_brightness < 40 else 0.5
-        img = adjust_gamma(img, gamma=gamma_value)
-
-    # Convertir a gris para deteccion
+def preprocess_to_gray(img):
+    """Preprocesa imagen BGR y retorna gris mejorado para reconocimiento."""
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    mean_brightness = np.mean(gray)
 
-    # Reducir ruido preservando bordes
-    denoised = cv2.fastNlMeansDenoising(gray, None, h=15, templateWindowSize=7, searchWindowSize=21)
+    # Correccion gamma agresiva para imagenes oscuras (tipico de ESP32-S3 CAM)
+    if mean_brightness < 80:
+        gamma_val = 0.35 if mean_brightness < 40 else 0.55
+        img = adjust_gamma(img, gamma=gamma_val)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # CLAHE agresivo para rescatar detalles en sombras
-    clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8, 8))
-    enhanced = clahe.apply(denoised)
+    # CLAHE: mejora contraste local sin saturar
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    gray = clahe.apply(gray)
 
-    # Reconstruir imagen color mejorada
-    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
-    l, a, b = cv2.split(lab)
-    l_enhanced = clahe.apply(l)
-    enhanced_color = cv2.merge([l_enhanced, a, b])
-    enhanced_color = cv2.cvtColor(enhanced_color, cv2.COLOR_LAB2BGR)
-
-    # Denoising en color tambien para reducir ruido de alta ganancia
-    enhanced_color = cv2.fastNlMeansDenoisingColored(enhanced_color, None, 10, 10, 7, 21)
-
-    return enhanced_color, enhanced
+    # Reduccion de ruido (importante para alta ganancia de camara)
+    gray = cv2.fastNlMeansDenoising(gray, None, h=12,
+                                    templateWindowSize=7, searchWindowSize=21)
+    return gray
 
 
-def detect_faces_multi(img, gray):
-    """Detecta rostros con multiples metodos. Prioriza HOG (mas preciso) sobre Haar."""
-    faces = []
+def detect_face_roi(gray):
+    """
+    Detecta el rostro mas prominente con Haar Cascade.
+    Retorna la region recortada (ROI) redimensionada a 200x200, o None si no detecta.
+    Intenta con parametros normales, luego permisivos, luego imagen escalada x2.
+    """
+    for (scale, neighbors, min_size) in [
+        (1.10, 5, (50, 50)),
+        (1.05, 3, (35, 35)),
+    ]:
+        faces = _cascade.detectMultiScale(
+            gray, scaleFactor=scale, minNeighbors=neighbors,
+            minSize=min_size, flags=cv2.CASCADE_SCALE_IMAGE
+        )
+        if len(faces) > 0:
+            x, y, w, h = faces[0]
+            roi = gray[y:y + h, x:x + w]
+            return cv2.resize(roi, (200, 200))
 
-    # 1) HOG detector de dlib: deteccion mas precisa de rostros reales
-    hog_faces = hog_detector(img, 1)
-    if len(hog_faces) > 0:
-        return list(hog_faces), "hog"
-
-    # 2) Haar Cascade: mas tolerante, pero validamos con landmarks de dlib
-    haar_faces = haar_cascade.detectMultiScale(
-        gray,
-        scaleFactor=1.05,
-        minNeighbors=4,
-        minSize=(40, 40),
-        flags=cv2.CASCADE_SCALE_IMAGE
+    # Ultimo intento: escalar imagen x2 y buscar de nuevo
+    scaled = cv2.resize(gray, None, fx=2.0, fy=2.0,
+                        interpolation=cv2.INTER_CUBIC)
+    faces = _cascade.detectMultiScale(
+        scaled, scaleFactor=1.05, minNeighbors=3,
+        minSize=(40, 40), flags=cv2.CASCADE_SCALE_IMAGE
     )
-    for (x, y, w, h) in haar_faces:
-        rect = dlib.rectangle(x, y, x + w, y + h)
-        # Validar que dlib puede encontrar landmarks (confirma que es un rostro real)
-        shape = shape_predictor(img, rect)
-        # Verificar que los landmarks no estan todos agrupados (rostro falso)
-        coords = np.array([[shape.part(i).x, shape.part(i).y] for i in range(68)])
-        spread = np.std(coords, axis=0).mean()
-        if spread > 5:  # landmarks distribuidos = rostro valido
-            faces.append(rect)
-
     if len(faces) > 0:
-        return faces, "haar"
+        x, y, w, h = faces[0]
+        # Coordenadas originales (dividir por factor de escala 2)
+        roi = gray[y // 2:(y + h) // 2, x // 2:(x + w) // 2]
+        if roi.size > 0:
+            return cv2.resize(roi, (200, 200))
 
-    # 3) Escalar imagen x2 y reintentar HOG (para rostros muy pequenos)
-    scaled = cv2.resize(img, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
-
-    hog_faces_scaled = hog_detector(scaled, 1)
-    for f in hog_faces_scaled:
-        faces.append(dlib.rectangle(
-            f.left() // 2, f.top() // 2,
-            f.right() // 2, f.bottom() // 2
-        ))
-
-    if len(faces) > 0:
-        return faces, "hog_scaled"
-
-    # 4) Ultimo recurso: Haar escalado con validacion
-    scaled_gray = cv2.resize(gray, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
-    haar_faces_scaled = haar_cascade.detectMultiScale(
-        scaled_gray,
-        scaleFactor=1.05,
-        minNeighbors=4,
-        minSize=(50, 50),
-        flags=cv2.CASCADE_SCALE_IMAGE
-    )
-    for (x, y, w, h) in haar_faces_scaled:
-        rect_orig = dlib.rectangle(x // 2, y // 2, (x + w) // 2, (y + h) // 2)
-        faces.append(rect_orig)
-
-    if len(faces) > 0:
-        return faces, "haar_scaled"
-
-    return [], "none"
+    return None
 
 
-def get_face_encoding(img, face_rect, num_jitters=3):
-    """Obtiene el encoding de 128 dimensiones de un rostro detectado."""
-    shape = shape_predictor(img, face_rect)
-    encoding = face_rec_model.compute_face_descriptor(img, shape, num_jitters=num_jitters)
-    return np.array(encoding)
+def extract_user_id(filename):
+    """Extrae user_id entero del nombre face_<id>.jpg"""
+    m = re.search(r'face_(\d+)', filename, re.IGNORECASE)
+    return int(m.group(1)) if m else None
 
 
-def face_distance(known_encoding, unknown_encoding):
-    """Calcula distancia euclidiana entre dos encodings."""
-    return np.linalg.norm(known_encoding - unknown_encoding)
+# ===== CARGA DE ENTRENAMIENTO =====
 
+def load_training_data():
+    """
+    Carga todos los archivos face_<id>.jpg para entrenamiento LBPH.
+    Busca primero en uploads/rostros/, luego en uploads/capturas_cam/
+    para soportar ambas ubicaciones de archivos registrados.
+    """
+    faces, labels = [], []
 
-def load_registered_faces():
-    """Carga todos los rostros registrados y sus encodings."""
-    known_encodings = []
-    known_ids = []
+    # Buscar en rostros/ y en capturas_cam/ (fallback si rostros/ esta vacio)
+    search_dirs = [ROSTROS_PATH, CAPTURAS_PATH]
 
-    if not os.path.isdir(ROSTROS_PATH):
-        return known_encodings, known_ids
+    found_dirs = [d for d in search_dirs if os.path.isdir(d)]
+    if not found_dirs:
+        return faces, labels
 
-    for filename in os.listdir(ROSTROS_PATH):
-        if not filename.lower().endswith(".jpg"):
-            continue
+    for search_dir in found_dirs:
+        for filename in sorted(os.listdir(search_dir)):
+            if not filename.lower().endswith(".jpg"):
+                continue
+            user_id = extract_user_id(filename)
+            if user_id is None:
+                continue  # Ignorar capturas con timestamp, solo face_<id>.jpg
 
-        filepath = os.path.join(ROSTROS_PATH, filename)
-
-        try:
-            img = cv2.imread(filepath)
+            img = cv2.imread(os.path.join(search_dir, filename))
             if img is None:
                 continue
 
-            enhanced_color, enhanced_gray = preprocess_image(img)
-            faces, method = detect_faces_multi(enhanced_color, enhanced_gray)
+            gray = preprocess_to_gray(img)
+            roi = detect_face_roi(gray)
 
-            if len(faces) == 0:
-                # Intentar con imagen original sin preprocesar
-                gray_orig = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                faces, method = detect_faces_multi(img, gray_orig)
+            if roi is None:
+                roi = cv2.resize(gray, (200, 200))
 
-            if len(faces) > 0:
-                encoding = get_face_encoding(enhanced_color, faces[0], num_jitters=5)
-                known_encodings.append(encoding)
+            faces.append(roi)
+            labels.append(user_id)
 
-                # Extraer user_id: formato face_{user_id}.jpg
-                user_id = int(filename.split("_")[1].split(".")[0])
-                known_ids.append(user_id)
-        except Exception:
-            continue
+        # Si ya encontramos rostros en el primer directorio, no seguir al siguiente
+        if len(faces) > 0:
+            break
 
-    return known_encodings, known_ids
+    return faces, labels
 
+
+# ===== MAIN =====
 
 def main():
     if len(sys.argv) < 2:
-        print(json.dumps({"success": False, "error": "No image path"}))
-        return
+        print(json.dumps({"success": False, "message": "No image path provided"}))
+        sys.exit(1)
 
-    input_path = sys.argv[1]
+    image_path = sys.argv[1]
 
-    if not os.path.exists(input_path):
-        print(json.dumps({"success": False, "error": "Image not found"}))
-        return
+    if not os.path.isfile(image_path):
+        print(json.dumps({"success": False, "message": "Image file not found"}))
+        sys.exit(1)
 
-    # Cargar y preprocesar imagen del ESP32
-    img = cv2.imread(input_path)
+    # --- Leer imagen de entrada ---
+    img = cv2.imread(image_path)
     if img is None:
-        print(json.dumps({"success": False, "error": "Cannot read image"}))
-        return
+        print(json.dumps({"success": False, "message": "Cannot read image"}))
+        sys.exit(1)
 
-    enhanced_color, enhanced_gray = preprocess_image(img)
+    gray_input = preprocess_to_gray(img)
+    roi_input = detect_face_roi(gray_input)
 
-    # Detectar rostro con multiples metodos
-    faces, detection_method = detect_faces_multi(enhanced_color, enhanced_gray)
+    if roi_input is None:
+        print(json.dumps({
+            "success": False,
+            "message": "No face detected in captured image"
+        }))
+        sys.exit(0)
 
-    if len(faces) == 0:
-        # Ultimo intento: imagen original sin mejoras
-        gray_orig = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        faces, detection_method = detect_faces_multi(img, gray_orig)
+    # --- Cargar datos de entrenamiento ---
+    train_faces, train_labels = load_training_data()
 
-    if len(faces) == 0:
-        print(json.dumps({"success": False, "error": "No face detected", "method": "none"}))
-        return
+    if len(train_faces) == 0:
+        print(json.dumps({
+            "success": False,
+            "message": "No registered faces found in " + ROSTROS_PATH
+        }))
+        sys.exit(0)
 
-    # Obtener encoding del rostro detectado (3 jitters: balance velocidad/precision)
-    input_encoding = get_face_encoding(enhanced_color, faces[0], num_jitters=3)
+    # --- Entrenar reconocedor LBPH ---
+    recognizer = cv2.face.LBPHFaceRecognizer_create(
+        radius=2, neighbors=16, grid_x=8, grid_y=8
+    )
+    recognizer.train(train_faces, np.array(train_labels, dtype=np.int32))
 
-    # Cargar rostros registrados
-    known_encodings, known_ids = load_registered_faces()
+    # --- Predecir ---
+    label, confidence = recognizer.predict(roi_input)
 
-    if len(known_encodings) == 0:
-        print(json.dumps({"success": False, "error": "No registered faces"}))
-        return
+    # confidence en LBPH: 0 = perfecto, >100 = muy diferente
+    # probability aproximada: 1 - (confidence/200), minimo 0
+    probability = round(max(0.0, 1.0 - confidence / 200.0), 4)
 
-    # Comparar contra todos los registrados
-    best_match_index = None
-    best_distance = 1.0
-
-    for i, known_enc in enumerate(known_encodings):
-        dist = face_distance(known_enc, input_encoding)
-        if dist < MATCH_TOLERANCE and dist < best_distance:
-            best_distance = dist
-            best_match_index = i
-
-    if best_match_index is not None:
-        user_id = known_ids[best_match_index]
-        probability = float(1 - best_distance)
-
+    if confidence <= MATCH_THRESHOLD:
         print(json.dumps({
             "success": True,
-            "user_id": user_id,
-            "probability": round(probability, 4),
-            "distance": round(best_distance, 4),
-            "detection_method": detection_method
+            "user_id": int(label),
+            "confidence": round(float(confidence), 2),
+            "probability": probability
         }))
     else:
         print(json.dumps({
             "success": False,
-            "error": "No match",
-            "detection_method": detection_method,
-            "best_distance": round(best_distance, 4) if best_distance < 1.0 else None
+            "message": "Face not recognized",
+            "user_id": 0,
+            "confidence": round(float(confidence), 2),
+            "probability": probability
         }))
 
 
