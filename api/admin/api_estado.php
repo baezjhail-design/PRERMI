@@ -2,8 +2,8 @@
 header('Content-Type: application/json');
 
 $host = "localhost";
-$user = "root";
-$password = "";
+$user = "prermi_user";
+$password = "Prermi2026!";
 $dbname = "prer_mi";
 
 $conn = new mysqli($host, $user, $password, $dbname);

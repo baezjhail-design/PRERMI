@@ -28,8 +28,14 @@ try {
     $stmt->execute([$admin['id']]);
 
     // Notificar que está pendiente de aprobación por superadmin
-    require_once __DIR__ . '/../../config/mailer.php';
-    sendWelcomeEmail($admin['email'], $admin['usuario'], 'admin_pending');
+    try {
+        require_once __DIR__ . '/../../config/mailer.php';
+        if (function_exists('sendWelcomeEmail')) {
+            sendWelcomeEmail($admin['email'], $admin['usuario'], 'admin_pending');
+        }
+    } catch (Throwable $e) {
+        error_log('Admin welcome email error: ' . $e->getMessage());
+    }
 
     registrarLog("Email verificado para admin: {$admin['usuario']}", "info");
     showVerificationPage(true, "¡Tu correo ha sido verificado! Tu cuenta está pendiente de aprobación por un superadministrador.");

@@ -13,7 +13,7 @@ import cv2
 import numpy as np
 
 # ===== RUTAS =====
-BASE_PATH = r"C:\xampp\htdocs\PRERMI"
+BASE_PATH = os.getenv('PRERMI_BASE_PATH', '/var/www/html/PRERMI')
 ROSTROS_PATH    = os.path.join(BASE_PATH, "uploads", "rostros")
 CAPTURAS_PATH   = os.path.join(BASE_PATH, "uploads", "capturas_cam")
 

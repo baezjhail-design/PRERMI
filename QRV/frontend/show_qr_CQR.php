@@ -22,7 +22,7 @@ $stmt = $conn->prepare("UPDATE contenedores_registrados
                         WHERE id = ?");
 $stmt->execute([$token, $expira, $idCont]);
 
-$urlQR = "http://localhost:8080/PRERMI/QRV/frontend/login_CQR.php?contenedor=$idCont&token=$token";
+$urlQR = "https://prermi.duckdns.org/PRERMI/QRV/frontend/login_CQR.php?contenedor=$idCont&token=$token";
 ?>
 
 <script>

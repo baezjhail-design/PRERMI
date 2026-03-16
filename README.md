@@ -1,267 +1,223 @@
-# 🚀 PRER_MI - Sistema de Gestión de Vehículos y Contenedores
+﻿# PRERMI — Sistema de Gestión de Residuos con IoT
 
-## ✅ Estado: Base de Datos Oficial Integrada
-
-La base de datos oficial `prer_mi.sql` ha sido completamente integrada en el sistema. Todos los conflictos han sido resueltos y el sistema está listo para usar.
+> **Proyecto académico** — Plataforma web + firmware IoT para la gestión inteligente de residuos mediante reconocimiento facial, monitoreo de biomasa y control remoto.
 
 ---
 
-## ⚡ Inicio Rápido (30 segundos)
-
-### 1. Importar la Base de Datos
-Abre en tu navegador:
-```
-http://localhost/PRERMI/instalar_bd.php
-```
-
-Espera a que el proceso complete (o visualiza el progreso).
-
-### 2. Verificar Instalación
-```
-http://localhost/PRERMI/verificar_bd_integridad.php
-```
-
-Debes ver: `"status": "OK"`
-
-### 3. Acceder al Panel de Control
-```
-http://localhost/PRERMI/index_herramientas.php
-```
-
-¡Listo! Sistema completamente operativo ✓
+## Tabla de Contenidos
+1. [Descripción General](#descripción-general)
+2. [Arquitectura del Sistema](#arquitectura-del-sistema)
+3. [Stack Tecnológico](#stack-tecnológico)
+4. [Estructura del Proyecto](#estructura-del-proyecto)
+5. [Seguridad Implementada](#seguridad-implementada)
+6. [Firmware MCU](#firmware-mcu)
+7. [Despliegue en Producción](#despliegue-en-producción)
+8. [Endpoints de la API](#endpoints-de-la-api)
+9. [Notas de Desarrollo](#notas-de-desarrollo)
 
 ---
 
-## 📦 ¿Qué se Instaló?
+## Descripción General
 
-### Base de Datos: `prer_mi` (8 tablas)
-- **usuarios**: Usuarios normales del sistema
-- **usuarios_admin**: Administradores (2 iniciales)
-- **vehiculos_registrados**: Vehículos detectados
-- **contenedores_registrados**: Contenedores inteligentes
-- **depositos**: Depósitos de basura
-- **multas**: Infracciones detectadas
-- **logs_sistema**: Registro de actividades
-- **configuracion**: Configuraciones globales (opcional)
+PRERMI integra dos sistemas físicos basados en microcontroladores con una plataforma web centralizada:
 
-### Datos Iniciales Incluidos
-- ✓ 2 Admins activos y verificados
-- ✓ 1 Vehículo de prueba
-- ✓ Estructura de FK completa
-- ✓ Índices en todas las tablas críticas
-
-### Archivos de Configuración
-- `config/db_config.php` - Variables de conexión
-- `api/utils.php` - Funciones globales con getPDO()
-- `prer_mi.sql` - Script SQL oficial
+- **Contenedor inteligente** (ESP32-S3 CAM): identifica usuarios por reconocimiento facial, mide el peso del residuo depositado y registra depósitos automáticamente.
+- **Módulo Biomasa** (ESP8266MOD OLED): monitorea la generación de energía a través de celdas Peltier, temperatura, corriente y ciclos de generación.
+- **Panel web**: gestión de usuarios, sanciones, reportes QR, estado de sensores y control remoto de dispositivos.
 
 ---
 
-## 🛠️ Herramientas Disponibles
-
-### Instalación y Configuración
-| Herramienta | URL | Función |
-|---|---|---|
-| **Instalador de BD** | `/instalar_bd.php` | Importa automáticamente la BD |
-| **Verificador** | `/verificar_bd_integridad.php` | Verifica estructura e integridad |
-| **Schema** | `/DB_PRER_MI_SCHEMA.md` | Documentación de tablas |
-
-### Testing
-| Herramienta | URL | Función |
-|---|---|---|
-| **Test de APIs** | `/test_apis.php` | Interfaz gráfica para probar APIs |
-| **Panel de Control** | `/index_herramientas.php` | Centro de control central |
-
-### Documentación
-| Archivo | Contenido |
-|---|---|
-| `GUIA_INSTALACION_BD.txt` | Guía paso a paso |
-| `INFRAESTRUCTURA_BD.txt` | Arquitectura completa |
-| `DB_PRER_MI_SCHEMA.md` | Referencia técnica |
-
----
-
-## 📋 Archivos Eliminados (Para Evitar Conflictos)
-
-Los siguientes archivos fueron **eliminados** porque podrían conflictuar con la BD oficial:
+## Arquitectura del Sistema
 
 ```
-✗ ACTUALIZACIONES.md
-✗ CHANGELOG.md
-✗ DATABASE_CONFIG_README.md
-✗ database_schema.sql (viejo)
-✗ README_INSTALACION.txt
-✗ SETUP_GUIDE.md
-✗ VERIFICACION_RAPIDA.txt
-✗ test_connection.php
-✗ test_db_connection.php
-```
-
-Ahora **SOLO** se usa la BD oficial: `prer_mi.sql` ✓
-
----
-
-## 🔐 Credenciales de Administrador
-
-```
-Admin 1:
-  Usuario: Jhail Baez
-  Email: baezjhail@gmail.com
-  Rol: admin
-  Estado: ✓ Verificado | ✓ Activo
-
-Admin 2:
-  Usuario: Jhail_ADMIN_GOD
-  Email: jhailbaezperez19@gmail.com
-  Rol: admin
-  Estado: ✓ Verificado | ✓ Activo
-```
-
-⚠️ Los passwords están hasheados con bcrypt en la BD.
-
----
-
-## 📊 Estructura de Datos
-
-### Tabla: usuarios
-```
-id (INT, PK)
-nombre VARCHAR(80)
-apellido VARCHAR(80)
-usuario VARCHAR(50) UNIQUE
-email VARCHAR(120) UNIQUE
-telefono VARCHAR(30)
-cedula VARCHAR(20) UNIQUE
-token VARCHAR(80) UNIQUE
-token_activo TINYINT(1)
-clave VARCHAR(255) [HASHEADA]
-creado_en TIMESTAMP
-```
-
-### Tabla: usuarios_admin
-```
-id (INT, PK)
-usuario VARCHAR(50) UNIQUE
-email VARCHAR(120) UNIQUE
-clave VARCHAR(255) [HASHEADA]
-verification_token VARCHAR(255)
-verified TINYINT(1) = 1
-active TINYINT(1) = 1
-rol ENUM('superadmin','admin') = 'admin'
-creado_en TIMESTAMP
-```
-
-### Tabla: vehiculos_registrados
-```
-id (INT, PK)
-placa VARCHAR(20)
-tipo_vehiculo VARCHAR(50)
-imagen VARCHAR(255)
-ubicacion VARCHAR(150)
-fecha DATE
-hora TIME
-modelo_ml VARCHAR(50)
-probabilidad FLOAT
-latitud DOUBLE
-longitud DOUBLE
-creado_en TIMESTAMP
-```
-
-### Otras Tablas
-Para ver la estructura completa de las otras tablas, abre:
-```
-/DB_PRER_MI_SCHEMA.md
+[ESP32-S3 CAM]  ──┐
+                  │  HTTP/HTTPS  ┌─────────────────────────────┐
+[ESP8266 OLED]  ──┼────────────►│  VPS Ubuntu 22.04 LTS       │
+                  │              │  Apache 2.4 + PHP 8.2        │
+[Navegadores]  ───┘              │  MySQL + Python 3.12         │
+                                 │  prermi.duckdns.org          │
+                                 └─────────────────────────────┘
 ```
 
 ---
 
-## 🔗 Relaciones (Foreign Keys)
+## Stack Tecnológico
+
+| Capa | Tecnología |
+|------|-----------|
+| Servidor | Ubuntu 22.04 LTS, Apache 2.4.52 |
+| Backend | PHP 8.2 |
+| Base de datos | MySQL 8 |
+| Visión artificial | Python 3.12, OpenCV (LBPH) |
+| Email | PHPMailer + SMTP Gmail |
+| Firmware contenedor | ESP32-S3 CAM (PlatformIO / Arduino) |
+| Firmware biomasa | ESP8266MOD OLED (PlatformIO / Arduino) |
+| Dominio | DuckDNS (prermi.duckdns.org) |
+
+---
+
+## Estructura del Proyecto
 
 ```
-usuarios (1) ──┬──→ (N) depositos (ON DELETE CASCADE)
-               └──→ (N) multas (ON DELETE CASCADE)
-
-contenedores_registrados (1) ──→ (N) depositos
-contenedores_registrados (1) ──→ (N) multas
-```
-
----
-
-## 🚀 Próximos Pasos
-
-1. ✓ Importa la BD: `http://localhost/PRERMI/instalar_bd.php`
-2. ✓ Verifica: `http://localhost/PRERMI/verificar_bd_integridad.php`
-3. ✓ Prueba APIs: `http://localhost/PRERMI/test_apis.php`
-4. ✓ Accede al panel: `http://localhost/PRERMI/web/`
-5. ✓ Inicia sesión como admin
-6. ✓ Comienza a usar el sistema
-
----
-
-## 🐛 Solución Rápida de Problemas
-
-### Error: "Unknown database 'prer_mi'"
-**Solución:** Abre `http://localhost/PRERMI/instalar_bd.php`
-
-### Error: "Connection refused"
-**Solución:** Inicia XAMPP y enciende MySQL
-
-### Error: "Parse error"
-**Solución:** Asegúrate de que `prer_mi.sql` está en `/PRERMI/`
-
-### APIs devuelven error 500
-**Solución:** Abre `http://localhost/PRERMI/test_apis.php` para ver detalles
-
----
-
-## 📞 Información Técnica
-
-| Aspecto | Valor |
-|---|---|
-| **Versión BD** | 1.0.0 |
-| **Motor** | InnoDB |
-| **Charset** | utf8mb4_general_ci |
-| **Servidor** | 127.0.0.1:3306 |
-| **MariaDB** | 10.4.32+ |
-| **PHP** | 8.2.12+ |
-| **Conexión** | PDO |
-
----
-
-## ✅ Checklist Final
-
-- [x] `prer_mi.sql` copiado en `/PRERMI/`
-- [x] `db_config.php` configurado
-- [x] `api/utils.php` con getPDO()
-- [x] Herramientas de instalación creadas
-- [x] Herramientas de verificación creadas
-- [x] Documentación completa
-- [ ] Base de datos importada ← **TÚ HACES ESTO**
-- [ ] Verificación exitosa ← **TÚ HACES ESTO**
-- [ ] APIs probados ← **TÚ HACES ESTO**
-
----
-
-## 📖 Documentación Completa
-
-Para información detallada, consulta:
-
-- **GUIA_INSTALACION_BD.txt** - Guía paso a paso
-- **DB_PRER_MI_SCHEMA.md** - Documentación técnica
-- **INFRAESTRUCTURA_BD.txt** - Arquitectura general
-
----
-
-## 🎯 Centro de Control
-
-Accede a todas las herramientas desde:
-```
-http://localhost/PRERMI/index_herramientas.php
+PRERMI/
+├── api/
+│   ├── security.php              ← Capa de seguridad central (MCU + Dev Auth)
+│   ├── contenedores/             ← Endpoints del contenedor inteligente
+│   ├── sensores/                 ← Registro de datos de sensores
+│   ├── sanciones/                ← Creación automática de sanciones
+│   ├── usuarios/                 ← Verificación y registro de usuarios
+│   └── admin/                    ← Endpoints de administración
+├── config/
+│   ├── db_config.php             ← Configuración de base de datos
+│   └── mailer.php                ← Configuración SMTP
+├── python/
+│   └── face_verify.py            ← Motor de reconocimiento facial (LBPH)
+├── QRV/                          ← Sistema de códigos QR
+├── BIOMASA/                      ← Panel de control biomasa
+├── firmware/
+│   ├── TEST_CONTENEDOR/          ← Firmware ESP32-S3 CAM
+│   └── BIOMASA_FINAL_CODE/       ← Firmware ESP8266MOD OLED
+└── logs/
+    └── security.log              ← Registro de intentos de acceso no autorizados
 ```
 
 ---
 
-**Estado: LISTO PARA PRODUCCIÓN ✓**
+## Seguridad Implementada
 
-Fecha: 9 de Diciembre de 2025  
-Versión: 1.0.0 OFICIAL
+### 1. Autenticación de Dispositivos MCU (IoT)
+
+Se implementó una capa de autenticación basada en cabeceras HTTP personalizadas. **Cada microcontrolador posee un identificador único y una clave secreta** que debe enviar en cada solicitud a la API.
+
+```
+X-MCU-ID:  <identificador del dispositivo>
+X-MCU-KEY: <clave secreta del dispositivo>
+```
+
+La validación se centraliza en `api/security.php` mediante la función `requireMCUAccess()`. Cualquier solicitud que no incluya cabeceras válidas recibe una respuesta `403 Forbidden` inmediata, sin revelar información sobre el esquema de autenticación.
+
+**Dispositivos registrados en el sistema:**
+| Dispositivo | Rol |
+|-------------|-----|
+| ESP32-S3 CAM | Contenedor inteligente (reconocimiento facial, pesos, depósitos) |
+| ESP8266MOD OLED | Módulo biomasa (temperatura, corriente, ciclos de energía) |
+
+### 2. Control de Acceso para Desarrolladores
+
+Los endpoints de administración y diagnóstico están protegidos mediante autenticación HTTP Basic Auth (`requireDevAccess()`). Solo los miembros del equipo de desarrollo autorizados pueden acceder a estos recursos.
+
+### 3. Registro de Intentos No Autorizados
+
+Todos los accesos rechazados se escriben en `logs/security.log` con:
+- Timestamp del intento
+- IP de origen
+- Cabeceras MCU presentadas (si las hay)
+- Endpoint solicitado
+
+Esto permite auditar intentos de acceso indebido sin exponer información sensible al solicitante.
+
+### 4. Protección de Directorios
+
+El archivo `.htaccess` aplica:
+- `Options -Indexes` — desactiva el listado de directorios
+- Protección de archivos de configuración sensibles (`.env`, `db_config.php`, `*.sql`)
+- Cabeceras de seguridad HTTP (`X-Frame-Options`, `X-Content-Type-Options`)
+
+### 5. Separación de Credenciales
+
+Las credenciales de base de datos, claves SMTP y tokens de dispositivos **no están expuestos en el código fuente público**. Se consumen desde archivos de configuración con permisos restringidos en el servidor.
+
+### 6. Variables de Entorno para Python
+
+El módulo de reconocimiento facial (`face_verify.py`) utiliza `PRERMI_BASE_PATH` como variable de entorno para determinar la ruta de trabajo, evitando rutas absolutas hardcodeadas y facilitando el despliegue en distintos entornos.
+
+---
+
+## Firmware MCU
+
+### Cambios de Seguridad en Firmware (v2.0 — Producción VPS)
+
+Ambos firmwares fueron actualizados para el despliegue en VPS con dominio público.
+
+#### ESP32-S3 CAM (`TEST_CONTENEDOR`)
+- `serverAPI` actualizado a dominio VPS (`prermi.duckdns.org`)
+- Añadidas constantes `MCU_DEVICE_ID` y `MCU_DEVICE_KEY`
+- Cabeceras `X-MCU-ID` y `X-MCU-KEY` inyectadas en:
+  - `httpPostJSON()` — envío de datos JSON (depósitos, sanciones, pesos)
+  - `fetchUserName()` — consulta de nombre de usuario por ID
+  - `verifyIdentityWithFace()` — envío de imagen base64 para reconocimiento facial (raw TCP)
+- Endpoint de verificación facial actualizado al servidor VPS
+
+#### ESP8266MOD OLED (`BIOMASA_FINAL_CODE`)
+- `SERVER_HOST_LOCAL` actualizado a dominio VPS
+- Añadidas constantes `MCU_DEVICE_ID` y `MCU_DEVICE_KEY`
+- Cabeceras `X-MCU-ID` y `X-MCU-KEY` inyectadas en:
+  - `syncWithServer()` — sincronización de sensores y recepción de comandos remotos
+  - `registrarCicloEnergia()` — registro de ciclos de generación de energía
+
+#### Dependencias de Firmware (PlatformIO)
+```
+ESP32-S3:  ESP32Servo, Adafruit SSD1306, HX711, ArduinoJson, esp_camera
+ESP8266:   ESP8266WiFi, ESP8266HTTPClient, DallasTemperature, Adafruit SSD1306
+```
+
+---
+
+## Despliegue en Producción
+
+### Requisitos del Servidor
+- Ubuntu 22.04 LTS
+- Apache 2.4 con `mod_rewrite` y `mod_headers` habilitados
+- PHP 8.2 (`ppa:ondrej/php`)
+- MySQL 8
+- Python 3.12 (`ppa:deadsnakes/ppa`) + `opencv-contrib-python-headless`
+- Certbot (snap) para certificado SSL de Let's Encrypt
+
+### Base de Datos
+```
+Base de datos : prer_mi
+Tablas        : 14 (usuarios, contenedores, depositos, multas, sanciones, sensores, ...)
+```
+
+### Variable de Entorno Recomendada
+```bash
+PRERMI_BASE_PATH=/var/www/html/PRERMI
+```
+
+### Certificado SSL
+```bash
+snap install --classic certbot
+certbot --apache -d prermi.duckdns.org
+```
+
+---
+
+## Endpoints de la API
+
+Todos los endpoints bajo `/api/contenedores/`, `/api/sensores/`, `/api/sanciones/` y `/api/usuarios/verificar_rostro.php` requieren autenticación MCU válida mediante cabeceras `X-MCU-ID` y `X-MCU-KEY`.
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/contenedores/registrar_depositos.php` | Registra un depósito de residuo |
+| POST | `/api/contenedores/verificar_rostro.php` | Verifica identidad por imagen facial |
+| POST | `/api/contenedores/validar_acceso.php` | Valida acceso al contenedor |
+| POST | `/api/contenedores/registrar_peso.php` | Registra medición de peso |
+| POST | `/api/contenedores/registrar_basura.php` | Registra tipo de basura |
+| POST | `/api/contenedores/registrar_multa.php` | Registra multa por uso incorrecto |
+| POST | `/api/sanciones/crear_sancion_auto.php` | Crea sanción automática |
+| GET  | `/api/sensores/registrar.php` | Registra lectura de sensores (biomasa) |
+| POST | `/api/usuarios/verificar_rostro.php` | Verificación facial desde panel web |
+
+---
+
+## Notas de Desarrollo
+
+- El módulo de InfinityFree (hosting gratuito alternativo) fue **desactivado temporalmente** durante la migración al VPS. El código mantiene comentarios para reactivarlo si fuera necesario.
+- El bloque HTTPS raw en `verifyIdentityWithFace()` (ESP32-S3) está condicionado con `if (false)` y puede reactivarse con `WiFiClientSecure` cuando el certificado SSL esté completamente activo.
+- La función `buildURL()` en el firmware ESP8266 omite el puerto si es el 80 estándar, manteniendo URLs limpias.
+- Los logs de seguridad se gestionan manualmente; se recomienda configurar `logrotate` en producción para evitar archivos de gran tamaño.
+- El reconocimiento facial utiliza el método LBPH (Local Binary Pattern Histograms) de OpenCV, entrenado con muestras locales por usuario.
+
+---
+
+*Desarrollado por Jhail Baez & Adrian Espinal — 2026*

@@ -2,7 +2,11 @@
 // similar a registrar_basura.php pero crea una fila en sanciones y notifica admins
 require_once __DIR__ . '/../../config/db_config.php';
 require_once __DIR__ . '/../utils.php';
+require_once __DIR__ . '/../security.php';
 require_once __DIR__ . '/../../config/mailer.php';
+
+header('Content-Type: application/json; charset=utf-8');
+if ($_SERVER['REQUEST_METHOD'] !== 'OPTIONS') requireMCUAccess();
 
 $input = json_decode(file_get_contents('php://input'), true);
 $user_id = intval($input['user_id'] ?? 0);

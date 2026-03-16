@@ -1,7 +1,9 @@
 <?php
 require_once __DIR__ . '/../../config/db_config.php';
+require_once __DIR__ . '/../security.php';
 
 header("Content-Type: application/json");
+if ($_SERVER['REQUEST_METHOD'] !== 'OPTIONS') requireMCUAccess();
 
 // Leer JSON recibido
 $data = file_get_contents("php://input");
@@ -27,8 +29,8 @@ $imageData = base64_decode($imgBase64);
 file_put_contents($tempPath, $imageData);
 
 // Ejecutar Python
-$pythonScript = "D:\\xampp\\htdocs\\PRERMI\\python\\face_verify.py";
-$command = "python \"$pythonScript\" \"$tempPath\"";
+$pythonScript = "/var/www/html/PRERMI/python/face_verify.py";
+$command = "/usr/bin/python3 \"$pythonScript\" \"$tempPath\"";
 
 $output = shell_exec($command);
 

@@ -1,6 +1,7 @@
 <?php
 // verificar_rostro.php
 require_once __DIR__ . '/../../config/db_config.php';
+require_once __DIR__ . '/../security.php';
 $conn = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
 if ($conn->connect_error) {
     http_response_code(500);
@@ -10,9 +11,10 @@ if ($conn->connect_error) {
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-API-KEY, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-API-KEY, X-MCU-KEY, X-MCU-ID, X-Requested-With");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
+requireMCUAccess();
 
 // Recibir JSON o form-data
 $data = json_decode(file_get_contents("php://input"), true);
@@ -34,9 +36,9 @@ $tempPath = $tempDir . 'face_temp_' . time() . '.jpg';
 file_put_contents($tempPath, base64_decode($imgBase64));
 
 // Ejecutar Python
-$pythonExe = "C:\\Users\\jhail\\AppData\\Local\\Programs\\Python\\Python314\\python.exe";
-$pythonScript = "C:\\xampp\\htdocs\\PRERMI\\python\\face_verify.py";
-$cmd = '"' . $pythonExe . '" "' . $pythonScript . '" "' . $tempPath . '" 2>&1';
+$pythonExe = "/usr/bin/python3";
+$pythonScript = "/var/www/html/PRERMI/python/face_verify.py";
+$cmd = $pythonExe . ' "' . $pythonScript . '" "' . $tempPath . '" 2>&1';
 $output = shell_exec($cmd);
 
 // Guardar captura antes de eliminar temporal

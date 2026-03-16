@@ -1,17 +1,16 @@
 <?php
 /**
  * db_config.php — Configuración centralizada de la base de datos
- * Modo: LOCAL (XAMPP) únicamente.
- * InfinityFree desactivado temporalmente.
+ * Modo: VPS Hostinger (producción).
  */
 
-// ===== LOCAL (XAMPP) =====
+// ===== VPS HOSTINGER =====
 $DB_HOST = "localhost";
-$DB_USER = "root";
-$DB_PASS = "";
+$DB_USER = "prermi_user";
+$DB_PASS = "Prermi2026!";
 $DB_NAME = "prer_mi";
 
-// Variables remotas desactivadas temporalmente
+// Variables remotas desactivadas
 $DB_HOST_REMOTE = null;
 $DB_NAME_REMOTE = null;
 $DB_USER_REMOTE = null;

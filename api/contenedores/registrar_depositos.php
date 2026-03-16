@@ -2,6 +2,7 @@
 // registrar_depositos.php (actualizado)
 require_once __DIR__ . '/../../config/db_config.php';
 require_once __DIR__ . '/../utils.php';
+require_once __DIR__ . '/../security.php';
 require_once __DIR__ . '/../../config/mailer.php';
 $conn = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
 if ($conn->connect_error) {
@@ -12,9 +13,10 @@ if ($conn->connect_error) {
 header("Content-Type: application/json; charset=utf-8");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-API-KEY, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-API-KEY, X-MCU-KEY, X-MCU-ID, X-Requested-With");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
+requireMCUAccess();
 
 // Leer cuerpo JSON o form-data
 $data = json_decode(file_get_contents("php://input"), true);

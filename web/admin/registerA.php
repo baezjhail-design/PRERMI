@@ -5,26 +5,91 @@ session_start();
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro Administrador PRERMI</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f7fb; padding: 30px; }
+        .card { max-width: 520px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.08); }
+        h2 { margin-top: 0; }
+        label { display:block; margin: 14px 0 6px; font-weight: 600; }
+        input { width: 100%; box-sizing: border-box; padding: 12px; border:1px solid #d6dbe7; border-radius: 8px; }
+        button { margin-top: 18px; width: 100%; padding: 12px; border:0; border-radius: 8px; background:#6c63ff; color:#fff; font-weight:700; cursor:pointer; }
+        .msg { margin-bottom: 14px; padding: 12px; border-radius: 8px; display:none; }
+        .msg.ok { background:#e8f7ee; color:#17663a; display:block; }
+        .msg.err { background:#fdecec; color:#8f1f1f; display:block; }
+        a { display:inline-block; margin-top: 16px; }
+    </style>
 </head>
 <body>
-    <h2>Registro de Administradores</h2>
+    <div class="card">
+        <h2>Registro de Administradores</h2>
+        <div id="msg" class="msg"></div>
 
-    <form action="/PRERMI/api/admin/registerA_submit.php" method="POST">
-        
-        <label>Usuario:</label><br>
-        <input type="text" name="usuario" required><br><br>
+        <form id="registerAdminForm">
+            <label>Usuario:</label>
+            <input type="text" name="usuario" id="usuario" minlength="4" maxlength="30" pattern="[A-Za-z0-9._-]{4,30}" required>
 
-        <label>Email:</label><br>
-        <input type="email" name="email" required><br><br>
+            <label>Email:</label>
+            <input type="email" name="email" id="email" maxlength="120" required>
 
-        <label>Contraseña:</label><br>
-        <input type="password" name="clave" required><br><br>
+            <label>Contraseña:</label>
+            <input type="password" name="clave" id="clave" minlength="8" maxlength="100" required>
 
-        <button type="submit">Registrar</button>
-    </form>
+            <button type="submit" id="btnSubmit">Registrar</button>
+        </form>
 
-    <br>
-    <a href="loginA.php">¿Ya tienes cuenta? Inicia sesión</a>
+        <a href="loginA.php">¿Ya tienes cuenta? Inicia sesión</a>
+    </div>
+
+    <script>
+        const form = document.getElementById('registerAdminForm');
+        const msg = document.getElementById('msg');
+        const btn = document.getElementById('btnSubmit');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            msg.className = 'msg';
+            msg.style.display = 'none';
+
+            const payload = {
+                usuario: document.getElementById('usuario').value.trim().toLowerCase(),
+                email: document.getElementById('email').value.trim().toLowerCase(),
+                clave: document.getElementById('clave').value
+            };
+
+            if (!/^[a-z0-9._-]{4,30}$/.test(payload.usuario)) {
+                msg.textContent = 'El usuario debe tener 4-30 caracteres válidos.';
+                msg.className = 'msg err';
+                return;
+            }
+
+            if (payload.clave.length < 8) {
+                msg.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+                msg.className = 'msg err';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Registrando...';
+
+            try {
+                const res = await fetch('/PRERMI/api/admin/registerA.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                msg.textContent = data.message || data.msg || 'Proceso completado.';
+                msg.className = data.success ? 'msg ok' : 'msg err';
+                if (data.success) form.reset();
+            } catch (err) {
+                msg.textContent = 'No se pudo conectar con el servidor.';
+                msg.className = 'msg err';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Registrar';
+            }
+        });
+    </script>
 </body>
 </html>

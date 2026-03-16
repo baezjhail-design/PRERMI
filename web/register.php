@@ -216,7 +216,7 @@ session_start();
                                     <i class="fas fa-user"></i> Nombre
                                 </label>
                                 <input type="text" class="form-control" id="nombre" name="nombre" 
-                                       placeholder="Juan" value="" required>
+                                        placeholder="Juan" value="" maxlength="80" required>
                             </div>
 
                             <div class="form-group">
@@ -224,7 +224,7 @@ session_start();
                                     <i class="fas fa-user"></i> Apellido
                                 </label>
                                 <input type="text" class="form-control" id="apellido" name="apellido" 
-                                       placeholder="Pérez" value="" required>
+                                        placeholder="Pérez" value="" maxlength="80" required>
                             </div>
                         </div>
 
@@ -233,7 +233,7 @@ session_start();
                                 <i class="fas fa-at"></i> Nombre de Usuario
                             </label>
                             <input type="text" class="form-control" id="usuario" name="usuario" 
-                                   placeholder="juanperez" value="" required>
+                                placeholder="juanperez" value="" minlength="4" maxlength="30" pattern="[A-Za-z0-9._-]{4,30}" required>
                         </div>
 
                         <div class="form-group">
@@ -241,7 +241,7 @@ session_start();
                                 <i class="fas fa-id-card"></i> Cédula de Identidad
                             </label>
                             <input type="text" class="form-control" id="cedula" name="cedula" 
-                                   placeholder="12345678" value="" required>
+                                placeholder="031-1234567-8" value="" maxlength="13" pattern="\d{3}-?\d{7}-?\d{1}" required>
                         </div>
 
                         <div class="form-group">
@@ -249,7 +249,7 @@ session_start();
                                 <i class="fas fa-envelope"></i> Correo Electrónico <span style="color: #ff6b6b;">*</span>
                             </label>
                             <input type="email" class="form-control" id="email" name="email" 
-                                   placeholder="tu@email.com" value="" required>
+                                placeholder="tu@email.com" value="" maxlength="120" required>
                             <small style="color: #666; font-size: 0.8rem;">Se enviará un enlace de verificación a este correo</small>
                         </div>
 
@@ -258,7 +258,7 @@ session_start();
                                 <i class="fas fa-phone"></i> Teléfono
                             </label>
                             <input type="tel" class="form-control" id="telefono" name="telefono" 
-                                   placeholder="+1234567890" value="">
+                                placeholder="809-555-1234" value="" maxlength="12" pattern="\d{3}-?\d{3}-?\d{4}">
                         </div>
 
                         <div class="form-group">
@@ -266,7 +266,7 @@ session_start();
                                 <i class="fas fa-lock"></i> Contraseña
                             </label>
                             <input type="password" class="form-control" id="clave" name="clave" 
-                                   placeholder="********" required>
+                                placeholder="********" minlength="8" maxlength="100" required>
                             <div class="password-strength">
                                 <div class="strength-bar">
                                     <div class="strength-fill" id="strengthFill"></div>
@@ -349,6 +349,15 @@ session_start();
             
             const clave = document.getElementById('clave').value;
             const claveConfirm = document.getElementById('clave-confirm').value;
+            const nombre = document.getElementById('nombre').value.trim();
+            const apellido = document.getElementById('apellido').value.trim();
+            const usuario = document.getElementById('usuario').value.trim();
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const cedulaRaw = document.getElementById('cedula').value.trim();
+            const telefonoRaw = document.getElementById('telefono').value.trim();
+
+            const cedulaDigits = cedulaRaw.replace(/\D/g, '');
+            const telefonoDigits = telefonoRaw.replace(/\D/g, '');
             
             // Client-side validation
             if (clave !== claveConfirm) {
@@ -356,8 +365,33 @@ session_start();
                 return;
             }
             
-            if (clave.length < 6) {
-                msgDiv.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> La contraseña debe tener al menos 6 caracteres</div>';
+            if (nombre.length < 2 || nombre.length > 80) {
+                msgDiv.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> El nombre debe tener entre 2 y 80 caracteres</div>';
+                return;
+            }
+
+            if (apellido.length < 2 || apellido.length > 80) {
+                msgDiv.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> El apellido debe tener entre 2 y 80 caracteres</div>';
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9._-]{4,30}$/.test(usuario)) {
+                msgDiv.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> El usuario debe tener 4-30 caracteres (letras, números, punto, guion y guion bajo)</div>';
+                return;
+            }
+
+            if (cedulaDigits.length !== 11) {
+                msgDiv.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> La cédula debe tener exactamente 11 dígitos</div>';
+                return;
+            }
+
+            if (telefonoRaw && telefonoDigits.length !== 10) {
+                msgDiv.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> El teléfono debe tener exactamente 10 dígitos</div>';
+                return;
+            }
+
+            if (clave.length < 8) {
+                msgDiv.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> La contraseña debe tener al menos 8 caracteres</div>';
                 return;
             }
             
@@ -365,12 +399,12 @@ session_start();
             btnRegister.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
 
             const formData = {
-                nombre: document.getElementById('nombre').value,
-                apellido: document.getElementById('apellido').value,
-                usuario: document.getElementById('usuario').value,
-                cedula: document.getElementById('cedula').value,
-                email: document.getElementById('email').value,
-                telefono: document.getElementById('telefono').value || null,
+                nombre: nombre,
+                apellido: apellido,
+                usuario: usuario.toLowerCase(),
+                cedula: cedulaDigits,
+                email: email,
+                telefono: telefonoRaw ? telefonoDigits : null,
                 clave: clave
             };
 

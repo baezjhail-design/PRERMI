@@ -4,15 +4,10 @@
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
 
-// Prefer Composer autoload if present
-if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
-    require_once __DIR__ . '/../vendor/autoload.php';
-} else {
-    require_once __DIR__ . '/../lib/PHPMailer/src/Exception.php';
-    require_once __DIR__ . '/../lib/PHPMailer/src/PHPMailer.php';
-    require_once __DIR__ . '/../lib/PHPMailer/src/SMTP.php';
-}
+// Cargar PHPMailer solo vía Composer autoload
+require_once __DIR__ . '/../vendor/autoload.php';
 
 $MAILER_CONFIG = [
     'mode' => 'smtp',
@@ -22,8 +17,10 @@ $MAILER_CONFIG = [
         'host'     => 'smtp.gmail.com',
         'username' => 'baezjhail@gmail.com',
         'password' => 'gzghfibxuryaebuj',
-        'port'     => 587,
-        'secure'   => 'tls',
+    'port'     => 465,
+    'secure'   => 'ssl',
+    'timeout'  => 30,
+    'ehlo'     => 'prermi.duckdns.org',
     ],
 ];
 
@@ -32,23 +29,44 @@ function getMailer($isHTML = true, $fromEmail = 'baezjhail@gmail.com', $fromName
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        $mail->SMTPDebug = 0;
+      $mail->SMTPDebug = SMTP::DEBUG_OFF;
         $mail->CharSet   = 'UTF-8';
+      $mail->Encoding  = 'base64';
+      $mail->Timeout   = $MAILER_CONFIG['smtp']['timeout'] ?? 30;
+      $mail->SMTPKeepAlive = false;
+      $mail->SMTPAuth  = true;
+      $mail->SMTPAutoTLS = true;
+      $mail->XMailer = 'PRERMI Mailer';
         $mail->setFrom($fromEmail, $fromName);
         $mail->isHTML($isHTML);
 
         $smtp = $MAILER_CONFIG['smtp'];
         $mail->Host       = $smtp['host'];
-        $mail->SMTPAuth   = true;
         $mail->Username   = $smtp['username'];
         $mail->Password   = $smtp['password'];
         $mail->Port       = $smtp['port'];
-        $mail->SMTPSecure = $smtp['secure'];
+      $mail->Hostname   = $smtp['ehlo'] ?? 'prermi.duckdns.org';
+      $mail->Helo       = $smtp['ehlo'] ?? 'prermi.duckdns.org';
+
+      if (($smtp['secure'] ?? '') === 'ssl') {
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+      } elseif (($smtp['secure'] ?? '') === 'tls') {
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+      }
+
+      $mail->SMTPOptions = [
+        'ssl' => [
+          'verify_peer' => false,
+          'verify_peer_name' => false,
+          'allow_self_signed' => true,
+        ],
+      ];
 
         return $mail;
     } catch (Exception $e) {
-        if (!is_dir(__DIR__ . '/../logs')) @mkdir(__DIR__ . '/../logs', 0755, true);
-        file_put_contents(__DIR__ . '/../logs/email_errors.log', "[".date('c')."] MailerInitError: ".$e->getMessage()."\n", FILE_APPEND);
+        $logDir = __DIR__ . '/../logs';
+        if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
+        file_put_contents($logDir . '/email_errors.log', "[".date('c')."] MailerInitError: ".$e->getMessage()."\n", FILE_APPEND);
         throw $e;
     }
 }
@@ -168,8 +186,9 @@ function sendAdminFineEmail($admins, $userEmail, $userName, $user_id, $contenedo
         $mail->send();
         return true;
     } catch (Exception $e) {
-        if (!is_dir(__DIR__ . '/../logs')) @mkdir(__DIR__ . '/../logs', 0755, true);
-        file_put_contents(__DIR__ . '/../logs/email_errors.log', "[".date('c')."] AdminMailError: ".$e->getMessage()."\n", FILE_APPEND);
+        $logDir = __DIR__ . '/../logs';
+        if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
+        file_put_contents($logDir . '/email_errors.log', "[".date('c')."] AdminMailError: ".$e->getMessage()."\n", FILE_APPEND);
         return false;
     }
 }
@@ -235,8 +254,9 @@ function sendRegistrationConfirmationEmail($to, $name, $verification_link, $user
         $mail->send();
         return true;
     } catch (Exception $e) {
-        if (!is_dir(__DIR__ . '/../logs')) @mkdir(__DIR__ . '/../logs', 0755, true);
-        file_put_contents(__DIR__ . '/../logs/email_errors.log', "[".date('c')."] RegistrationConfirmationError: ".$e->getMessage()."\n", FILE_APPEND);
+        $logDir = __DIR__ . '/../logs';
+        if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
+        file_put_contents($logDir . '/email_errors.log', "[".date('c')."] RegistrationConfirmationError: ".$e->getMessage()."\n", FILE_APPEND);
         return false;
     }
 }
@@ -309,7 +329,7 @@ function sendWelcomeEmail($to, $name, $userType = 'usuario') {
               </div>
 
               <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:8px 0 8px;">
-                <a href="http://localhost:8080/PRERMI/web/admin/dashboard.php"
+                <a href="https://prermi.duckdns.org/PRERMI/web/admin/dashboard.php"
                    style="display:inline-block;
                           background:linear-gradient(135deg,#7c3aed,#06b6d4);
                           color:#fff;text-decoration:none;
@@ -365,7 +385,7 @@ function sendWelcomeEmail($to, $name, $userType = 'usuario') {
               </div>
 
               <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:8px 0 8px;">
-                <a href="http://localhost:8080/PRERMI/web/index.php"
+                <a href="https://prermi.duckdns.org/PRERMI/web/index.php"
                    style="display:inline-block;
                           background:linear-gradient(135deg,#06b6d4,#10b981);
                           color:#fff;text-decoration:none;
@@ -387,12 +407,13 @@ function sendWelcomeEmail($to, $name, $userType = 'usuario') {
             $userType === 'admin_pending' ? 'Email Verificado — Acceso Pendiente' :
             ($userType === 'admin_approved' ? 'Cuenta de Administrador Activada' : 'Bienvenido/a a PRERMI'),
             $badge, $bodyHtml);
-        $mail->AltBody = "Hola $name,\n\nBienvenido/a a PRERMI.\nVisita la plataforma en: http://localhost:8080/PRERMI/web/\n\nEquipo PRERMI";
+        $mail->AltBody = "Hola $name,\n\nBienvenido/a a PRERMI.\nVisita la plataforma en: https://prermi.duckdns.org/PRERMI/web/\n\nEquipo PRERMI";
         $mail->send();
         return true;
     } catch (Exception $e) {
-        if (!is_dir(__DIR__ . '/../logs')) @mkdir(__DIR__ . '/../logs', 0755, true);
-        file_put_contents(__DIR__ . '/../logs/email_errors.log', "[".date('c')."] WelcomeEmailError: ".$e->getMessage()."\n", FILE_APPEND);
+        $logDir = __DIR__ . '/../logs';
+        if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
+        file_put_contents($logDir . '/email_errors.log', "[".date('c')."] WelcomeEmailError: ".$e->getMessage()."\n", FILE_APPEND);
         return false;
     }
 }
@@ -462,8 +483,9 @@ function sendDepositNotificationEmail($to, $name, $peso, $credito_kwh, $deposit_
         $mail->send();
         return true;
     } catch (Exception $e) {
-        if (!is_dir(__DIR__ . '/../logs')) @mkdir(__DIR__ . '/../logs', 0755, true);
-        file_put_contents(__DIR__ . '/../logs/email_errors.log', "[".date('c')."] DepositNotificationError: ".$e->getMessage()."\n", FILE_APPEND);
+        $logDir = __DIR__ . '/../logs';
+        if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
+        file_put_contents($logDir . '/email_errors.log', "[".date('c')."] DepositNotificationError: ".$e->getMessage()."\n", FILE_APPEND);
         return false;
     }
 }
@@ -515,8 +537,9 @@ function sendBanEmail($to, $name, $motivo = '') {
         $mail->send();
         return true;
     } catch (Exception $e) {
-        if (!is_dir(__DIR__ . '/../logs')) @mkdir(__DIR__ . '/../logs', 0755, true);
-        file_put_contents(__DIR__ . '/../logs/email_errors.log', "[".date('c')."] BanEmailError: ".$e->getMessage()."\n", FILE_APPEND);
+        $logDir = __DIR__ . '/../logs';
+        if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
+        file_put_contents($logDir . '/email_errors.log', "[".date('c')."] BanEmailError: ".$e->getMessage()."\n", FILE_APPEND);
         return false;
     }
 }
@@ -576,8 +599,9 @@ function sendSanctionReportEmail($to, $name, $sancion_id, $descripcion, $peso, $
         $mail->send();
         return true;
     } catch (Exception $e) {
-        if (!is_dir(__DIR__ . '/../logs')) @mkdir(__DIR__ . '/../logs', 0755, true);
-        file_put_contents(__DIR__ . '/../logs/email_errors.log', "[".date('c')."] SanctionReportError: ".$e->getMessage()."\n", FILE_APPEND);
+        $logDir = __DIR__ . '/../logs';
+        if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
+        file_put_contents($logDir . '/email_errors.log', "[".date('c')."] SanctionReportError: ".$e->getMessage()."\n", FILE_APPEND);
         return false;
     }
 }

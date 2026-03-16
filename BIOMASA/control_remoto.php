@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_comando'])) {
     $descripcion = $_POST['descripcion'] ?? "Basado en: " . $comando;
     
     // Construir URL para enviar comando al servidor
-    $url = "http://localhost/PRERMI/BIOMASA/comandos.php";
+    $url = "https://prermi.duckdns.org/PRERMI/BIOMASA/comandos.php";
     
     // Preparar datos incluyendo token si no tiene sesión
     $data_array = [
