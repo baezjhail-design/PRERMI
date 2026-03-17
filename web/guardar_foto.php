@@ -29,6 +29,7 @@ if (isset($_POST['image_data'])) {
         require_once __DIR__ . '/../api/utils.php';
 
         $pdo = getPDO();
+        $pdo->beginTransaction();
 
         // Crear tabla si no existe
         $pdo->exec("CREATE TABLE IF NOT EXISTS rostros (
@@ -39,12 +40,32 @@ if (isset($_POST['image_data'])) {
             creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+        // Mantener un unico rostro activo por usuario.
+        $stmtSelect = $pdo->prepare("SELECT filename FROM rostros WHERE user_id = ?");
+        $stmtSelect->execute([$_SESSION['user_id']]);
+        $oldFiles = $stmtSelect->fetchAll(PDO::FETCH_COLUMN) ?: [];
+
+        $stmtDelete = $pdo->prepare("DELETE FROM rostros WHERE user_id = ?");
+        $stmtDelete->execute([$_SESSION['user_id']]);
+
+        foreach ($oldFiles as $oldFile) {
+            $oldPath = $rostrosDir . '/' . basename((string) $oldFile);
+            if (is_file($oldPath) && $oldPath !== $facePath) {
+                @unlink($oldPath);
+            }
+        }
+
         $stmt = $pdo->prepare("INSERT INTO rostros (user_id, filename, image) VALUES (?, ?, ?)");
         $stmt->bindParam(1, $_SESSION['user_id'], PDO::PARAM_INT);
         $stmt->bindParam(2, $faceFilename, PDO::PARAM_STR);
         $stmt->bindParam(3, $imageData, PDO::PARAM_LOB);
         $stmt->execute();
+
+        $pdo->commit();
     } catch (Exception $e) {
+        if (isset($pdo) && $pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         // Registrar fallo de forma no intrusiva
         if (function_exists('registrarLog')) {
             registrarLog('Error guardando rostro en DB: ' . $e->getMessage(), 'error');

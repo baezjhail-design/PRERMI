@@ -67,14 +67,45 @@ if (!$result) {
     exit;
 }
 
+$confidence = isset($result["confidence"]) ? floatval($result["confidence"]) : 999.0;
+$probability = isset($result["probability"]) ? floatval($result["probability"]) : 0.0;
+$minProbabilityServer = 0.45;
+$maxConfidenceServer = 118.0;
+
+if (!empty($result["success"])) {
+    // Doble validacion en servidor: evita aprobar matches debiles por cambios de modelo.
+    if ($probability < $minProbabilityServer || $confidence > $maxConfidenceServer) {
+        echo json_encode([
+            "success" => false,
+            "message" => "Low confidence match rejected",
+            "confidence" => $confidence,
+            "probability" => $probability
+        ]);
+        exit;
+    }
+}
+
 // Si éxito, validar que el rostro esté registrado en la tabla rostros
 if ($result["success"]) {
     $user_id = intval($result["user_id"]);
     $expectedFilename = "face_" . $user_id . ".jpg";
+    $faceFilePath = __DIR__ . '/../../uploads/rostros/' . $expectedFilename;
+
+    if (!file_exists($faceFilePath)) {
+        echo json_encode([
+            "success" => false,
+            "message" => "Face file not found for predicted user",
+            "user_id" => $user_id
+        ]);
+        exit;
+    }
+
     $stmt = $conn->prepare(
-        "SELECT user_id FROM rostros
-         WHERE user_id = ? AND filename = ?
-         ORDER BY id DESC LIMIT 1"
+        "SELECT r.user_id
+         FROM rostros r
+         INNER JOIN usuarios u ON u.id = r.user_id
+         WHERE r.user_id = ? AND r.filename = ?
+         ORDER BY r.id DESC LIMIT 1"
     );
     $stmt->bind_param("is", $user_id, $expectedFilename);
     $stmt->execute();
@@ -84,11 +115,21 @@ if ($result["success"]) {
         echo json_encode([
             "success" => true,
             "user_id" => $user_id,
-            "probability" => $result["probability"]
+            "probability" => $probability,
+            "confidence" => $confidence
         ]);
     } else {
-        echo json_encode(["success" => false, "message" => "User not found in face registry"]);
+        echo json_encode([
+            "success" => false,
+            "message" => "Predicted user is not valid in usuarios/rostros",
+            "user_id" => $user_id
+        ]);
     }
 } else {
-    echo json_encode(["success" => false]);
+    echo json_encode([
+        "success" => false,
+        "message" => isset($result["message"]) ? $result["message"] : "Face not recognized",
+        "confidence" => $confidence,
+        "probability" => $probability
+    ]);
 }

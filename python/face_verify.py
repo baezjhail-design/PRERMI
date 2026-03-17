@@ -19,9 +19,13 @@ CAPTURAS_PATH   = os.path.join(BASE_PATH, "uploads", "capturas_cam")
 
 # ===== TOLERANCIA LBPH =====
 # LBPH retorna "confianza" donde valores MAS BAJOS = mejor match.
-# < 80: match excelente, < 140: aceptable para ESP32 CAM con 1 imagen de entrenamiento.
-# Nota: con mas imagenes de entrenamiento por usuario se puede bajar a 100-110.
-MATCH_THRESHOLD = 140.0
+# < 80: match excelente, < 120: aceptable para ESP32 CAM con buena luz.
+# Umbral previo (140) era muy permisivo y provocaba falsos positivos.
+MATCH_THRESHOLD = 118.0
+
+# Probabilidad minima para considerar valido el match.
+# Protege contra detecciones "dudosas" aun cuando pasen por threshold LBPH.
+MIN_PROBABILITY = 0.45
 
 # ===== DETECTOR HAAR =====
 CASCADE_PATH = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
@@ -197,7 +201,7 @@ def main():
     # probability aproximada: 1 - (confidence/200), minimo 0
     probability = round(max(0.0, 1.0 - confidence / 200.0), 4)
 
-    if confidence <= MATCH_THRESHOLD:
+    if confidence <= MATCH_THRESHOLD and probability >= MIN_PROBABILITY:
         print(json.dumps({
             "success": True,
             "user_id": int(label),
@@ -210,7 +214,9 @@ def main():
             "message": "Face not recognized",
             "user_id": 0,
             "confidence": round(float(confidence), 2),
-            "probability": probability
+            "probability": probability,
+            "threshold": MATCH_THRESHOLD,
+            "min_probability": MIN_PROBABILITY
         }))
 
 
