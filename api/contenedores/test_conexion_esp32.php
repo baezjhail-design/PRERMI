@@ -25,6 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/../utils.php';
 
+requireLocalAccess(true);
+
 // ===== GET: estado básico =====
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     echo json_encode([

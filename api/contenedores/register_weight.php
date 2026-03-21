@@ -33,6 +33,16 @@ $token_usado = isset($data['token_usado']) ? limpiar($data['token_usado']) : '';
 $metal_detectado = isset($data['inductivo']) ? (int)$data['inductivo'] :
                    (isset($data['metal_detectado']) ? (int)$data['metal_detectado'] : 0);
 
+// tipo_residuo: 'metal' si se detectó metal, 'organico' en caso contrario (a menos que el ESP32 envíe otro valor)
+$tipo_residuo = isset($data['tipo_residuo']) ? trim($data['tipo_residuo']) : ($metal_detectado ? 'metal' : 'organico');
+if (!in_array($tipo_residuo, ['organico', 'metal', 'electronico', 'plastico', 'vidrio', 'papel'], true)) {
+    $tipo_residuo = $metal_detectado ? 'metal' : 'organico';
+}
+
+// credito_kwh: usar valor enviado por el ESP32, o calcular a 0.0011 kWh/kg
+const KG_TO_KWH = 0.0011;
+$credito_kwh = isset($data['credito_kwh']) ? round((float)$data['credito_kwh'], 5) : round($peso * KG_TO_KWH, 5);
+
 // =============================
 // VALIDACIONES
 // =============================
@@ -70,8 +80,8 @@ try {
     // =============================
     $stmt = $pdo->prepare("
         INSERT INTO depositos 
-        (id_usuario, id_contenedor, token_usado, peso, metal_detectado)
-        VALUES (?, ?, ?, ?, ?)
+        (id_usuario, id_contenedor, token_usado, peso, tipo_residuo, credito_kwh, metal_detectado)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     ");
 
     $stmt->execute([
@@ -79,6 +89,8 @@ try {
         $id_contenedor,
         $token_usado,
         $peso,
+        $tipo_residuo,
+        $credito_kwh,
         $metal_detectado
     ]);
 
@@ -96,7 +108,6 @@ try {
         $u = $stmtU->fetch(PDO::FETCH_ASSOC);
         if (!empty($u['email'])) {
             $fullName = trim(($u['nombre'] ?? '') . ' ' . ($u['apellido'] ?? '')) ?: $u['email'];
-            $credito_kwh = round($peso * 0.5, 4); // Tasa por defecto
             sendDepositNotificationEmail($u['email'], $fullName, $peso, $credito_kwh, date('Y-m-d H:i:s'), $insertId);
         }
 

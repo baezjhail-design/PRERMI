@@ -11,6 +11,8 @@ require_once __DIR__ . '/api/utils.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
+requireLocalAccess(true);
+
 $resultado = [
     'status' => 'OK',
     'fecha' => date('Y-m-d H:i:s'),

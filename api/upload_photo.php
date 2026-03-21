@@ -7,6 +7,8 @@ require_once __DIR__ . '/utils.php'; // Cargar funciones comunes
 
 header('Content-Type: application/json; charset=utf-8'); // Respuesta en JSON
 
+$maxPhotoBytes = 5 * 1024 * 1024;
+
 // Obtener datos raw del request
 $raw = file_get_contents('php://input'); // Leer payload completo
 if (!$raw) { // Si no hay datos
@@ -29,6 +31,15 @@ if (!$photoB64) { // Si no está presente
 $photoBinary = base64_decode($photoB64, true); // Decodificar con validación estricta
 if ($photoBinary === false) { // Si falla la decodificación
     jsonErr('Base64 inválido', 400); // Error: base64 corrupto
+}
+
+$binaryLength = strlen($photoBinary);
+if ($binaryLength === 0 || $binaryLength > $maxPhotoBytes) {
+    jsonErr('La imagen excede el tamano permitido', 413);
+}
+
+if (!isValidJpegBinary($photoBinary)) {
+    jsonErr('Formato de imagen no permitido. Solo se aceptan JPEG validos', 415);
 }
 
 // Crear nombre del archivo con timestamp

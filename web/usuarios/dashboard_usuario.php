@@ -75,6 +75,27 @@ try {
 $monthLabelsJson  = json_encode(array_values($monthLabels));
 $monthSavingsJson = json_encode(array_values($monthSavings));
 $monthKwhJson     = json_encode(array_values(array_values($monthKwh)));
+
+// ===== MODELO BIOMASA + PELTIER TEG — Proyección basada en residuos del usuario =====
+// Estimamos kg depositados este mes a partir del crédito kWh (1 kWh = 2 kg depositó el sistema)
+$residuos_kg_mes_est = max(1.0, $mesActualKwh * 2.0);
+$residuos_dia_user   = max(0.1, $residuos_kg_mes_est / 30.0);
+
+function calcEscUser(float $r, float $nr, float $ef, float $tar): array {
+    $mod = 40; $pw = 2.5; $h = 12.0;
+    $eb = $r * $nr * 6.0 * $ef * 30.0;
+    $ep = ($mod * $pw * $h * 30.0) / 1000.0;
+    $et = $eb + $ep;
+    return [
+        'e_biomasa' => round($eb, 2),
+        'e_peltier' => round($ep, 2),
+        'e_total'   => round($et, 2),
+        'ahorro_rd' => round($et * $tar, 2),
+    ];
+}
+$sc_cons_u = calcEscUser($residuos_dia_user, 0.06, 0.22, $TARIFA_RD_KWH);
+$sc_base_u = calcEscUser($residuos_dia_user, 0.08, 0.28, $TARIFA_RD_KWH);
+$sc_opti_u = calcEscUser($residuos_dia_user, 0.12, 0.35, $TARIFA_RD_KWH);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -361,6 +382,40 @@ $monthKwhJson     = json_encode(array_values(array_values($monthKwh)));
     </div>
 </section>
 
+<!-- ===== PROYECCIÓN BIOMASA + PELTIER TEG ===== -->
+<section class="savings-section" style="margin-top:0;padding-bottom:2rem;">
+  <p class="savings-title">🌱 <span>Proyección BIOMASA + Peltier TEG — 3 Escenarios</span></p>
+  <div class="savings-chart-box">
+    <p style="color:rgba(255,255,255,.62);font-size:.82rem;text-align:center;margin-bottom:14px;">
+      Basado en <strong style="color:#06b6d4;"><?php echo number_format($mesActualKwh,3); ?> kWh</strong> generados este mes · Sistema compartido BIOMASA (<?php echo number_format($residuos_dia_user,2); ?> kg/día estimados)
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:12px;margin-bottom:18px;">
+      <div style="background:linear-gradient(135deg,#1e293b,#334155);border-radius:12px;padding:16px;color:#fff;text-align:center;">
+        <div style="font-size:.68rem;font-weight:800;letter-spacing:.08em;background:rgba(255,255,255,.15);border-radius:20px;padding:.18rem .6rem;display:inline-block;margin-bottom:7px;">🌿 CONSERVADOR</div>
+        <div style="font-size:1.55rem;font-weight:900;"><?php echo number_format($sc_cons_u['e_total'],1); ?> kWh/mes</div>
+        <div style="font-size:.92rem;font-weight:700;opacity:.85;">RD$ <?php echo number_format($sc_cons_u['ahorro_rd'],2); ?>/mes</div>
+        <div style="font-size:.7rem;opacity:.58;margin-top:4px;">BIOMASA <?php echo $sc_cons_u['e_biomasa']; ?> + Peltier <?php echo $sc_cons_u['e_peltier']; ?> kWh</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#065f46,#059669);border-radius:12px;padding:16px;color:#fff;text-align:center;box-shadow:0 4px 14px rgba(5,150,105,.3);">
+        <div style="font-size:.68rem;font-weight:800;letter-spacing:.08em;background:rgba(255,255,255,.18);border-radius:20px;padding:.18rem .6rem;display:inline-block;margin-bottom:7px;">⚡ BASE</div>
+        <div style="font-size:1.55rem;font-weight:900;"><?php echo number_format($sc_base_u['e_total'],1); ?> kWh/mes</div>
+        <div style="font-size:.92rem;font-weight:700;opacity:.85;">RD$ <?php echo number_format($sc_base_u['ahorro_rd'],2); ?>/mes</div>
+        <div style="font-size:.7rem;opacity:.58;margin-top:4px;">BIOMASA <?php echo $sc_base_u['e_biomasa']; ?> + Peltier <?php echo $sc_base_u['e_peltier']; ?> kWh</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#5b21b6,#7c3aed);border-radius:12px;padding:16px;color:#fff;text-align:center;box-shadow:0 4px 14px rgba(124,58,237,.3);">
+        <div style="font-size:.68rem;font-weight:800;letter-spacing:.08em;background:rgba(255,255,255,.18);border-radius:20px;padding:.18rem .6rem;display:inline-block;margin-bottom:7px;">🚀 OPTIMISTA</div>
+        <div style="font-size:1.55rem;font-weight:900;"><?php echo number_format($sc_opti_u['e_total'],1); ?> kWh/mes</div>
+        <div style="font-size:.92rem;font-weight:700;opacity:.85;">RD$ <?php echo number_format($sc_opti_u['ahorro_rd'],2); ?>/mes</div>
+        <div style="font-size:.7rem;opacity:.58;margin-top:4px;">BIOMASA <?php echo $sc_opti_u['e_biomasa']; ?> + Peltier <?php echo $sc_opti_u['e_peltier']; ?> kWh</div>
+      </div>
+    </div>
+    <canvas id="chartEscenariosUser" height="90"></canvas>
+    <p class="savings-note" style="margin-top:10px;">
+      Modelo: Digestión anaerobia (biogás → electricidad) + Celdas Peltier TEG (calor residual → corriente) · 40 módulos × 2.5 W × 12 h/día
+    </p>
+  </div>
+</section>
+
 <div id="facialModal" class="facial-modal" onclick="cerrarModalFacial(event)">
     <div class="facial-modal-content">
         <h3>Foto Facial Vinculada</h3>
@@ -469,6 +524,38 @@ function cerrarModalFacial(event) {
             }
         }
     });
+})();
+
+// ===== GRÁFICA ESCENARIOS BIOMASA+PELTIER (USUARIO) =====
+(function(){
+  const cU = document.getElementById('chartEscenariosUser');
+  if (!cU) return;
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const now   = new Date();
+  const lbls  = Array.from({length:12},(_,i)=>{ const d=new Date(now.getFullYear(),now.getMonth()+i+1,1); return meses[d.getMonth()]+" '"+(d.getFullYear()%100); });
+  const cons = <?php echo $sc_cons_u['ahorro_rd']; ?>;
+  const base = <?php echo $sc_base_u['ahorro_rd']; ?>;
+  const opti = <?php echo $sc_opti_u['ahorro_rd']; ?>;
+  new Chart(cU, {
+    type: 'line',
+    data: {
+      labels: lbls,
+      datasets: [
+        { label: 'Conservador (RD$)', data: Array.from({length:12},(_,i)=>+(cons*(i+1)).toFixed(2)), borderColor:'#64748b', backgroundColor:'rgba(71,85,105,.12)', fill:true, tension:.3, borderWidth:2, pointRadius:3 },
+        { label: 'Base (RD$)',         data: Array.from({length:12},(_,i)=>+(base*(i+1)).toFixed(2)), borderColor:'#10b981', backgroundColor:'rgba(16,185,129,.15)', fill:true, tension:.3, borderWidth:2.5, pointRadius:3 },
+        { label: 'Optimista (RD$)',    data: Array.from({length:12},(_,i)=>+(opti*(i+1)).toFixed(2)), borderColor:'#7c3aed', backgroundColor:'rgba(124,58,237,.12)', fill:true, tension:.3, borderWidth:2, pointRadius:3 }
+      ]
+    },
+    options: {
+      responsive:true,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{ labels:{ color:'#cbd5e1', font:{size:11} } }, tooltip:{ callbacks:{ label: ctx => ` ${ctx.dataset.label}: RD$ ${ctx.parsed.y.toLocaleString('es-DO',{minimumFractionDigits:2})}` } } },
+      scales:{
+        x:{ ticks:{color:'#94a3b8',font:{size:10}}, grid:{color:'rgba(255,255,255,.05)'} },
+        y:{ ticks:{color:'#06b6d4', callback:v=>'RD$ '+v.toLocaleString('es-DO')}, grid:{color:'rgba(255,255,255,.07)'}, title:{display:true,text:'Ahorro acumulado (RD$)',color:'#06b6d4',font:{size:10}} }
+      }
+    }
+  });
 })();
 </script>
 <script src="/PRERMI/web/assets/js/theme.js"></script>

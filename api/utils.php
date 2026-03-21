@@ -27,11 +27,48 @@ function jsonErr($msg = "Error desconocido", $code = 400) {
 }
 
 
+function prermiIsLocalRequest() {
+    $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? '';
+    $serverName = strtolower($_SERVER['SERVER_NAME'] ?? '');
+    $host = strtolower($_SERVER['HTTP_HOST'] ?? '');
+    $allowedHosts = ['localhost', '127.0.0.1', '::1'];
+    $allowedIps = ['127.0.0.1', '::1'];
+
+    return in_array($remoteAddr, $allowedIps, true)
+        || in_array($serverName, $allowedHosts, true)
+        || in_array($host, $allowedHosts, true);
+}
+
+
+function requireLocalAccess($expectsJson = true) {
+    if (prermiIsLocalRequest()) {
+        return;
+    }
+
+    if ($expectsJson) {
+        jsonErr('Acceso restringido en produccion', 403);
+    }
+
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    exit('Acceso restringido en produccion');
+}
+
+
 // =====================================
 // LIMPIAR STRINGS
 // =====================================
 function limpiar($str) {
     return htmlspecialchars(trim($str), ENT_QUOTES, 'UTF-8');
+}
+
+
+function isValidJpegBinary($binary) {
+    if (!is_string($binary) || strlen($binary) < 4) {
+        return false;
+    }
+
+    return substr($binary, 0, 2) === "\xFF\xD8" && substr($binary, -2) === "\xFF\xD9";
 }
 
 

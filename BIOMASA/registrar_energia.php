@@ -18,6 +18,7 @@
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
+date_default_timezone_set('America/Santo_Domingo');
 
 // ============================================================
 // ARCHIVOS DE DATOS
@@ -111,8 +112,8 @@ function intentarGuardarEnBD(array $ciclo): void {
 
         $stmt = $pdo->prepare("
             INSERT INTO `energia_biomasa_ciclos`
-                (energia_wh, duracion_seg, temp_promedio, corriente_promedio, timestamp_inicio)
-            VALUES (?, ?, ?, ?, ?)
+                (energia_wh, duracion_seg, temp_promedio, corriente_promedio, timestamp_inicio, registrado_en)
+            VALUES (?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
             round(floatval($ciclo['energia_wh']), 4),
@@ -120,6 +121,7 @@ function intentarGuardarEnBD(array $ciclo): void {
             isset($ciclo['temp_promedio'])      ? round(floatval($ciclo['temp_promedio']), 2)      : null,
             isset($ciclo['corriente_promedio'])  ? round(floatval($ciclo['corriente_promedio']), 3) : null,
             isset($ciclo['timestamp_inicio'])    ? intval($ciclo['timestamp_inicio'])               : null,
+            isset($ciclo['registrado_en_mysql']) ? $ciclo['registrado_en_mysql']                    : date('Y-m-d H:i:s'),
         ]);
     } catch (Exception $e) {
         // Silencioso: la BD es opcional; el JSON es la fuente primaria
@@ -163,7 +165,8 @@ if ($accion === 'registrar') {
         'temp_promedio'      => isset($_GET['temp_promedio'])      ? round(floatval($_GET['temp_promedio']), 2)      : null,
         'corriente_promedio' => isset($_GET['corriente_promedio']) ? round(floatval($_GET['corriente_promedio']), 3) : null,
         'timestamp_inicio'   => isset($_GET['timestamp_inicio'])   ? intval($_GET['timestamp_inicio'])              : null,
-        'registrado_en'      => date(DATE_ATOM),
+        'registrado_en'      => date('c'),
+        'registrado_en_mysql'=> date('Y-m-d H:i:s'),
     ];
 
     // Calcular potencia promedio del ciclo

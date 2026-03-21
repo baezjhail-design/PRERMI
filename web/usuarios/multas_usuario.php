@@ -8,12 +8,26 @@ if (!isset($_SESSION['usuario_id'])) {
 require_once "../../config/db_config.php";
 require_once "../../api/utils.php";
 
+date_default_timezone_set('America/Santo_Domingo');
+
+function formatDateTimeRD(?string $value, string $format = 'd/m/Y H:i:s'): string {
+    if (empty($value)) return '—';
+    try {
+        $tz = new DateTimeZone('America/Santo_Domingo');
+        $dt = new DateTimeImmutable($value);
+        return $dt->setTimezone($tz)->format($format);
+    } catch (Exception $e) {
+        return (string)$value;
+    }
+}
+
 $id = $_SESSION['usuario_id'];
 
 try {
     $pdo = getPDO();
+    $pdo->exec("SET time_zone = '-04:00'");
     $stmt = $pdo->prepare("
-        SELECT m.id, m.id_contenedor, m.descripcion, m.peso, m.creado_en, c.codigo_contenedor, c.ubicacion 
+        SELECT s.id, s.contenedor_id AS id_contenedor, s.descripcion, s.peso, s.creado_en, c.codigo_contenedor, c.ubicacion 
         FROM sanciones s 
         LEFT JOIN contenedores_registrados c ON s.contenedor_id = c.id 
         WHERE s.user_id = ?
@@ -32,11 +46,19 @@ try {
     <meta charset="UTF-8">
     <title>Mis Sanciones - PRERMI</title>
     <link rel="stylesheet" href="estilos_usuario.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        table {
-            width: 90%;
+        .table-wrap {
+            width: 92%;
             margin: 25px auto;
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+        }
+        table {
+            width: 100%;
+            margin: 0;
             background: white;
             border-radius: 10px;
             border-collapse: collapse;
@@ -48,6 +70,16 @@ try {
         th {
             background: #cc0000;
             color: white;
+            white-space: nowrap;
+        }
+        .fecha-cell {
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+        @media (max-width: 768px) {
+            table {
+                min-width: 760px;
+            }
         }
     </style>
 </head>
@@ -60,6 +92,7 @@ try {
 
 <h2 style="color:white; text-align:center;">Sanciones Registradas</h2>
 
+<div class="table-wrap">
 <table>
     <tr>
         <th>ID Contenedor</th>
@@ -76,7 +109,7 @@ try {
             <td><?php echo htmlspecialchars($row['ubicacion'] ?? 'No especificada'); ?></td>
             <td><?php echo htmlspecialchars($row['descripcion']); ?></td>
             <td><?php echo number_format($row['peso'], 2); ?></td>
-            <td><?php echo date('d/m/Y H:i', strtotime($row['creado_en'])); ?></td>
+            <td class="fecha-cell"><?php echo htmlspecialchars(formatDateTimeRD($row['creado_en'] ?? null)); ?></td>
         </tr>
         <?php endforeach; ?>
     <?php else: ?>
@@ -89,6 +122,7 @@ try {
         </tr>
     <?php endif; ?>
 </table>
+</div>
 
 <p style="text-align:center;">
     <a href="dashboard_usuario.php">← Volver al Dashboard</a>

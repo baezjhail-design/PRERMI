@@ -1,16 +1,12 @@
 <?php
-header('Content-Type: application/json');
+require_once __DIR__ . '/../utils.php';
 
-$host = "localhost";
-$user = "prermi_user";
-$password = "Prermi2026!";
-$dbname = "prer_mi";
+header('Content-Type: application/json; charset=utf-8');
 
-$conn = new mysqli($host, $user, $password, $dbname);
-
-if ($conn->connect_error) {
-    echo json_encode(["error" => "BD desconectada"]);
-    exit;
+try {
+    getPDO();
+} catch (Exception $e) {
+    jsonErr('BD desconectada', 503);
 }
 
 /*
@@ -35,4 +31,4 @@ echo json_encode([
     "estado_sistema" => $estado,
     "led_activo" => $led,
     "timestamp" => date("H:i:s")
-]);
+], JSON_UNESCAPED_UNICODE);

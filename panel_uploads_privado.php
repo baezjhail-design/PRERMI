@@ -4,14 +4,19 @@
 declare(strict_types=1);
 
 $sessionSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path' => '/',
-    'domain' => '',
-    'secure' => $sessionSecure,
-    'httponly' => true,
-    'samesite' => 'Strict',
-]);
+if (PHP_VERSION_ID >= 70300) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => '',
+        'secure' => $sessionSecure,
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ]);
+} else {
+    // Compatibilidad con PHP < 7.3 (sin soporte de arreglo de opciones).
+    session_set_cookie_params(0, '/; samesite=Strict', '', $sessionSecure, true);
+}
 session_start();
 
 const PANEL_USER = 'root';
@@ -161,36 +166,50 @@ $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
 $images = [];
 
 if (is_dir($baseDir)) {
-    $iterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($baseDir, FilesystemIterator::SKIP_DOTS)
-    );
+    try {
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($baseDir, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::LEAVES_ONLY,
+            RecursiveIteratorIterator::CATCH_GET_CHILD
+        );
 
-    foreach ($iterator as $fileInfo) {
-        if (!$fileInfo->isFile()) {
-            continue;
+        foreach ($iterator as $fileInfo) {
+            if (!$fileInfo->isFile()) {
+                continue;
+            }
+
+            $ext = strtolower(pathinfo($fileInfo->getFilename(), PATHINFO_EXTENSION));
+            if (!in_array($ext, $imageExtensions, true)) {
+                continue;
+            }
+
+            $absolutePath = $fileInfo->getPathname();
+            $relativePath = str_replace($baseDir . DIRECTORY_SEPARATOR, '', $absolutePath);
+            $publicPath = 'uploads/' . str_replace(DIRECTORY_SEPARATOR, '/', $relativePath);
+
+            $images[] = [
+                'path' => $publicPath,
+                'name' => $fileInfo->getFilename(),
+                'size' => $fileInfo->getSize(),
+                'mtime' => $fileInfo->getMTime(),
+            ];
         }
-
-        $ext = strtolower(pathinfo($fileInfo->getFilename(), PATHINFO_EXTENSION));
-        if (!in_array($ext, $imageExtensions, true)) {
-            continue;
+    } catch (UnexpectedValueException $e) {
+        if ($error === '') {
+            $error = 'Se omitieron carpetas sin permisos en uploads.';
         }
-
-        $absolutePath = $fileInfo->getPathname();
-        $relativePath = str_replace($baseDir . DIRECTORY_SEPARATOR, '', $absolutePath);
-        $publicPath = 'uploads/' . str_replace(DIRECTORY_SEPARATOR, '/', $relativePath);
-
-        $images[] = [
-            'path' => $publicPath,
-            'name' => $fileInfo->getFilename(),
-            'size' => $fileInfo->getSize(),
-            'mtime' => $fileInfo->getMTime(),
-        ];
     }
 }
 
 usort(
     $images,
-    static fn(array $a, array $b): int => $b['mtime'] <=> $a['mtime']
+    static function (array $a, array $b): int {
+        if ($a['mtime'] === $b['mtime']) {
+            return 0;
+        }
+
+        return ($a['mtime'] < $b['mtime']) ? 1 : -1;
+    }
 );
 
 $totalImages = count($images);
@@ -199,6 +218,69 @@ $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
 $page = min($page, $totalPages);
 $offset = ($page - 1) * PER_PAGE;
 $currentImages = array_slice($images, $offset, PER_PAGE);
+
+$facialRecords = [];
+$facialError = '';
+
+try {
+    require_once __DIR__ . '/api/utils.php';
+
+    if (function_exists('getPDO')) {
+        $pdo = getPDO();
+        $stmt = $pdo->query(
+            "SELECT r.user_id, r.filename, r.creado_en, u.nombre, u.apellido, u.usuario
+             FROM rostros r
+             LEFT JOIN usuarios u ON u.id = r.user_id
+             ORDER BY r.creado_en DESC
+             LIMIT 300"
+        );
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows as $row) {
+            $userId = (int) ($row['user_id'] ?? 0);
+            $nombre = trim((string) ($row['nombre'] ?? ''));
+            $apellido = trim((string) ($row['apellido'] ?? ''));
+            $usuario = trim((string) ($row['usuario'] ?? ''));
+            $fullName = trim($nombre . ' ' . $apellido);
+            $displayName = $fullName !== '' ? $fullName : ($usuario !== '' ? $usuario : ('Usuario #' . $userId));
+
+            $filename = basename((string) ($row['filename'] ?? ''));
+            $candidatePaths = [];
+
+            if ($filename !== '') {
+                $candidatePaths[] = $baseDir . DIRECTORY_SEPARATOR . 'rostros' . DIRECTORY_SEPARATOR . $filename;
+            }
+
+            if ($userId > 0) {
+                $candidatePaths[] = $baseDir . DIRECTORY_SEPARATOR . 'rostros' . DIRECTORY_SEPARATOR . 'face_' . $userId . '.jpg';
+                $candidatePaths[] = $baseDir . DIRECTORY_SEPARATOR . 'rostros' . DIRECTORY_SEPARATOR . 'face_' . $userId . '.jpeg';
+                $candidatePaths[] = $baseDir . DIRECTORY_SEPARATOR . 'rostros' . DIRECTORY_SEPARATOR . 'face_' . $userId . '.png';
+                $candidatePaths[] = $baseDir . DIRECTORY_SEPARATOR . 'rostros' . DIRECTORY_SEPARATOR . 'face_' . $userId . '.webp';
+            }
+
+            $publicFacePath = '';
+            foreach ($candidatePaths as $candidate) {
+                if (is_file($candidate)) {
+                    $publicFacePath = 'uploads/rostros/' . basename($candidate);
+                    break;
+                }
+            }
+
+            $facialRecords[] = [
+                'user_id' => $userId,
+                'display_name' => $displayName,
+                'username' => $usuario,
+                'filename' => $filename,
+                'created_at' => (string) ($row['creado_en'] ?? ''),
+                'face_path' => $publicFacePath,
+            ];
+        }
+    } else {
+        $facialError = 'No se pudo cargar la conexion de base de datos.';
+    }
+} catch (Throwable $e) {
+    $facialError = 'No se pudieron cargar los registros faciales.';
+}
 
 function bytesToHuman(int $bytes): string
 {
@@ -288,6 +370,57 @@ function bytesToHuman(int $bytes): string
             font-size: 1.06rem;
             color: var(--title);
             font-weight: 700;
+        }
+        .section-title {
+            margin: 18px 0 10px;
+            color: var(--title);
+            font-size: 1.2rem;
+        }
+        .faces-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .face-card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+        .face-photo {
+            aspect-ratio: 4 / 3;
+            background: #0f172a;
+            display: grid;
+            place-items: center;
+        }
+        .face-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .face-missing {
+            color: #cbd5e1;
+            font-size: .86rem;
+            text-align: center;
+            padding: 0 10px;
+        }
+        .face-meta {
+            padding: 10px;
+        }
+        .face-name {
+            font-size: .94rem;
+            color: var(--title);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .face-sub {
+            color: var(--muted);
+            font-size: .82rem;
+            margin-bottom: 3px;
+            word-break: break-word;
         }
         .grid {
             display: grid;
@@ -384,7 +517,43 @@ function bytesToHuman(int $bytes): string
                 <div class="label">Carpeta escaneada</div>
                 <div class="value">uploads</div>
             </article>
+            <article class="stat">
+                <div class="label">Registros faciales</div>
+                <div class="value"><?php echo number_format(count($facialRecords)); ?></div>
+            </article>
         </section>
+
+        <h2 class="section-title">Registros faciales por usuario</h2>
+        <?php if ($facialError !== ''): ?>
+            <div class="empty"><?php echo htmlspecialchars($facialError, ENT_QUOTES, 'UTF-8'); ?></div>
+        <?php elseif (count($facialRecords) === 0): ?>
+            <div class="empty">No hay registros faciales en la base de datos.</div>
+        <?php else: ?>
+            <section class="faces-grid">
+                <?php foreach ($facialRecords as $face): ?>
+                    <article class="face-card">
+                        <div class="face-photo">
+                            <?php if ($face['face_path'] !== ''): ?>
+                                <a href="<?php echo htmlspecialchars($face['face_path'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">
+                                    <img src="<?php echo htmlspecialchars($face['face_path'], ENT_QUOTES, 'UTF-8'); ?>" alt="Rostro de <?php echo htmlspecialchars($face['display_name'], ENT_QUOTES, 'UTF-8'); ?>" loading="lazy">
+                                </a>
+                            <?php else: ?>
+                                <div class="face-missing">Imagen no disponible en uploads/rostros</div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="face-meta">
+                            <div class="face-name"><?php echo htmlspecialchars($face['display_name'], ENT_QUOTES, 'UTF-8'); ?></div>
+                            <div class="face-sub">ID usuario: <?php echo (int) $face['user_id']; ?></div>
+                            <div class="face-sub">Usuario: <?php echo htmlspecialchars($face['username'] !== '' ? $face['username'] : 'N/D', ENT_QUOTES, 'UTF-8'); ?></div>
+                            <div class="face-sub">Archivo: <?php echo htmlspecialchars($face['filename'] !== '' ? $face['filename'] : 'N/D', ENT_QUOTES, 'UTF-8'); ?></div>
+                            <div class="face-sub">Registro: <?php echo htmlspecialchars($face['created_at'] !== '' ? $face['created_at'] : 'N/D', ENT_QUOTES, 'UTF-8'); ?></div>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </section>
+        <?php endif; ?>
+
+        <h2 class="section-title">Imagenes detectadas en uploads</h2>
 
         <?php if ($totalImages === 0): ?>
             <div class="empty">No se encontraron imagenes en la carpeta uploads.</div>

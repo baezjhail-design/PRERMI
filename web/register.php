@@ -423,7 +423,8 @@ session_start();
                         '<div style="font-size: 3rem; margin-bottom: 15px;"><i class="fas fa-envelope-circle-check"></i></div>' +
                         '<h4 style="color: #2d8a56; margin-bottom: 10px;">Cuenta creada exitosamente</h4>' +
                         '<p style="color: #555; margin-bottom: 15px;">Hemos enviado un correo de verificaci\u00f3n a <strong>' + (formData.email) + '</strong></p>' +
-                        '<p style="color: #888; font-size: 0.9rem; margin-bottom: 20px;">Revisa tu bandeja de entrada (y spam) y haz clic en el enlace para activar tu cuenta.</p>' +
+                        '<p style="color: #555; font-size: 0.9rem; margin-bottom: 8px;">Haz clic en el enlace para activar tu cuenta.</p>' +
+                        '<p style="background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;font-size:0.88rem;margin-bottom:20px;"><i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i> <strong>Si no encuentras el correo, revisa tu carpeta de <span style="color:#d97706;">Spam / Correo no deseado</span>.</strong></p>' +
                         '<a href="login.php" class="btn-register" style="display: inline-block; text-decoration: none; max-width: 300px; margin: 0 auto;"><i class="fas fa-sign-in-alt"></i> Ir a Iniciar Sesi\u00f3n</a>' +
                         '</div>';
                 } else {

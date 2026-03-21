@@ -1,9 +1,9 @@
 ﻿<?php
-// api/usuarios/logout.php - Logout elegante con animaciÃ³n
+// api/usuarios/logout.php - Logout elegante con animación
 
 session_start();
 
-// Destruir sesiÃ³n
+// Destruir sesión
 session_destroy();
 
 // Destruir cookies si existen
@@ -16,7 +16,7 @@ if (isset($_COOKIE[session_name()])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cerrando SesiÃ³n - PRERMI</title>
+    <title>Cerrando Sesión - PRERMI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -204,24 +204,24 @@ if (isset($_COOKIE[session_name()])) {
     </style>
 </head>
 <body>
-    <!-- PartÃ­culas animadas de fondo -->
+    <!-- Partículas animadas de fondo -->
     <div class="particles" id="particles"></div>
 
     <div class="logout-container">
         <div class="logout-card">
-            <!-- Ãcono X animado -->
+            <!-- Ícono X animado -->
             <div class="logout-icon">
                 <i class="fas fa-times"></i>
             </div>
 
             <!-- Texto principal -->
-            <h1>Â¡Hasta Luego!</h1>
-            <p>Tu sesiÃ³n ha sido cerrada correctamente.</p>
+            <h1>¡Hasta Luego!</h1>
+            <p>Tu sesión ha sido cerrada correctamente.</p>
             <p style="font-size: 14px; margin-top: 15px;">
                 Gracias por usar PRERMI
             </p>
 
-            <!-- Contador de redirecciÃ³n -->
+            <!-- Contador de redirección -->
             <div class="countdown">
                 <div class="countdown-text">Redirigiendo en:</div>
                 <div class="countdown-timer" id="timer">3</div>
@@ -231,13 +231,13 @@ if (isset($_COOKIE[session_name()])) {
             </div>
 
             <div class="logout-footer">
-                Si no se redirige automÃ¡ticamente, <a href="../../index.php" style="color: #ff6b6b; text-decoration: none; font-weight: 600;">haz clic aquÃ­</a>
+                Si no se redirige automáticamente, <a href="../../index.php" style="color: #ff6b6b; text-decoration: none; font-weight: 600;">haz clic aquí</a>
             </div>
         </div>
     </div>
 
     <script>
-        // Generar partÃ­culas flotantes
+        // Generar partículas flotantes
         function generateParticles() {
             const container = document.getElementById('particles');
             const particleCount = 20;
@@ -259,7 +259,7 @@ if (isset($_COOKIE[session_name()])) {
             }
         }
 
-        // Inicializar partÃ­culas
+        // Inicializar partículas
         generateParticles();
 
         // Contador regresivo
@@ -272,7 +272,7 @@ if (isset($_COOKIE[session_name()])) {
 
             if (timeLeft <= 0) {
                 clearInterval(interval);
-                // Redirigir con animaciÃ³n de salida
+                // Redirigir con animación de salida
                 document.querySelector('.logout-card').style.animation = 'slideIn 0.6s ease-out reverse forwards';
                 setTimeout(() => {
                     window.location.href = '../../index.php';
@@ -280,7 +280,7 @@ if (isset($_COOKIE[session_name()])) {
             }
         }, 1000);
 
-        // Permitir redirecciÃ³n manual al hacer clic en el enlace
+        // Permitir redirección manual al hacer clic en el enlace
         document.addEventListener('click', (e) => {
             if (e.target.tagName === 'A') {
                 clearInterval(interval);

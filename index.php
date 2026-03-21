@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -328,6 +328,13 @@
             height: 100%;
         }
 
+        .access-actions {
+            margin-top: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+        }
+
         .access-icon {
             width: 44px;
             height: 44px;
@@ -419,7 +426,62 @@
             width: 100%;
             border-radius: 12px;
             display: block;
+            object-fit: cover;
+            height: 230px;
         }
+
+        .real-photo-grid {
+            margin-top: 1.1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.9rem;
+        }
+
+        .real-photo-card {
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.88);
+            padding: 0.45rem;
+            overflow: hidden;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .real-photo-card img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 12px;
+            display: block;
+        }
+
+        .img-focus-top { object-position: center 18%; }
+        .img-focus-center { object-position: center center; }
+        .img-focus-bottom { object-position: center 78%; }
+        .img-focus-left { object-position: 28% center; }
+        .img-focus-right { object-position: 72% center; }
+
+        .real-photo-grid.media-distributed {
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            grid-auto-rows: 120px;
+            gap: 0.8rem;
+        }
+
+        .real-photo-grid.media-distributed .real-photo-card {
+            height: 100%;
+            padding: 0.4rem;
+        }
+
+        .real-photo-grid.media-distributed .real-photo-card img {
+            height: 100%;
+            min-height: 140px;
+        }
+
+        .real-photo-card.span-4 { grid-column: span 4; }
+        .real-photo-card.span-5 { grid-column: span 5; }
+        .real-photo-card.span-6 { grid-column: span 6; }
+        .real-photo-card.span-7 { grid-column: span 7; }
+        .real-photo-card.span-8 { grid-column: span 8; }
+        .real-photo-card.row-2 { grid-row: span 2; }
 
         .contact-card {
             margin-top: 1rem;
@@ -552,8 +614,24 @@
             .metric-grid,
             .purpose-grid,
             .illustration-row,
+            .real-photo-grid,
             .about-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .real-photo-grid.media-distributed {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-auto-rows: 170px;
+            }
+
+            .real-photo-card.span-4,
+            .real-photo-card.span-5,
+            .real-photo-card.span-6,
+            .real-photo-card.span-7,
+            .real-photo-card.span-8,
+            .real-photo-card.row-2 {
+                grid-column: auto;
+                grid-row: auto;
             }
         }
 
@@ -857,6 +935,558 @@
             line-height: 1.2;
         }
         .btn-theme-index:hover { background: rgba(0,0,0,.14); }
+
+        /* ── MEJORAS VISUALES GENERALES ── */
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(56,189,248,.35), rgba(124,58,237,.35), transparent);
+            margin: 0;
+            position: relative;
+            z-index: 1;
+        }
+        .grad-text {
+            background: linear-gradient(90deg, #38bdf8 0%, #06b6d4 45%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .grad-text-green {
+            background: linear-gradient(90deg, #10b981 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        /* Hero mejorado */
+        .hero-kpi-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .7rem;
+            margin-top: 1.4rem;
+        }
+        .hkpi {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            border-radius: 16px;
+            padding: .85rem 1rem;
+            border: 1px solid rgba(56,189,248,.3);
+            background: rgba(255,255,255,.72);
+            backdrop-filter: blur(6px);
+            box-shadow: 0 8px 22px rgba(56,189,248,.08);
+            transition: transform .22s ease, box-shadow .22s ease;
+        }
+        .hkpi:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(56,189,248,.14); }
+        .hkpi .hkpi-val {
+            font-size: 1.45rem;
+            font-weight: 900;
+            font-family: Sora, sans-serif;
+            line-height: 1.1;
+        }
+        .hkpi .hkpi-lbl {
+            font-size: .73rem;
+            color: var(--muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-top: .2rem;
+        }
+        /* Value cards (sobre nosotros) */
+        .value-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px,1fr));
+            gap: .9rem;
+            margin-top: 1.3rem;
+        }
+        .value-card {
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: rgba(255,255,255,.88);
+            padding: 1.3rem 1.1rem 1.1rem;
+            transition: transform .22s ease, box-shadow .22s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .value-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--vc-grad);
+            border-radius: 18px 18px 0 0;
+        }
+        .value-card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(0,0,0,.1); }
+        .value-card .vc-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: var(--vc-grad);
+            display: inline-grid;
+            place-items: center;
+            font-size: 1.1rem;
+            color: #fff;
+            margin-bottom: .8rem;
+        }
+        .value-card h4 { font-family: Sora, sans-serif; font-size: .98rem; margin: 0 0 .4rem; }
+        .value-card p  { margin: 0; color: var(--muted); font-size: .83rem; line-height: 1.6; }
+        /* Impacto mejorado */
+        .impact-num-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: .9rem;
+            margin-top: 1.3rem;
+        }
+        .impact-card {
+            border-radius: 18px;
+            padding: 1.5rem;
+            text-align: center;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .impact-card::after {
+            content: '';
+            position: absolute;
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.08);
+            bottom: -30px; right: -30px;
+        }
+        .impact-card .ic-icon { font-size: 1.5rem; margin-bottom: .5rem; opacity: .9; }
+        .impact-card .ic-num  { font-size: 2.2rem; font-weight: 900; font-family: Sora, sans-serif; line-height: 1; }
+        .impact-card .ic-lbl  { font-size: .78rem; margin-top: .35rem; opacity: .82; }
+        .ic-blue   { background: linear-gradient(135deg, #0e7490, #38bdf8); }
+        .ic-green  { background: linear-gradient(135deg, #065f46, #10b981); }
+        .ic-purple { background: linear-gradient(135deg, #5b21b6, #7c3aed); }
+        .ic-orange { background: linear-gradient(135deg, #9a3412, #f97316); }
+        /* Pilares (propósito) */
+        .pillar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+            gap: 1rem;
+            margin-top: 1.3rem;
+        }
+        .pillar-card {
+            border-radius: 18px;
+            padding: 1.4rem;
+            position: relative;
+            overflow: hidden;
+            color: #fff;
+        }
+        .pillar-card h3 { font-family: Sora, sans-serif; font-size: 1.05rem; margin: .7rem 0 .5rem; }
+        .pillar-card p  { margin: 0; font-size: .84rem; opacity: .88; line-height: 1.6; }
+        .pillar-card .p-icon { font-size: 1.8rem; }
+        .pc-1 { background: linear-gradient(135deg, #0c4a6e, #0284c7); }
+        .pc-2 { background: linear-gradient(135deg, #14532d, #15803d); }
+        .pc-3 { background: linear-gradient(135deg, #4c1d95, #7c3aed); }
+        .pc-4 { background: linear-gradient(135deg, #7c2d12, #ea580c); }
+        /* Hero badge mejorado */
+        .hero-tag {
+            border: 1.5px solid rgba(56,189,248,.6);
+            background: linear-gradient(130deg, rgba(56,189,248,.15), rgba(124,58,237,.1));
+            color: #0f3a6e;
+        }
+        /* Acceso mejorado */
+        .access-card {
+            transition: transform .22s ease, box-shadow .22s ease;
+        }
+        .access-card:hover { transform: translateY(-4px); box-shadow: 0 20px 44px rgba(0,0,0,.1); }
+        [data-theme="dark"] .value-card { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .value-card p { color: #94a3b8; }
+        [data-theme="dark"] .hkpi { background: rgba(30,41,59,.75); border-color: #334155; }
+        [data-theme="dark"] .hkpi .hkpi-lbl { color: #94a3b8; }
+        @media (max-width: 768px) {
+            .hero-kpi-strip { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .hero-kpi-strip { grid-template-columns: 1fr 1fr; }
+        }
+
+        .section-jump-wrap {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 80;
+        }
+        .section-jump-btn {
+            border: 0;
+            border-radius: 999px;
+            background: linear-gradient(130deg, #0ea5e9, #7c3aed);
+            color: #fff;
+            font-weight: 800;
+            font-size: .82rem;
+            padding: .62rem .95rem;
+            box-shadow: 0 12px 28px rgba(14,165,233,.28);
+        }
+        .section-jump-menu {
+            margin-top: .55rem;
+            min-width: 230px;
+            background: rgba(255,255,255,.96);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            box-shadow: 0 16px 34px rgba(15,23,42,.18);
+            overflow: hidden;
+            transform: translateX(120%);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform .26s ease, opacity .26s ease;
+        }
+        .section-jump-menu.show {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .section-jump-menu a {
+            display: block;
+            text-decoration: none;
+            color: #1e3a5f;
+            font-size: .81rem;
+            font-weight: 700;
+            padding: .58rem .78rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .section-jump-menu a:last-child { border-bottom: 0; }
+        .section-jump-menu a:hover { background: #eff6ff; }
+
+        .concept-grid {
+            margin-top: 1.15rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: .9rem;
+        }
+        .concept-card {
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: rgba(255,255,255,.9);
+            padding: 1rem;
+        }
+        .concept-card h4 {
+            font-family: Sora, sans-serif;
+            font-size: .95rem;
+            margin: 0 0 .35rem;
+        }
+        .concept-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: .82rem;
+            line-height: 1.58;
+        }
+
+        .mini-flow {
+            margin-top: 1rem;
+            border-radius: 16px;
+            border: 1px dashed #8ec8e8;
+            background: rgba(255,255,255,.86);
+            padding: .95rem;
+        }
+        .mini-flow-row {
+            display: grid;
+            grid-template-columns: 1fr 40px 1fr 40px;
+            gap: .6rem;
+            align-items: center;
+        }
+        .mini-step {
+            border-radius: 12px;
+            border: 1px solid #c6e6f8;
+            background: #fff;
+            padding: .65rem;
+            text-align: center;
+            font-size: .76rem;
+            color: #325474;
+            font-weight: 700;
+        }
+        .mini-step i {
+            display: block;
+            font-size: 1rem;
+            margin-bottom: .25rem;
+            color: #0ea5e9;
+        }
+        .mini-arrow {
+            text-align: center;
+            color: #7c3aed;
+            font-size: 1.05rem;
+            font-weight: 900;
+        }
+
+        /* ── Chart canvas — dejar que Chart.js controle alturas ── */
+        .textil-chart-box canvas {
+            display: block;
+            width: 100% !important;
+        }
+
+        /* ── TCB (Textil Chart Box) componentes interactivos ── */
+        .tcb-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: .5rem;
+            margin-bottom: .65rem;
+        }
+        .tcb-title {
+            font-family: Sora, sans-serif;
+            font-size: .95rem;
+            font-weight: 700;
+            color: var(--txt);
+            display: flex;
+            align-items: center;
+            gap: .45rem;
+        }
+        .tcb-controls {
+            display: inline-flex;
+            gap: .25rem;
+            background: rgba(56,189,248,.1);
+            border-radius: 9px;
+            padding: .22rem;
+        }
+        .tcb-toggle {
+            border: none;
+            background: transparent;
+            border-radius: 7px;
+            font-family: Sora, sans-serif;
+            font-size: .72rem;
+            font-weight: 700;
+            color: var(--muted);
+            padding: .24rem .72rem;
+            cursor: pointer;
+            transition: background .22s, color .22s, transform .14s;
+            white-space: nowrap;
+            line-height: 1.3;
+        }
+        .tcb-toggle.active {
+            background: var(--grad-main);
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(56,189,248,.28);
+        }
+        .tcb-toggle:not(.active):hover {
+            background: rgba(56,189,248,.2);
+            color: var(--txt);
+            transform: translateY(-1px);
+        }
+        .tcb-kpis {
+            display: flex;
+            gap: .85rem;
+            flex-wrap: wrap;
+            margin-bottom: .75rem;
+            padding: .45rem .7rem;
+            border-radius: 12px;
+            background: rgba(56,189,248,.06);
+            border: 1px solid rgba(56,189,248,.16);
+        }
+        .tcb-kpi {
+            display: flex;
+            flex-direction: column;
+            gap: .05rem;
+        }
+        .tcb-kpi-val {
+            font-family: Sora, sans-serif;
+            font-weight: 900;
+            font-size: .95rem;
+            line-height: 1.1;
+        }
+        .tcb-kpi-lbl {
+            font-size: .65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--muted);
+        }
+        [data-theme="dark"] .tcb-controls { background: rgba(56,189,248,.14); }
+        [data-theme="dark"] .tcb-kpis { background: rgba(56,189,248,.07); border-color: rgba(56,189,248,.22); }
+        [data-theme="dark"] .tcb-title { color: #e2e8f0; }
+
+        .bio-basic-grid {
+            margin-top: 1.15rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: .85rem;
+        }
+        .bio-basic-card {
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: rgba(255,255,255,.9);
+            padding: 1rem;
+        }
+        .bio-basic-card .step-badge {
+            display: inline-block;
+            font-size: .68rem;
+            font-weight: 800;
+            letter-spacing: .08em;
+            color: #fff;
+            background: linear-gradient(130deg,#059669,#0ea5e9);
+            border-radius: 999px;
+            padding: .18rem .55rem;
+            margin-bottom: .4rem;
+        }
+        .bio-basic-card h4 { margin: .1rem 0 .35rem; font-family: Sora, sans-serif; font-size: .9rem; }
+        .bio-basic-card p  { margin: 0; color: var(--muted); font-size: .81rem; line-height: 1.55; }
+
+        .calc-basic {
+            margin-top: 1.2rem;
+            border-radius: 16px;
+            border: 1px solid #0ea5e9;
+            background: linear-gradient(130deg, rgba(14,165,233,.08), rgba(16,185,129,.08));
+            padding: 1rem;
+        }
+        .calc-basic h4 { font-family: Sora, sans-serif; font-size: .97rem; margin: 0 0 .6rem; }
+        .calc-step-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: .75rem;
+        }
+        .calc-step {
+            border-radius: 12px;
+            background: rgba(255,255,255,.92);
+            border: 1px solid #c7e6f5;
+            padding: .8rem;
+        }
+        .calc-step strong { display: block; color: #0f4f82; font-size: .8rem; margin-bottom: .2rem; }
+        .calc-step p { margin: 0; color: #355776; font-size: .78rem; line-height: 1.52; }
+
+        [data-theme="dark"] .section-jump-menu { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .section-jump-menu a { color: #e2e8f0; border-bottom-color: #334155; }
+        [data-theme="dark"] .section-jump-menu a:hover { background: #0f172a; }
+        [data-theme="dark"] .concept-card,
+        [data-theme="dark"] .bio-basic-card,
+        [data-theme="dark"] .calc-step { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .concept-card p,
+        [data-theme="dark"] .bio-basic-card p,
+        [data-theme="dark"] .calc-step p { color: #94a3b8; }
+        [data-theme="dark"] .calc-step strong { color: #67e8f9; }
+        [data-theme="dark"] .mini-flow { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .mini-step { background: #0f172a; border-color: #334155; color: #94a3b8; }
+
+        /* ══ BIOENERGIA ══ */
+        .bio-section { position:relative;z-index:1;padding:2.8rem 0; }
+        .bio-badge {
+            display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;border-radius:999px;
+            background:linear-gradient(130deg,#065f46,#059669);color:#fff;
+            font-weight:800;font-size:.77rem;letter-spacing:.07em;text-transform:uppercase;margin-bottom:.7rem;
+        }
+        .bio-unique-grid {
+            margin-top:1.2rem;display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.9rem;
+        }
+        .bio-unique-card {
+            border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.88);padding:1rem;
+            position:relative;padding-top:1.4rem;
+        }
+        .bio-num {
+            position:absolute;top:-11px;left:14px;
+            background:linear-gradient(130deg,#065f46,#10b981);color:#fff;
+            font-weight:800;font-size:.74rem;border-radius:999px;padding:.18rem .65rem;
+        }
+        .bio-unique-card h4 { margin:.3rem 0 .3rem;font-family:Sora,sans-serif;font-size:.9rem; }
+        .bio-unique-card p  { margin:0;color:#214668;font-size:.81rem;line-height:1.55; }
+        .bio-formula-box {
+            margin-top:1.4rem;background:rgba(15,23,42,.88);border-radius:16px;
+            padding:1.3rem;border:1px solid rgba(16,185,129,.3);color:#e2e8f0;
+        }
+        .bio-formula-box h4 { font-family:Sora,sans-serif;color:#10b981;margin:0 0 .9rem;font-size:.97rem; }
+        .bio-formula-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:.7rem; }
+        .bio-formula-item { background:rgba(255,255,255,.08);border-radius:10px;padding:.8rem; }
+        .bio-formula-item .f-title { color:#06b6d4;font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem; }
+        .bio-formula-item code { background:rgba(6,182,212,.15);color:#67e8f9;padding:.12rem .4rem;border-radius:5px;font-size:.77rem;display:block;margin-bottom:.35rem; }
+        .bio-formula-item p { margin:0;font-size:.79rem;color:#cbd5e1;line-height:1.5; }
+        .bio-sce-grid { margin-top:1.4rem;display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem; }
+        .bio-sce-card { border-radius:14px;padding:1.1rem;text-align:center;color:#fff; }
+        .bio-sce-card.c1 { background:linear-gradient(135deg,#1e293b,#334155); }
+        .bio-sce-card.c2 { background:linear-gradient(135deg,#065f46,#059669); }
+        .bio-sce-card.c3 { background:linear-gradient(135deg,#5b21b6,#7c3aed); }
+        .bio-sce-card .sc-tag  { font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.15);border-radius:999px;padding:.18rem .6rem;display:inline-block;margin-bottom:.5rem; }
+        .bio-sce-card .sc-kwh  { font-size:1.7rem;font-weight:900;line-height:1.1; }
+        .bio-sce-card .sc-rd   { font-size:.97rem;font-weight:700;opacity:.88; }
+        .bio-sce-card .sc-anual{ font-size:.72rem;opacity:.6;margin-top:.3rem; }
+
+        /* ══ SECTOR TEXTIL ══ */
+        .textil-section { position:relative;z-index:1;padding:2.8rem 0; }
+        .textil-badge {
+            display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;border-radius:999px;
+            background:linear-gradient(130deg,#7c3aed,#0e7490);color:#fff;
+            font-weight:800;font-size:.77rem;letter-spacing:.07em;text-transform:uppercase;margin-bottom:.7rem;
+        }
+        .textil-heat-grid {
+            margin-top:1.1rem;display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:.85rem;
+        }
+        .textil-heat-card { border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.88);padding:.9rem;text-align:center; }
+        .textil-heat-card .heat-icon { font-size:1.7rem;margin-bottom:.35rem; }
+        .textil-heat-card h5 { font-family:Sora,sans-serif;font-size:.85rem;margin:0 0 .3rem; }
+        .heat-temp { background:linear-gradient(130deg,#ef4444,#f97316);color:#fff;border-radius:999px;display:inline-block;font-weight:800;font-size:.77rem;padding:.16rem .6rem;margin:.25rem 0; }
+        .textil-heat-card p { margin:0;color:var(--muted);font-size:.78rem; }
+        .textil-roi-grid { margin-top:1.4rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:1rem; }
+        .textil-roi-card { border-radius:16px;padding:1.2rem;color:#fff;text-align:center; }
+        .textil-roi-card.sm { background:linear-gradient(135deg,#0e7490,#06b6d4); }
+        .textil-roi-card.md { background:linear-gradient(135deg,#5b21b6,#7c3aed); }
+        .textil-roi-card.lg { background:linear-gradient(135deg,#065f46,#10b981); }
+        .textil-roi-card .roi-size { font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.75;margin-bottom:.4rem; }
+        .textil-roi-card .roi-kwh  { font-size:1.55rem;font-weight:900; }
+        .textil-roi-card .roi-rd   { font-size:1rem;font-weight:700;opacity:.88; }
+        .textil-roi-card .roi-meta { font-size:.74rem;opacity:.68;margin-top:.35rem; }
+        .textil-chart-box { background:rgba(255,255,255,.90);border:1px solid var(--line);border-radius:18px;padding:1.3rem;margin-top:1.4rem; }
+        .textil-chart-box h4 { font-family:Sora,sans-serif;font-size:.97rem;margin:0 0 .9rem;color:var(--txt); }
+        .textil-chart-box {
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 14px 36px rgba(17, 93, 160, 0.12);
+        }
+        .textil-chart-box::before {
+            content: '';
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 3px;
+            background: linear-gradient(90deg, #06b6d4 0%, #10b981 44%, #7c3aed 100%);
+        }
+        .textil-chart-note {
+            margin-top: .9rem;
+            border-radius: 12px;
+            border: 1px dashed rgba(27, 93, 146, 0.45);
+            background: rgba(255, 255, 255, 0.72);
+            color: #214668;
+            font-size: .79rem;
+            padding: .65rem .75rem;
+            line-height: 1.55;
+        }
+        [data-theme="dark"] .bio-unique-card { background:#1e293b; }
+        [data-theme="dark"] .bio-unique-card p { color:#94a3b8; }
+        [data-theme="dark"] .textil-heat-card { background:#1e293b; }
+        [data-theme="dark"] .textil-heat-card p { color:#94a3b8; }
+        [data-theme="dark"] .textil-chart-box {
+            background: linear-gradient(170deg, rgba(30,41,59,.96), rgba(15,23,42,.95));
+            color:#e2e8f0;
+            border-color: rgba(59,130,246,.35);
+            box-shadow: 0 16px 34px rgba(1, 12, 30, 0.55);
+        }
+        [data-theme="dark"] .textil-chart-box h4 { color:#e2e8f0; }
+        [data-theme="dark"] .textil-chart-note {
+            background: rgba(15, 23, 42, 0.92);
+            border-color: rgba(56, 189, 248, 0.5);
+            color: #cbd5e1;
+        }
+        [data-theme="dark"] .panel-card,
+        [data-theme="dark"] .about-card,
+        [data-theme="dark"] .access-card,
+        [data-theme="dark"] .metric-card,
+        [data-theme="dark"] .illustration-card,
+        [data-theme="dark"] .purpose-card,
+        [data-theme="dark"] .contact-card,
+        [data-theme="dark"] .bio-unique-card,
+        [data-theme="dark"] .textil-heat-card,
+        [data-theme="dark"] .concept-card {
+            border-color: rgba(56, 189, 248, 0.25);
+            box-shadow: 0 12px 26px rgba(1, 12, 30, 0.4);
+        }
+        [data-theme="dark"] .dropdown-menu {
+            background: #0f172a;
+            border-color: rgba(56, 189, 248, 0.28);
+        }
+        [data-theme="dark"] .dropdown-item {
+            color: #cbd5e1;
+        }
+        [data-theme="dark"] .dropdown-item:hover,
+        [data-theme="dark"] .dropdown-item:focus {
+            background: rgba(56, 189, 248, 0.16);
+            color: #e2e8f0;
+        }
+        @media(max-width:768px) { .bio-sce-grid { grid-template-columns:1fr; } }
     </style>
     <script>(function(){var t=localStorage.getItem('prermi_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
 </head>
@@ -869,18 +1499,32 @@
                 <img src="/PRERMI/uploads/LOGO/LOGO%20OFICIAL%20PRERMI.png" alt="Logo PRERMI" style="height:44px;width:auto;background:#fff;border-radius:8px;padding:3px 8px;box-shadow:0 2px 8px rgba(0,0,0,.2);">
                 <span class="brand-name">PRERMI<span class="brand-sub">Feria Proindustria</span></span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Menu">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Menú">
                 <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
             </button>
             <div class="collapse navbar-collapse" id="navMain">
                 <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
-                    <li class="nav-item"><a class="nav-link" href="#sobre-nosotros">Sobre nosotros</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navSecciones" role="button" data-bs-toggle="dropdown" aria-expanded="false">Secciones</a>
+                        <ul class="dropdown-menu" aria-labelledby="navSecciones">
+                            <li><a class="dropdown-item" href="#inicio">🏠 Inicio</a></li>
+                            <li><a class="dropdown-item" href="#sobre-nosotros">🧩 Proyecto PRERMI</a></li>
+                            <li><a class="dropdown-item" href="#impacto">📈 Impacto</a></li>
+                            <li><a class="dropdown-item" href="#analitica">📊 Analítica</a></li>
+                            <li><a class="dropdown-item" href="#contenedores-inteligentes">🗑️ Contenedores Inteligentes</a></li>
+                            <li><a class="dropdown-item" href="#monitoreo-inteligente">🛰️ Monitoreo Inteligente</a></li>
+                            <li><a class="dropdown-item" href="#bioenergia">🌿 Sistema BIOMASA + Peltier</a></li>
+                            <li><a class="dropdown-item" href="#textil">🧵 Sector Textil</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item"><a class="nav-link" href="web/register.php">Registrarse</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#impacto">Impacto</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#analitica">Analítica</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#acceso">Acceso</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#procesos">Procesos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#guia">Guía</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
+                        <ul class="dropdown-menu" aria-labelledby="navAdmin">
+                            <li><a class="dropdown-item" href="web/admin/registerA.php"><i class="fa-solid fa-user-shield"></i> Registrarse como Admin</a></li>
+                            <li><a class="dropdown-item" href="web/admin/loginA.php"><i class="fa-solid fa-lock"></i> Iniciar sesión Admin</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link contact-nav-link" href="#contacto">
                             <img src="web/assets/img/image.png" alt="Logo Instituto Tecnológico México" class="contact-mini-logo">
@@ -899,106 +1543,116 @@
 
     <header class="hero" id="inicio">
         <div class="container">
-            <span class="hero-tag fade-up"><i class="fa-solid fa-cubes-stacked"></i> Solución oficial para Feria Proindustria</span>
-            <h1 class="hero-title fade-up delay-1">Programa de Reabastecimiento Energético, Residuos y Monitoreo Inteligente (PRERMI)</h1>
+            <span class="hero-tag fade-up"><i class="fa-solid fa-award"></i> Presentado en Feria Proindustria 2026 &mdash; Instituto Tecnológico México</span>
+            <h1 class="hero-title fade-up delay-1">
+                <span class="grad-text">Programa de Reabastecimiento Energético,</span><br>Residuos y Monitoreo Inteligente <span class="grad-text-green">(PRERMI)</span>
+            </h1>
             <p class="hero-lead fade-up delay-2">
-                Fusionamos la operación de campo, el monitoreo IoT, la trazabilidad por usuario y la inteligencia de datos
-                para convertir residuos en energía útil, medible y escalable en tiempo real.
+                PRERMI automatiza la recolección de residuos, los convierte en energía mediante biogás + celdas Peltier y entrega control total vía plataforma web. <strong>Una inversión que se paga sola.</strong>
+            </p>
+            <p class="section-sub fade-up delay-2" style="max-width:900px;margin-top:.45rem;">
+                <strong>Programa de Reabastecimiento Energético, Residuos y Monitoreo Inteligente (PRERMI):</strong> solución integral para convertir residuos en valor energético, reducir costos operativos y digitalizar toda la gestión ambiental de tu empresa.
             </p>
             <div class="hero-actions fade-up delay-3">
-                <a class="btn-outline-soft" href="web/register.php"><i class="fa-solid fa-user-plus"></i> Registrarse</a>
-                <a class="btn-main" href="web/login.php"><i class="fa-solid fa-gauge-high"></i> Acceso Usuarios</a>
-                <a class="btn-alt" href="web/admin/loginA.php"><i class="fa-solid fa-shield-halved"></i> Acceso Administradores</a>
-                <a class="btn-outline-soft" href="#contacto"><i class="fa-solid fa-handshake"></i> Agendar Reunión</a>
+                <a class="btn-main" href="#bioenergia"><i class="fa-solid fa-fire-flame-curved"></i> Ver tecnología</a>
+                <a class="btn-alt" href="#contacto"><i class="fa-solid fa-handshake"></i> Agendar demostración</a>
+                <a class="btn-outline-soft" href="web/login.php"><i class="fa-solid fa-gauge-high"></i> Acceder a la plataforma</a>
             </div>
 
-            <div class="hero-art fade-up delay-3">
-                <img src="web/assets/img/illus-hero-energy.svg" alt="Ilustración de energía circular PRERMI">
-            </div>
-
-            <div class="quick-stats">
-                <div class="quick-card">
-                    <div class="lbl">Ahorro operativo anual</div>
-                    <div class="num">RD$ 2.9M</div>
+            <div class="hero-kpi-strip fade-up delay-3">
+                <div class="hkpi">
+                    <div class="hkpi-val" style="color:#38bdf8;">RD$ 2.9M</div>
+                    <div class="hkpi-lbl">Ahorro operativo / año</div>
                 </div>
-                <div class="quick-card">
-                    <div class="lbl">ROI estimado</div>
-                    <div class="num">14.8 meses</div>
+                <div class="hkpi">
+                    <div class="hkpi-val" style="color:#10b981;">14.8 meses</div>
+                    <div class="hkpi-lbl">ROI estimado</div>
                 </div>
-                <div class="quick-card">
-                    <div class="lbl">Reducción huella</div>
-                    <div class="num">41%</div>
+                <div class="hkpi">
+                    <div class="hkpi-val" style="color:#7c3aed;">41%</div>
+                    <div class="hkpi-lbl">Reducción de huella</div>
                 </div>
-                <div class="quick-card">
-                    <div class="lbl">Eventos trazables</div>
-                    <div class="num">100%</div>
+                <div class="hkpi">
+                    <div class="hkpi-val" style="color:#f97316;">100%</div>
+                    <div class="hkpi-lbl">Eventos trazables</div>
                 </div>
             </div>
         </div>
     </header>
 
+    <div class="section-divider"></div>
+
     <section class="section" id="sobre-nosotros">
         <div class="container">
-            <h2 class="section-title">SOBRE NOSOTROS</h2>
-            <p class="section-sub">PRERMI es una iniciativa que transforma residuos en energía útil mediante tecnología aplicada, trazabilidad digital y monitoreo continuo para apoyar operaciones industriales sostenibles.</p>
+            <span style="display:inline-flex;align-items:center;gap:.45rem;font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#0e7490;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.28);border-radius:999px;padding:.3rem .85rem;margin-bottom:.7rem;">
+                <i class="fa-solid fa-bolt"></i> ¿Por qué PRERMI?
+            </span>
+            <h2 class="section-title">Programa de Reabastecimiento Energético, Residuos y Monitoreo Inteligente (PRERMI)</h2>
+            <p class="section-sub">De los residuos al panel de control: automatizamos cada paso, generamos energía y te damos los números que importan.</p>
 
-            <div class="about-grid">
-                <article class="about-card">
-                    <h3><i class="fa-solid fa-circle-info"></i> ¿Qué es PRERMI?</h3>
-                    <p>
-                        El <strong>Programa de Reabastecimiento Energético, Residuos y Monitoreo Inteligente (PRERMI)</strong>
-                        integra sensores IoT, analítica de datos y control operativo para convertir residuos en valor energético.
-                        Su enfoque combina eficiencia, sostenibilidad y evidencia técnica para la toma de decisiones en tiempo real.
-                    </p>
+            <div class="value-grid">
+                <article class="value-card" style="--vc-grad: linear-gradient(130deg,#0e7490,#06b6d4);">
+                    <div class="vc-icon"><i class="fa-solid fa-coins"></i></div>
+                    <h4>Reduce tu factura eléctrica</h4>
+                    <p>El biogás generado por tus residuos orgánicos alimenta un generador. Ahorra hasta <strong>RD$ 15,600/mes</strong> según el volumen operativo.</p>
                 </article>
-
-                <article class="about-card">
-                    <h3><i class="fa-solid fa-layer-group"></i> Rasgos Generales Integrados</h3>
-                    <ul class="about-points">
-                        <li><i class="fa-solid fa-check"></i> Monitoreo de depósitos y eventos con trazabilidad por usuario.</li>
-                        <li><i class="fa-solid fa-check"></i> Visualización de indicadores de energía, costos y rendimiento.</li>
-                        <li><i class="fa-solid fa-check"></i> Control administrativo para seguimiento operativo y cumplimiento.</li>
-                        <li><i class="fa-solid fa-check"></i> Plataforma unificada para usuarios y administradores.</li>
-                    </ul>
+                <article class="value-card" style="--vc-grad: linear-gradient(130deg,#065f46,#10b981);">
+                    <div class="vc-icon"><i class="fa-solid fa-recycle"></i></div>
+                    <h4>Valoriza tus residuos</h4>
+                    <p>Cada kilogramo depositado genera crédito energético. Convierte un costo de disposición en un <strong>activo productivo medible</strong>.</p>
+                </article>
+                <article class="value-card" style="--vc-grad: linear-gradient(130deg,#5b21b6,#7c3aed);">
+                    <div class="vc-icon"><i class="fa-solid fa-microchip"></i></div>
+                    <h4>Control IoT en tiempo real</h4>
+                    <p>Temperatura, corriente, ventilación y energía generada — visibles desde cualquier dispositivo. <strong>Sin instalar software adicional.</strong></p>
+                </article>
+                <article class="value-card" style="--vc-grad: linear-gradient(130deg,#9a3412,#f97316);">
+                    <div class="vc-icon"><i class="fa-solid fa-id-badge"></i></div>
+                    <h4>Trazabilidad biométrica</h4>
+                    <p>Reconocimiento facial por contenedor. Cada depósito queda vinculado al usuario, con historial, sanciones y reportes <strong>automáticos</strong>.</p>
                 </article>
             </div>
         </div>
     </section>
+
+    <div class="section-divider"></div>
 
     <section class="section" id="impacto">
         <div class="container">
-            <h2 class="section-title">Información puntual para decisiones industriales</h2>
-            <p class="section-sub">PRERMI presenta indicadores accionables para operaciones, sostenibilidad, cumplimiento y retorno económico.</p>
+            <h2 class="section-title">Números que <span class="grad-text">hablan por sí solos</span></h2>
+            <p class="section-sub">Resultados reales a escala industrial. Estos son los indicadores que PRERMI entrega desde el primer mes de operación.</p>
 
-            <div class="metric-grid">
-                <article class="metric-card">
-                    <span class="icon-box"><i class="fa-solid fa-bolt"></i></span>
-                    <h3 class="counter" data-target="1240">0</h3>
-                    <p>kWh mensuales promedio recuperados</p>
+            <div class="impact-num-grid">
+                <article class="impact-card ic-blue">
+                    <div class="ic-icon"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="ic-num counter" data-target="1240">0</div>
+                    <div class="ic-lbl">kWh mensuales promedio recuperados</div>
                 </article>
-                <article class="metric-card">
-                    <span class="icon-box"><i class="fa-solid fa-coins"></i></span>
-                    <h3 class="counter" data-target="80600">0</h3>
-                    <p>RD$ de valor económico mensual</p>
+                <article class="impact-card ic-green">
+                    <div class="ic-icon"><i class="fa-solid fa-coins"></i></div>
+                    <div class="ic-num counter" data-target="80600">0</div>
+                    <div class="ic-lbl">RD$ de valor económico mensual</div>
                 </article>
-                <article class="metric-card">
-                    <span class="icon-box"><i class="fa-solid fa-recycle"></i></span>
-                    <h3 class="counter" data-target="38">0</h3>
-                    <p>Toneladas/mes de residuos valorizados</p>
+                <article class="impact-card ic-purple">
+                    <div class="ic-icon"><i class="fa-solid fa-recycle"></i></div>
+                    <div class="ic-num counter" data-target="38">0</div>
+                    <div class="ic-lbl">Toneladas/mes de residuos valorizados</div>
                 </article>
-                <article class="metric-card">
-                    <span class="icon-box"><i class="fa-solid fa-user-check"></i></span>
-                    <h3 class="counter" data-target="97">0</h3>
-                    <p>% de validaciones biométrica/usuario correctas</p>
+                <article class="impact-card ic-orange">
+                    <div class="ic-icon"><i class="fa-solid fa-user-check"></i></div>
+                    <div class="ic-num counter" data-target="97">0</div>
+                    <div class="ic-lbl">% precisión biométrica / usuario</div>
                 </article>
             </div>
         </div>
     </section>
 
+    <div class="section-divider"></div>
+
     <section class="section" id="analitica">
         <div class="container">
-            <h2 class="section-title">Analítica integrada: energía, costos y desempeño</h2>
-            <p class="section-sub">Panel combinado para presentar en la feria: lectura ejecutiva y trazabilidad operativa en una sola vista.</p>
+            <h2 class="section-title">Tu operación completa, <span class="grad-text">en una pantalla</span></h2>
+            <p class="section-sub">Paneles ejecutivos de energía, costos y desempeño para decisiones inmediatas. Sin cálculos extra, sin hojas de cálculo.</p>
 
             <div class="row g-3 charts-grid">
                 <div class="col-lg-8">
@@ -1021,63 +1675,160 @@
                 </div>
             </div>
 
-            <div class="illustration-row">
-                <article class="illustration-card">
-                    <img src="web/assets/img/illus-iot-monitor.svg" alt="Ilustración monitoreo IoT y biometría">
-                </article>
-                <article class="illustration-card">
-                    <img src="web/assets/img/illus-proindustria-stand.svg" alt="Ilustración de stand para la Feria Proindustria">
-                </article>
-            </div>
         </div>
     </section>
 
+    <div class="section-divider"></div>
+
     <section class="section" id="acceso">
         <div class="container">
-            <h2 class="section-title">Acceso de plataforma combinado</h2>
-            <p class="section-sub">Integración del flujo de acceso de usuarios y administradores en una misma interfaz inicial.</p>
+            <h2 class="section-title">Accede ahora <span class="grad-text">desde cualquier dispositivo</span></h2>
+            <p class="section-sub">No se requiere instalación. Entra con tu cuenta y ten control total desde el celular, tablet o computadora.</p>
 
             <div class="access-grid">
                 <article class="access-card access-user">
                     <span class="access-icon"><i class="fa-solid fa-user"></i></span>
                     <h3 style="font-family: Sora, sans-serif;">Portal de Usuarios</h3>
-                    <p style="color: var(--muted);">Consulta depósitos, sanciones, historial y trazabilidad individual de forma segura.</p>
+                    <p style="color: var(--muted);">Consulta tus depósitos, créditos energéticos, historial y sanciones. Trazabilidad individual 100% digital.</p>
                     <a class="btn-main" href="web/login.php"><i class="fa-solid fa-right-to-bracket"></i> Ingresar como Usuario</a>
                 </article>
                 <article class="access-card access-admin">
                     <span class="access-icon"><i class="fa-solid fa-user-shield"></i></span>
                     <h3 style="font-family: Sora, sans-serif;">Panel Administrativo</h3>
-                    <p style="color: var(--muted);">Monitorea capturas, depósitos registrados, sanciones y control operativo en tiempo real.</p>
-                    <a class="btn-alt" href="web/admin/loginA.php"><i class="fa-solid fa-lock"></i> Ingresar como Admin</a>
+                    <p style="color: var(--muted);">Monitorea sensores en tiempo real, gestiona usuarios, emite sanciones y controla el biorreactor BIOMASA remotamente.</p>
+                    <div class="access-actions">
+                        <a class="btn-alt" href="web/admin/loginA.php"><i class="fa-solid fa-lock"></i> Ingresar como Admin</a>
+                        <a class="btn-outline-soft" href="web/admin/registerA.php"><i class="fa-solid fa-user-plus"></i> Registrar Admin</a>
+                    </div>
                 </article>
             </div>
         </div>
     </section>
+
+    <section class="section" id="contenedores-inteligentes" style="padding-top:1.2rem;">
+        <div class="container">
+            <h2 class="section-title">Contenedores Inteligentes</h2>
+            <p class="section-sub">Reciben residuos, validan usuario y registran todo automáticamente. Más control, menos pérdidas y mejor experiencia para el ciudadano o colaborador.</p>
+            <div class="concept-grid">
+                <article class="concept-card">
+                    <h4><i class="fa-solid fa-face-smile" style="color:#0ea5e9;"></i> Identificación automática</h4>
+                    <p>Reconocimiento facial para saber quién depositó, cuándo y cuánto. El registro queda listo para seguimiento y recompensas.</p>
+                </article>
+                <article class="concept-card">
+                    <h4><i class="fa-solid fa-scale-balanced" style="color:#10b981;"></i> Pesaje en tiempo real</h4>
+                    <p>El contenedor calcula los kg depositados y envía los datos al sistema sin procesos manuales.</p>
+                </article>
+                <article class="concept-card">
+                    <h4><i class="fa-solid fa-shield-halved" style="color:#7c3aed;"></i> Trazabilidad y control</h4>
+                    <p>Cada evento queda respaldado con fecha, usuario y contenedor para auditoría y control administrativo.</p>
+                </article>
+                <article class="concept-card">
+                    <h4><i class="fa-solid fa-hand-holding-dollar" style="color:#f97316;"></i> Beneficio directo</h4>
+                    <p>Convierte un proceso de descarte en una fuente medible de ahorro energético y valor económico.</p>
+                </article>
+            </div>
+
+            <div class="mini-flow">
+                <h4 style="font-family:Sora,sans-serif;font-size:.9rem;margin:0 0 .6rem;"><i class="fa-solid fa-diagram-project" style="color:#7c3aed;"></i> Flujo básico de Contenedores Inteligentes</h4>
+                <div class="mini-flow-row">
+                    <div class="mini-step"><i class="fa-solid fa-user-check"></i>Usuario se valida</div>
+                    <div class="mini-arrow">→</div>
+                    <div class="mini-step"><i class="fa-solid fa-weight-scale"></i>Se pesa el residuo</div>
+                    <div class="mini-arrow">→</div>
+                </div>
+                <div class="mini-flow-row" style="margin-top:.55rem;">
+                    <div class="mini-step"><i class="fa-solid fa-database"></i>Se registra en la nube</div>
+                    <div class="mini-arrow">→</div>
+                    <div class="mini-step"><i class="fa-solid fa-bolt"></i>Genera crédito energético</div>
+                    <div class="mini-arrow">→</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="monitoreo-inteligente" style="padding-top:0.8rem;">
+        <div class="container">
+            <h2 class="section-title">Monitoreo Inteligente</h2>
+            <p class="section-sub">PRERMI te muestra el estado real de la operación: sensores, energía, alertas y rendimiento financiero en un solo panel web.</p>
+            <div class="concept-grid">
+                <article class="concept-card">
+                    <h4><i class="fa-solid fa-satellite-dish" style="color:#06b6d4;"></i> Sensores 24/7</h4>
+                    <p>Temperatura, corriente, ventilación y generación energética actualizados continuamente.</p>
+                </article>
+                <article class="concept-card">
+                    <h4><i class="fa-solid fa-bell" style="color:#ef4444;"></i> Alertas inmediatas</h4>
+                    <p>Si un valor sale de rango, el sistema notifica para actuar rápido y evitar pérdidas operativas.</p>
+                </article>
+                <article class="concept-card">
+                    <h4><i class="fa-solid fa-chart-column" style="color:#10b981;"></i> Reportes automáticos</h4>
+                    <p>Informes de ahorro, energía y cumplimiento listos para dirección, clientes e instituciones.</p>
+                </article>
+                <article class="concept-card">
+                    <h4><i class="fa-solid fa-mobile-screen-button" style="color:#7c3aed;"></i> Acceso desde cualquier lugar</h4>
+                    <p>La gerencia puede revisar indicadores clave desde celular o laptop sin depender de visitas presenciales.</p>
+                </article>
+            </div>
+
+            <div class="real-photo-grid media-distributed" style="margin-top:1rem;">
+                <article class="real-photo-card span-7 row-2">
+                    <img src="/PRERMI/uploads/images/monitoring-ai-performance.jpg" class="img-focus-center" alt="Sala de control y analitica operativa" loading="lazy" onerror="this.onerror=null;this.src='/PRERMI/web/assets/img/illus-proindustria-stand.svg';">
+                </article>
+                <article class="real-photo-card span-5 row-2">
+                    <img src="/PRERMI/uploads/images/facial-recognition.jpg" class="img-focus-center" alt="Biometria facial para validacion de usuario" loading="lazy" onerror="this.onerror=null;this.src='/PRERMI/web/assets/img/illus-iot-monitor.svg';">
+                </article>
+            </div>
+
+            <div class="mini-flow">
+                <h4 style="font-family:Sora,sans-serif;font-size:.9rem;margin:0 0 .6rem;"><i class="fa-solid fa-diagram-project" style="color:#7c3aed;"></i> Flujo básico de Monitoreo Inteligente</h4>
+                <div class="mini-flow-row">
+                    <div class="mini-step"><i class="fa-solid fa-satellite-dish"></i>Sensores IoT envían data</div>
+                    <div class="mini-arrow">→</div>
+                    <div class="mini-step"><i class="fa-solid fa-microchip"></i>PRERMI procesa eventos</div>
+                    <div class="mini-arrow">→</div>
+                </div>
+                <div class="mini-flow-row" style="margin-top:.55rem;">
+                    <div class="mini-step"><i class="fa-solid fa-bell"></i>Genera alertas</div>
+                    <div class="mini-arrow">→</div>
+                    <div class="mini-step"><i class="fa-solid fa-chart-line"></i>Dashboard y reportes</div>
+                    <div class="mini-arrow">→</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
 
     <section class="section" id="proposito">
         <div class="container">
-            <h2 class="section-title">Propósito estratégico PRERMI</h2>
-            <p class="section-sub">Marco institucional para la evolución de ciudades limpias, seguras y sostenibles.</p>
+            <h2 class="section-title">Por qué <span class="grad-text">invertir en PRERMI</span></h2>
+            <p class="section-sub">Cuatro pilares que justifican la decisión desde el primer día.</p>
 
-            <div class="purpose-grid">
-                <article class="purpose-card">
-                    <span class="purpose-tag">🌱</span>
-                    <h3><i class="fa-solid fa-bullseye"></i> Misión</h3>
-                    <p>Transformar la gestión urbana mediante la tecnología, promoviendo el reciclaje, la energía renovable y el monitoreo eficiente de los servicios públicos para crear ciudades más limpias, seguras y sostenibles.</p>
+            <div class="pillar-grid">
+                <article class="pillar-card pc-1">
+                    <div class="p-icon">💰</div>
+                    <h3>Retorno tangible y medido</h3>
+                    <p>ROI documentado en menos de 15 meses. El sistema genera ingresos energéticos desde el ciclo 1, con panel de seguimiento incluido.</p>
                 </article>
-                <article class="purpose-card">
-                    <span class="purpose-tag">🔭</span>
-                    <h3><i class="fa-solid fa-eye"></i> Visión</h3>
-                    <p>Convertirse en el sistema urbano más innovador y sostenible del país, donde los residuos se conviertan en energía, el tránsito sea más eficiente y los ciudadanos participen activamente en la protección del medio ambiente.</p>
+                <article class="pillar-card pc-2">
+                    <div class="p-icon">🌱</div>
+                    <h3>Sostenibilidad que vende</h3>
+                    <p>Reduce tu huella de carbono un 41% y obtén evidencia verificable para certificaciones ambientales, clientes y licitaciones públicas.</p>
                 </article>
-                <article class="purpose-card">
-                    <span class="purpose-tag">🤝</span>
-                    <h3><i class="fa-solid fa-gem"></i> Valores Clave</h3>
-                    <p>Sostenibilidad, innovación, transparencia, eficiencia, responsabilidad social, seguridad, integridad, colaboración y compromiso tecnológico.</p>
+                <article class="pillar-card pc-3">
+                    <div class="p-icon">⚡</div>
+                    <h3>Tecnología lista para operar</h3>
+                    <p>Sistema instalado, calibrado y funcionando desde el primer día. Sin curva de aprendizaje larga. Soporte técnico incluido.</p>
+                </article>
+                <article class="pillar-card pc-4">
+                    <div class="p-icon">📊</div>
+                    <h3>Datos para tomar decisiones</h3>
+                    <p>KPIs de energía, residuos y operación actualizados en tiempo real. Reportes exportables listos para tu dirección o consejo.</p>
                 </article>
             </div>
         </div>
     </section>
+
+    <div class="section-divider"></div>
 
     <!-- ═══════════ PROCESOS DEL SISTEMA ═══════════ -->
     <section class="section" id="procesos">
@@ -1327,6 +2078,273 @@
         </div>
     </section>
 
+    <!-- ═══════════ SISTEMA HÍBRIDO BIOMASA + PELTIER ═══════════ -->
+    <section class="bio-section" id="bioenergia">
+        <div class="container">
+            <span class="bio-badge"><i class="fa-solid fa-fire-flame-curved"></i> Primera vez en RD y el Caribe</span>
+            <h2 class="section-title">Sistema Híbrido <span style="background:linear-gradient(90deg,#10b981,#06b6d4,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">BIOMASA + Peltier TEG</span></h2>
+            <p class="section-sub">
+                PRERMI integra por primera vez en República Dominicana y el Caribe la digestión anaerobia de residuos orgánicos con recuperación termoeléctrica mediante módulos Peltier TEG, trazabilidad biométrica por usuario y control SCADA web en tiempo real. 
+                <strong>Ninguna plataforma industrial en el país combina estos siete pilares en un solo sistema.</strong>
+            </p>
+
+            <div class="real-photo-grid media-distributed">
+                <article class="real-photo-card span-8 row-2">
+                    <img src="/PRERMI/uploads/images/biomass-plant.jpg" class="img-focus-center" alt="Planta de biomasa para generacion energetica" loading="lazy" onerror="this.onerror=null;this.src='/PRERMI/web/assets/img/illus-proindustria-stand.svg';">
+                </article>
+                <article class="real-photo-card span-4 row-2">
+                    <img src="/PRERMI/uploads/images/hero-industrial.jpg" class="img-focus-left" alt="Infraestructura industrial para conversion energetica" loading="lazy" onerror="this.onerror=null;this.src='/PRERMI/web/assets/img/illus-iot-monitor.svg';">
+                </article>
+            </div>
+
+            <div class="bio-unique-grid">
+                <article class="bio-unique-card">
+                    <span class="bio-num">A</span>
+                    <h4><i class="fa-solid fa-circle-info" style="color:#06b6d4;"></i> Qué es este sistema híbrido</h4>
+                    <p>Es la unión de dos fuentes: BIOMASA (residuos orgánicos) + celdas Peltier TEG (calor residual). Así, la planta genera más energía con el mismo proceso.</p>
+                </article>
+                <article class="bio-unique-card">
+                    <span class="bio-num">B</span>
+                    <h4><i class="fa-solid fa-bolt" style="color:#10b981;"></i> Qué gana tu empresa</h4>
+                    <p>Menor factura eléctrica, reducción de residuos, trazabilidad completa y tablero web con indicadores operativos y financieros en tiempo real.</p>
+                </article>
+                <article class="bio-unique-card">
+                    <span class="bio-num">C</span>
+                    <h4><i class="fa-solid fa-gears" style="color:#7c3aed;"></i> Cómo se implementa</h4>
+                    <p>Instalación por etapas: contenedores inteligentes, reactor de biomasa, módulos TEG, sensores IoT y plataforma web para control y reportes.</p>
+                </article>
+                <article class="bio-unique-card">
+                    <span class="bio-num">D</span>
+                    <h4><i class="fa-solid fa-chart-line" style="color:#f97316;"></i> Resultado esperado</h4>
+                    <p>Ahorro económico mensual medible, operación más eficiente y evidencia digital para auditorías ambientales y decisiones de inversión.</p>
+                </article>
+            </div>
+
+            <div class="calc-basic">
+                <h4><i class="fa-solid fa-calculator"></i> Cómo estima PRERMI el ahorro real (explicación básica)</h4>
+                <div class="calc-step-grid">
+                    <div class="calc-step">
+                        <strong>1) Medimos residuos diarios</strong>
+                        <p>El sistema registra cuántos kg de residuo orgánico entra cada día.</p>
+                    </div>
+                    <div class="calc-step">
+                        <strong>2) Estimamos energía de biomasa</strong>
+                        <p>Con el rendimiento del reactor, convertimos esos residuos en kWh de forma conservadora, base y optimista.</p>
+                    </div>
+                    <div class="calc-step">
+                        <strong>3) Sumamos energía de celdas Peltier</strong>
+                        <p>El calor residual aporta energía adicional sin usar combustible extra.</p>
+                    </div>
+                    <div class="calc-step">
+                        <strong>4) Convertimos kWh en RD$</strong>
+                        <p>Multiplicamos por la tarifa eléctrica para mostrar ahorro mensual y anual en dinero.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Escenarios de referencia -->
+            <div class="bio-sce-grid">
+                <div class="bio-sce-card c1">
+                    <div class="sc-tag">🌿 Conservador</div>
+                    <div class="sc-kwh">1,044 kWh/mes</div>
+                    <div class="sc-rd">RD$ 14,616/mes</div>
+                    <div class="sc-anual">200 kg/día · 0.06 m³/kg · 22% efic. · 40 módulos</div>
+                </div>
+                <div class="bio-sce-card c2">
+                    <div class="sc-tag">⚡ Base (activo)</div>
+                    <div class="sc-kwh">1,116 kWh/mes</div>
+                    <div class="sc-rd">RD$ 15,624/mes</div>
+                    <div class="sc-anual">200 kg/día · 0.08 m³/kg · 28% efic. · 40 módulos</div>
+                </div>
+                <div class="bio-sce-card c3">
+                    <div class="sc-tag">🚀 Optimista</div>
+                    <div class="sc-kwh">1,278 kWh/mes</div>
+                    <div class="sc-rd">RD$ 17,892/mes</div>
+                    <div class="sc-anual">200 kg/día · 0.12 m³/kg · 35% efic. · 40 módulos</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ SECTOR TEXTIL ═══════════ -->
+    <section class="textil-section" id="textil">
+        <div class="container">
+            <span class="textil-badge"><i class="fa-solid fa-fire"></i> Aplicación Industrial — Venta de Solución</span>
+            <h2 class="section-title">Bioenergía Termoeléctrica para <span style="background:linear-gradient(90deg,#7c3aed,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Empresas Textiles</span></h2>
+            <p class="section-sub">
+                Las fábricas textiles generan enormes cantidades de calor residual en sus procesos. PRERMI ofrece la instalación de módulos Peltier TEG en los puntos de calor para convertir ese desperdicio térmico en electricidad — <strong>sin combustible adicional, sin piezas móviles, mantenimiento mínimo.</strong>
+            </p>
+
+            <div class="real-photo-grid media-distributed">
+                <article class="real-photo-card span-6 row-2">
+                    <img src="/PRERMI/uploads/images/textile-factory.jpg" class="img-focus-center" alt="Linea de produccion textil" loading="lazy" onerror="this.onerror=null;this.src='/PRERMI/web/assets/img/illus-proindustria-stand.svg';">
+                </article>
+                <article class="real-photo-card span-6">
+                    <img src="/PRERMI/uploads/images/recycling-facility.jpg" class="img-focus-center" alt="Recoleccion y clasificacion de residuos" loading="lazy" onerror="this.onerror=null;this.src='/PRERMI/web/assets/img/illus-iot-monitor.svg';">
+                </article>
+                <article class="real-photo-card span-6">
+                    <img src="/PRERMI/uploads/images/iot-monitoring.jpg" class="img-focus-center" alt="Control digital de procesos textiles" loading="lazy" onerror="this.onerror=null;this.src='/PRERMI/web/assets/img/illus-iot-monitor.svg';">
+                </article>
+            </div>
+
+            <!-- Fuentes de calor residual textil -->
+            <div class="textil-heat-grid">
+                <article class="textil-heat-card">
+                    <div class="heat-icon">🧵</div>
+                    <h5>Teñido y acabado</h5>
+                    <span class="heat-temp">80–95°C</span>
+                    <p>Las tinas de teñido mantienen temperatura constante durante horas. Ideal para TEG de baja ΛT.</p>
+                </article>
+                <article class="textil-heat-card">
+                    <div class="heat-icon">💨</div>
+                    <h5>Vaporizadores</h5>
+                    <span class="heat-temp">120–135°C</span>
+                    <p>El escape de vapor en autoclaves y vaporizadores industriales genera ΛT altamente aprovechable con TEG de alta eficiencia.</p>
+                </article>
+                <article class="textil-heat-card">
+                    <div class="heat-icon">🔥</div>
+                    <h5>Calandrias y rodillos calientes</h5>
+                    <span class="heat-temp">140–180°C</span>
+                    <p>Superficie de rodillos de prensado con calor continuo. Los TEG pueden instalarse en los soportes metálicos laterales.</p>
+                </article>
+                <article class="textil-heat-card">
+                    <div class="heat-icon">🏭</div>
+                    <h5>Calderas industriales</h5>
+                    <span class="heat-temp">150–200°C</span>
+                    <p>El escape de gases de las calderas es la fuente con mayor potencial térmico. Sistemas de 200+ módulos pueden generar varios kW.</p>
+                </article>
+                <article class="textil-heat-card">
+                    <div class="heat-icon">🧺</div>
+                    <h5>Secado de telas</h5>
+                    <span class="heat-temp">100–130°C</span>
+                    <p>Las cámaras de secado y tenters liberan calor en sus paredes externas, perfectas para TEG de alta temperatura.</p>
+                </article>
+            </div>
+
+            <!-- ROI por tamaño de planta -->
+            <p style="margin-top:1.4rem;font-family:Sora,sans-serif;font-size:.97rem;font-weight:700;"><i class="fa-solid fa-chart-bar" style="color:#7c3aed;"></i> Proyección de ahorro según tamaño de planta</p>
+            <div class="textil-roi-grid">
+                <div class="textil-roi-card sm">
+                    <div class="roi-size">🏭 Planta pequeña</div>
+                    <div class="roi-kwh">18,432 kWh/año</div>
+                    <div class="roi-rd">RD$ 258,048/año</div>
+                    <div class="roi-meta">200 trabajadores · 400 módulos × 3W · 16h/día · ROI ~3.5 años</div>
+                </div>
+                <div class="textil-roi-card md">
+                    <div class="roi-size">🏭🏭 Planta mediana</div>
+                    <div class="roi-kwh">57,600 kWh/año</div>
+                    <div class="roi-rd">RD$ 806,400/año</div>
+                    <div class="roi-meta">800 trabajadores · 1,200 módulos × 5W · 20h/día · ROI ~2.9 años</div>
+                </div>
+                <div class="textil-roi-card lg">
+                    <div class="roi-size">🏭🏭🏭 Planta grande</div>
+                    <div class="roi-kwh">172,800 kWh/año</div>
+                    <div class="roi-rd">RD$ 2,419,200/año</div>
+                    <div class="roi-meta">2,000+ trabajadores · 3,000 módulos × 8W · 24h/día · ROI ~2.2 años</div>
+                </div>
+            </div>
+
+            <!-- Gráficas de proyección -->
+            <div class="row g-3" style="margin-top:1.4rem;">
+                <div class="col-lg-7">
+                    <div class="textil-chart-box">
+                        <div class="tcb-header">
+                            <span class="tcb-title">
+                                <i class="fa-solid fa-arrow-trend-up" style="color:#7c3aed;"></i>
+                                Proyección acumulada de ahorro — RD$
+                            </span>
+                            <div class="tcb-controls">
+                                <button class="tcb-toggle active" id="btnSavAcum" onclick="setSavingsMode('acumulado',this)">Acumulado</button>
+                                <button class="tcb-toggle" id="btnSavMens" onclick="setSavingsMode('mensual',this)">Por mes</button>
+                            </div>
+                        </div>
+                        <div class="tcb-kpis">
+                            <div class="tcb-kpi"><span class="tcb-kpi-val" style="color:#06b6d4">RD$ 258K</span><span class="tcb-kpi-lbl">Pequeña/año</span></div>
+                            <div class="tcb-kpi"><span class="tcb-kpi-val" style="color:#7c3aed">RD$ 806K</span><span class="tcb-kpi-lbl">Mediana/año</span></div>
+                            <div class="tcb-kpi"><span class="tcb-kpi-val" style="color:#10b981">RD$ 2.4M</span><span class="tcb-kpi-lbl">Grande/año</span></div>
+                        </div>
+                        <canvas id="textilSavingsChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="textil-chart-box">
+                        <div class="tcb-header">
+                            <span class="tcb-title">
+                                <i class="fa-solid fa-chart-pie" style="color:#06b6d4;"></i>
+                                Distribución por fuente térmica
+                            </span>
+                        </div>
+                        <canvas id="textilHeatChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3" style="margin-top:.7rem;">
+                <div class="col-lg-7">
+                    <div class="textil-chart-box">
+                        <div class="tcb-header">
+                            <span class="tcb-title">
+                                <i class="fa-solid fa-chart-column" style="color:#10b981;"></i>
+                                Energía anual vs Inversión estimada
+                            </span>
+                        </div>
+                        <div class="tcb-kpis">
+                            <div class="tcb-kpi"><span class="tcb-kpi-val" style="color:#10b981">18,432 kWh</span><span class="tcb-kpi-lbl">Pequeña/año</span></div>
+                            <div class="tcb-kpi"><span class="tcb-kpi-val" style="color:#10b981">57,600 kWh</span><span class="tcb-kpi-lbl">Mediana/año</span></div>
+                            <div class="tcb-kpi"><span class="tcb-kpi-val" style="color:#10b981">172,800 kWh</span><span class="tcb-kpi-lbl">Grande/año</span></div>
+                        </div>
+                        <canvas id="textilInvestmentChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="textil-chart-box">
+                        <div class="tcb-header">
+                            <span class="tcb-title">
+                                <i class="fa-solid fa-gauge-high" style="color:#f97316;"></i>
+                                Tiempo de recuperación (meses)
+                            </span>
+                        </div>
+                        <div class="tcb-kpis">
+                            <div class="tcb-kpi"><span class="tcb-kpi-val" style="color:#f97316">~42 meses</span><span class="tcb-kpi-lbl">Pequeña</span></div>
+                            <div class="tcb-kpi"><span class="tcb-kpi-val" style="color:#f97316">~35 meses</span><span class="tcb-kpi-lbl">Mediana</span></div>
+                            <div class="tcb-kpi"><span class="tcb-kpi-val" style="color:#10b981">~26 meses</span><span class="tcb-kpi-lbl">Grande</span></div>
+                        </div>
+                        <canvas id="textilPaybackChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="textil-chart-note">
+                Cifras base usadas en las proyecciones: tarifa promedio <strong>RD$ 14.00/kWh</strong>; inversión estimada por planta
+                (<strong>RD$ 900,000</strong> pequeña, <strong>RD$ 2,350,000</strong> mediana, <strong>RD$ 5,200,000</strong> grande);
+                y retorno calculado con la fórmula <strong>payback = inversión / ahorro mensual</strong>.
+            </div>
+
+            <!-- Ventajas clave -->
+            <div class="about-grid" style="margin-top:1.4rem;">
+                <article class="about-card">
+                    <h3><i class="fa-solid fa-lightbulb" style="color:#f59e0b;"></i> ¿Por qué elegir PRERMI TEG?</h3>
+                    <ul class="about-points">
+                        <li><i class="fa-solid fa-check"></i> <strong>Cero combustible:</strong> aprovecha calor que ya se está generando y desperdiciando.</li>
+                        <li><i class="fa-solid fa-check"></i> <strong>Sin piezas móviles:</strong> módulos de estado sólido con vida útil de 20+ años.</li>
+                        <li><i class="fa-solid fa-check"></i> <strong>Escalable:</strong> desde 50 hasta 5,000+ módulos según el tamaño de la planta.</li>
+                        <li><i class="fa-solid fa-check"></i> <strong>Monitoreo IoT incluido:</strong> dashboard web con datos de generación en tiempo real.</li>
+                        <li><i class="fa-solid fa-check"></i> <strong>ROI comprobado:</strong> 2.2 a 3.5 años de recuperación de inversión según tamaño.</li>
+                    </ul>
+                </article>
+                <article class="about-card">
+                    <h3><i class="fa-solid fa-industry" style="color:#7c3aed;"></i> Industrias objetivo en RD</h3>
+                    <ul class="about-points">
+                        <li><i class="fa-solid fa-check"></i> Zonas francas textiles de <strong>Santiago, Bonao, San Pedro de Macorís</strong></li>
+                        <li><i class="fa-solid fa-check"></i> Plantas de fabricación de prendas con procesos de vapor</li>
+                        <li><i class="fa-solid fa-check"></i> Industrias productoras de telas sintéticas y tejidos técnicos</li>
+                        <li><i class="fa-solid fa-check"></i> Lavanderías industriales con calderas</li>
+                        <li><i class="fa-solid fa-check"></i> Cualquier industria con procesos térmicos continuos ≥ 80°C</li>
+                    </ul>
+                </article>
+            </div>
+        </div>
+    </section>
+
     <section class="section" id="contacto">
         <div class="container">
             <div class="contact-title-wrap">
@@ -1358,9 +2376,14 @@
     </section>
 
     <footer class="footer">
-        <div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
-            <span>2026 PRERMI | Programa de Reabastecimiento Energético, Residuos y Monitoreo Inteligente.</span>
-            <span><a href="web/login.php">Plataforma</a> | <a href="web/admin/loginA.php">Admin</a> | <a href="api/">API</a></span>
+        <div class="container d-flex flex-column gap-2">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                <span>2026 PRERMI | Programa de Reabastecimiento Energético, Residuos y Monitoreo Inteligente.</span>
+                <span><a href="web/login.php">Plataforma</a> | <a href="web/admin/loginA.php">Admin</a> | <a href="api/">API</a></span>
+            </div>
+            <div style="font-size:.83rem;color:#436282;">
+                Créditos técnicos: jóvenes del área técnica de 5toA de Mecatrónica, Instituto Tecnológico México.
+            </div>
         </div>
     </footer>
 
@@ -1384,10 +2407,16 @@
         }
 
         function renderCharts() {
-            const labelColor = '#2f557a';
-            const gridColor = 'rgba(90, 147, 194, 0.22)';
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const labelColor = isDark ? '#cbd5e1' : '#2f557a';
+            const gridColor = isDark ? 'rgba(148, 163, 184, 0.22)' : 'rgba(90, 147, 194, 0.22)';
+            const bgCanvas = isDark ? 'rgba(15, 23, 42, 0.65)' : 'rgba(255, 255, 255, 0.95)';
 
-            new Chart(document.getElementById('cashflowChart'), {
+            const cashflowChart = document.getElementById('cashflowChart');
+            if (cashflowChart) {
+            const prevCashflow = Chart.getChart(cashflowChart);
+            if (prevCashflow) prevCashflow.destroy();
+            new Chart(cashflowChart, {
                 type: 'line',
                 data: {
                     labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
@@ -1415,6 +2444,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    backgroundColor: bgCanvas,
                     plugins: {
                         legend: { labels: { color: labelColor } }
                     },
@@ -1430,8 +2460,13 @@
                     }
                 }
             });
+            }
 
-            new Chart(document.getElementById('valueChart'), {
+            const valueChart = document.getElementById('valueChart');
+            if (valueChart) {
+            const prevValue = Chart.getChart(valueChart);
+            if (prevValue) prevValue.destroy();
+            new Chart(valueChart, {
                 type: 'doughnut',
                 data: {
                     labels: ['Ahorro eléctrico', 'Créditos verdes', 'Costos evitados'],
@@ -1445,13 +2480,19 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    backgroundColor: bgCanvas,
                     plugins: {
                         legend: { position: 'bottom', labels: { color: labelColor, boxWidth: 14 } }
                     }
                 }
             });
+            }
 
-            new Chart(document.getElementById('opsChart'), {
+            const opsChart = document.getElementById('opsChart');
+            if (opsChart) {
+            const prevOps = Chart.getChart(opsChart);
+            if (prevOps) prevOps.destroy();
+            new Chart(opsChart, {
                 type: 'bar',
                 data: {
                     labels: ['Planta Norte', 'Planta Este', 'Planta Sur', 'Centro Logístico'],
@@ -1463,7 +2504,7 @@
                             borderRadius: 8
                         },
                         {
-                            label: 'Energia recuperada (MWh)',
+                            label: 'Energía recuperada (MWh)',
                             data: [13, 9, 11, 8],
                             backgroundColor: 'rgba(124, 58, 237, 0.7)',
                             borderRadius: 8
@@ -1473,6 +2514,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    backgroundColor: bgCanvas,
                     plugins: {
                         legend: { labels: { color: labelColor } }
                     },
@@ -1482,6 +2524,18 @@
                     }
                 }
             });
+            }
+        }
+
+        function ensureChartJsReady(done) {
+            if (typeof Chart !== 'undefined') {
+                done();
+                return;
+            }
+            const fallback = document.createElement('script');
+            fallback.src = 'https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js';
+            fallback.onload = done;
+            document.head.appendChild(fallback);
         }
 
         document.querySelectorAll('a[href^="#"]').forEach((a) => {
@@ -1524,7 +2578,380 @@
         const impacto = document.getElementById('impacto');
         if (impacto) observer.observe(impacto);
 
-        renderCharts();
+        document.addEventListener('DOMContentLoaded', () => {
+            ensureChartJsReady(() => {
+                renderCharts();
+                if (typeof renderTextilCharts === 'function') {
+                    renderTextilCharts();
+                }
+            });
+        });
+    </script>
+    <script>
+    // ── Plugin: Texto central animado en doughnut ───────────────────────────────
+    const prermiCenterTextPlugin = {
+        id: 'prermiCenterText',
+        afterDraw(chart) {
+            if (chart.config.type !== 'doughnut') return;
+            const { ctx, chartArea: { left, top, width, height } } = chart;
+            const cx = left + width / 2;
+            const cy = top + height / 2;
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const mainC = isDark ? '#e2e8f0' : '#13263f';
+            const subC  = isDark ? '#94a3b8'  : '#4d6e8f';
+            const active = chart.getActiveElements();
+            ctx.save();
+            if (active.length > 0) {
+                const idx = active[0].index;
+                const val = chart.data.datasets[0].data[idx];
+                const lbl = chart.data.labels[idx];
+                const col = chart.data.datasets[0].backgroundColor[idx];
+                ctx.font = 'bold 1.25rem Sora, sans-serif';
+                ctx.fillStyle = col;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(val + '%', cx, cy - 12);
+                ctx.font = '600 0.67rem Manrope, sans-serif';
+                ctx.fillStyle = subC;
+                const words = lbl.split(' ');
+                let line = '', y = cy + 9;
+                for (const w of words) {
+                    const test = line ? line + ' ' + w : w;
+                    if (ctx.measureText(test).width > width * 0.4 && line) {
+                        ctx.fillText(line, cx, y); line = w; y += 13;
+                    } else { line = test; }
+                }
+                ctx.fillText(line, cx, y);
+            } else {
+                ctx.font = 'bold 1.05rem Sora, sans-serif';
+                ctx.fillStyle = mainC;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('5 fuentes', cx, cy - 9);
+                ctx.font = '600 0.67rem Manrope, sans-serif';
+                ctx.fillStyle = subC;
+                ctx.fillText('Toca un segmento', cx, cy + 9);
+            }
+            ctx.restore();
+        }
+    };
+    Chart.register(prermiCenterTextPlugin);
+
+    // ── Helper: destruir instancia previa ──────────────────────────────────────
+    function destroyChartById(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas || typeof Chart === 'undefined') return;
+        const current = Chart.getChart(canvas);
+        if (current) current.destroy();
+    }
+
+    // ── Helper: opciones de tema dinámicas ─────────────────────────────────────
+    function _tcbTheme() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        return {
+            isDark,
+            axis:    isDark ? '#94a3b8'  : '#2f557a',
+            grid:    isDark ? 'rgba(148,163,184,.18)' : 'rgba(90,147,194,.15)',
+            border:  isDark ? '#0f172a'  : '#ffffff',
+            bgCanvas: isDark ? 'rgba(15,23,42,.65)' : 'rgba(255,255,255,.95)',
+            ttBg:    isDark ? 'rgba(8,18,38,.97)'    : 'rgba(255,255,255,.98)',
+            ttBdr:   isDark ? 'rgba(56,189,248,.45)' : 'rgba(56,189,248,.5)',
+            ttTitle: isDark ? '#e2e8f0'  : '#0f2440',
+            ttBody:  isDark ? '#94a3b8'  : '#4d6e8f',
+        };
+    }
+
+    // ── Estado del toggle de ahorro ────────────────────────────────────────────
+    let _savingsMode = 'acumulado';
+    function setSavingsMode(mode, btn) {
+        _savingsMode = mode;
+        document.querySelectorAll('#btnSavAcum,#btnSavMens').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        destroyChartById('textilSavingsChart');
+        _renderSavingsChart();
+    }
+
+    // ── Constantes de negocio ──────────────────────────────────────────────────
+    const TDATA = {
+        meses: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+        ahorroAnual:  { pequena: 258048,  mediana: 806400,   grande: 2419200 },
+        inversion:    { pequena: 900000,  mediana: 2350000,  grande: 5200000 },
+        energiaAnual: { pequena: 18432,   mediana: 57600,    grande: 172800  },
+        get ahorroMensual() {
+            return {
+                pequena: this.ahorroAnual.pequena / 12,
+                mediana: this.ahorroAnual.mediana / 12,
+                grande:  this.ahorroAnual.grande  / 12,
+            };
+        },
+        get payback() {
+            const am = this.ahorroMensual;
+            return {
+                pequena: +(this.inversion.pequena / am.pequena).toFixed(1),
+                mediana: +(this.inversion.mediana / am.mediana).toFixed(1),
+                grande:  +(this.inversion.grande  / am.grande ).toFixed(1),
+            };
+        }
+    };
+
+    // ── Opciones compartidas de tooltip ───────────────────────────────────────
+    function _tooltipOpts(T, extraCallbacks) {
+        return {
+            backgroundColor: T.ttBg,
+            borderColor: T.ttBdr, borderWidth: 1,
+            titleColor: T.ttTitle, bodyColor: T.ttBody,
+            padding: 13, cornerRadius: 12, caretSize: 7,
+            titleFont: { family: 'Sora, sans-serif', weight: '700', size: 12 },
+            bodyFont: { family: 'Manrope, sans-serif', size: 11 },
+            callbacks: extraCallbacks,
+        };
+    }
+
+    // ── GRÁFICA 1: Proyección de ahorro acumulado / mensual ────────────────────
+    function _renderSavingsChart() {
+        const canvas = document.getElementById('textilSavingsChart');
+        if (!canvas) return;
+        const T = _tcbTheme();
+        const am = TDATA.ahorroMensual;
+        const isAcum = _savingsMode === 'acumulado';
+
+        const mkDataset = (label, val, color, alpha) => ({
+            label,
+            data: TDATA.meses.map((_,i) => +(isAcum ? val*(i+1) : val).toFixed(0)),
+            borderColor: color,
+            backgroundColor: `rgba(${alpha},.1)`,
+            fill: true, tension: .42, borderWidth: 2.5,
+            pointRadius: 4, pointHoverRadius: 9,
+            pointBackgroundColor: color,
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: color,
+            pointHoverBorderWidth: 2.5,
+        });
+
+        new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: TDATA.meses,
+                datasets: [
+                    mkDataset('Planta Pequeña — 200 trab.', am.pequena, '#06b6d4', '6,182,212'),
+                    mkDataset('Planta Mediana — 800 trab.', am.mediana, '#7c3aed', '124,58,237'),
+                    mkDataset('Planta Grande — 2000+ trab.',am.grande,  '#10b981', '16,185,129'),
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: true, aspectRatio: 2.1,
+                animation: { duration: 950, easing: 'easeInOutQuart' },
+                interaction: { mode: 'index', intersect: false },
+                backgroundColor: T.bgCanvas,
+                plugins: {
+                    legend: { labels: { color: T.axis, font: { size: 11 }, usePointStyle: true, pointStyleWidth: 12, boxHeight: 8 } },
+                    tooltip: _tooltipOpts(T, {
+                        title: ctx => ctx[0].label + (isAcum ? ' — acumulado' : ' — mensual'),
+                        label: ctx => ` ${ctx.dataset.label}: RD$ ${ctx.parsed.y.toLocaleString('es-DO')}`,
+                    }),
+                },
+                scales: {
+                    x: { ticks: { color: T.axis, font: { size: 11 } }, grid: { color: T.grid }, border: { color: T.grid } },
+                    y: {
+                        ticks: { color: T.axis, font: { size: 10 }, callback: v => 'RD$ ' + (v/1000).toFixed(0) + 'K' },
+                        grid: { color: T.grid }, border: { color: T.grid },
+                        title: { display: true, text: isAcum ? 'RD$ acumulado' : 'RD$ por mes', color: T.axis, font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── GRÁFICA 2: Distribución por fuente térmica (Doughnut) ──────────────────
+    function _renderHeatChart() {
+        const canvas = document.getElementById('textilHeatChart');
+        if (!canvas) return;
+        const T = _tcbTheme();
+        new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Biomasa orgánica','Textiles — teñido/secado','Calderas industriales','Vaporizadores','Otros procesos'],
+                datasets: [{
+                    data: [28, 24, 21, 15, 12],
+                    backgroundColor: ['#10b981','#06b6d4','#7c3aed','#f97316','#38bdf8'],
+                    hoverBackgroundColor: ['#34d399','#22d3ee','#a78bfa','#fb923c','#7dd3fc'],
+                    borderColor: T.border, borderWidth: 2.5,
+                    hoverOffset: 16,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: true, aspectRatio: 1.55,
+                cutout: '62%',
+                animation: { animateRotate: true, animateScale: true, duration: 1100, easing: 'easeInOutBack' },
+                backgroundColor: T.bgCanvas,
+                plugins: {
+                    prermiCenterText: {},
+                    legend: { position: 'bottom', labels: { color: T.axis, boxWidth: 11, font: { size: 10.5 }, usePointStyle: true, pointStyleWidth: 11, padding: 9 } },
+                    tooltip: _tooltipOpts(T, {
+                        label: ctx => ` ${ctx.label}: ${ctx.parsed}% del potencial térmico`
+                    }),
+                }
+            }
+        });
+    }
+
+    // ── GRÁFICA 3: Energía anual vs Inversión ──────────────────────────────────
+    function _renderInvestmentChart() {
+        const canvas = document.getElementById('textilInvestmentChart');
+        if (!canvas) return;
+        const T = _tcbTheme();
+        const D = TDATA;
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: ['Planta pequeña','Planta mediana','Planta grande'],
+                datasets: [
+                    {
+                        label: 'Energía anual (kWh)',
+                        data: [D.energiaAnual.pequena, D.energiaAnual.mediana, D.energiaAnual.grande],
+                        yAxisID: 'yKwh',
+                        backgroundColor: ['rgba(16,185,129,.68)','rgba(16,185,129,.82)','rgba(16,185,129,.97)'],
+                        hoverBackgroundColor: '#10b981',
+                        borderRadius: { topLeft: 10, topRight: 10 },
+                        borderSkipped: false,
+                        barPercentage: 0.48,
+                    },
+                    {
+                        label: 'Inversión estimada (RD$)',
+                        data: [D.inversion.pequena, D.inversion.mediana, D.inversion.grande],
+                        yAxisID: 'yRD',
+                        backgroundColor: ['rgba(124,58,237,.6)','rgba(124,58,237,.76)','rgba(124,58,237,.94)'],
+                        hoverBackgroundColor: '#7c3aed',
+                        borderRadius: { topLeft: 10, topRight: 10 },
+                        borderSkipped: false,
+                        barPercentage: 0.48,
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: true, aspectRatio: 2.1,
+                animation: { duration: 950, easing: 'easeOutQuart' },
+                interaction: { mode: 'index', intersect: false },
+                backgroundColor: T.bgCanvas,
+                plugins: {
+                    legend: { labels: { color: T.axis, font: { size: 11 }, usePointStyle: true, pointStyleWidth: 12, boxHeight: 8 } },
+                    tooltip: _tooltipOpts(T, {
+                        label: ctx => ctx.datasetIndex === 0
+                            ? ` Energía: ${ctx.parsed.y.toLocaleString('es-DO')} kWh/año`
+                            : ` Inversión: RD$ ${ctx.parsed.y.toLocaleString('es-DO')}`,
+                    }),
+                },
+                scales: {
+                    x: { ticks: { color: T.axis }, grid: { color: T.grid }, border: { color: T.grid } },
+                    yKwh: {
+                        type: 'linear', position: 'left',
+                        ticks: { color: '#10b981', font: { size: 10 }, callback: v => v.toLocaleString('es-DO') + ' kWh' },
+                        grid: { color: T.grid }, border: { color: T.grid }
+                    },
+                    yRD: {
+                        type: 'linear', position: 'right',
+                        ticks: { color: '#7c3aed', font: { size: 10 }, callback: v => 'RD$ ' + (v/1000).toFixed(0) + 'K' },
+                        grid: { drawOnChartArea: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── GRÁFICA 4: Tiempo de recuperación (línea) ──────────────────────────────
+    function _renderPaybackChart() {
+        const canvas = document.getElementById('textilPaybackChart');
+        if (!canvas) return;
+        const T = _tcbTheme();
+        const pb = TDATA.payback;
+        new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: ['Planta pequeña','Planta mediana','Planta grande'],
+                datasets: [
+                    {
+                        label: 'Meses para recuperar inversión',
+                        data: [pb.pequena, pb.mediana, pb.grande],
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249,115,22,.12)',
+                        pointBackgroundColor: '#f97316',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#f97316',
+                        pointHoverBorderWidth: 2.5,
+                        pointRadius: 8, pointHoverRadius: 13,
+                        pointStyle: 'circle',
+                        fill: true, tension: .3, borderWidth: 2.5,
+                    },
+                    {
+                        label: 'Rentabilidad plena — referencia',
+                        data: [pb.pequena + 1, pb.mediana + 1, pb.grande + 1],
+                        borderColor: '#10b981',
+                        borderDash: [7, 5],
+                        backgroundColor: 'transparent',
+                        pointBackgroundColor: '#10b981',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#10b981',
+                        pointHoverBorderWidth: 2,
+                        pointRadius: 4, pointHoverRadius: 8,
+                        fill: false, tension: .2, borderWidth: 2,
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: true, aspectRatio: 1.55,
+                animation: { duration: 1000, easing: 'easeInOutQuart' },
+                interaction: { mode: 'index', intersect: false },
+                backgroundColor: T.bgCanvas,
+                plugins: {
+                    legend: { labels: { color: T.axis, font: { size: 11 }, usePointStyle: true, pointStyleWidth: 12, boxHeight: 8 } },
+                    tooltip: _tooltipOpts(T, {
+                        label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} meses`,
+                        afterBody: ctx => {
+                            if (ctx[0] && ctx[0].datasetIndex === 0) {
+                                const idx = ctx[0].dataIndex;
+                                const anios = (ctx[0].parsed.y / 12).toFixed(1);
+                                return [`  → Equivale a ${anios} años de retorno`];
+                            }
+                            return [];
+                        }
+                    }),
+                },
+                scales: {
+                    x: { ticks: { color: T.axis }, grid: { color: T.grid }, border: { color: T.grid } },
+                    y: {
+                        ticks: { color: '#f97316', font: { size: 10 }, callback: v => v + ' meses' },
+                        grid: { color: T.grid }, border: { color: T.grid },
+                        title: { display: true, text: 'Plazo de recuperación', color: T.axis, font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── Punto de entrada principal ─────────────────────────────────────────────
+    function renderTextilCharts() {
+        destroyChartById('textilSavingsChart');
+        destroyChartById('textilHeatChart');
+        destroyChartById('textilInvestmentChart');
+        destroyChartById('textilPaybackChart');
+        _renderSavingsChart();
+        _renderHeatChart();
+        _renderInvestmentChart();
+        _renderPaybackChart();
+    }
+
+    const themeObserver = new MutationObserver((changes) => {
+        for (const change of changes) {
+            if (change.type === 'attributes' && change.attributeName === 'data-theme') {
+                ensureChartJsReady(() => {
+                    renderCharts();
+                    renderTextilCharts();
+                });
+                break;
+            }
+        }
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     </script>
     <script src="web/assets/js/theme.js"></script>
 </body>

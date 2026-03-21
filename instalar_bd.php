@@ -8,6 +8,9 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
+require_once __DIR__ . '/api/utils.php';
+requireLocalAccess(true);
+
 $resultado = [
     'status' => 'INICIANDO',
     'pasos' => [],
@@ -90,8 +93,6 @@ try {
     }
     
     // PASO 6: Verificar conexión a BD
-    require_once __DIR__ . '/api/utils.php';
-    
     try {
         $pdo = getPDO();
         $resultado['pasos'][] = "✓ Conexión a base de datos prer_mi establecida";

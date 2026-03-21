@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $userIdSesion = intval($_SESSION['user_id']);
 $rostrosDir = __DIR__ . '/../uploads/rostros';
+$userFaceDir = $rostrosDir . '/' . $userIdSesion;
 
 try {
     require_once __DIR__ . '/../api/utils.php';
@@ -16,15 +17,21 @@ try {
 
     $pdo->beginTransaction();
 
-    $stmtSelect = $pdo->prepare("SELECT filename FROM rostros WHERE user_id = ?");
+    $stmtSelect = $pdo->prepare("SELECT filename, relative_path FROM rostros WHERE user_id = ?");
     $stmtSelect->execute([$userIdSesion]);
-    $filenames = $stmtSelect->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    $rows = $stmtSelect->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
     $filePaths = [];
-    foreach ($filenames as $filename) {
-        $cleanFilename = basename((string) $filename);
+    foreach ($rows as $row) {
+        $cleanFilename = basename((string) ($row['filename'] ?? ''));
         if ($cleanFilename !== '') {
+            $filePaths[] = $userFaceDir . '/' . $cleanFilename;
             $filePaths[] = $rostrosDir . '/' . $cleanFilename;
+        }
+
+        $relativePath = str_replace(['..', '\\'], '', (string) ($row['relative_path'] ?? ''));
+        if ($relativePath !== '') {
+            $filePaths[] = __DIR__ . '/../uploads/' . $relativePath;
         }
     }
 
@@ -40,6 +47,18 @@ try {
         if (is_file($filePath) && !unlink($filePath)) {
             throw new Exception('No se pudo eliminar el archivo físico: ' . basename($filePath));
         }
+    }
+
+    if (is_dir($userFaceDir)) {
+        $userFiles = glob($userFaceDir . '/*');
+        if (is_array($userFiles)) {
+            foreach ($userFiles as $path) {
+                if (is_file($path)) {
+                    @unlink($path);
+                }
+            }
+        }
+        @rmdir($userFaceDir);
     }
 
     $stmtDelete = $pdo->prepare("DELETE FROM rostros WHERE user_id = ?");

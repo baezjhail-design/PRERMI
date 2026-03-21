@@ -6,6 +6,9 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
+// Zona horaria operacional del sistema (RD)
+date_default_timezone_set('America/Santo_Domingo');
+
 // Helper: read token if exists
 function expected_token() {
     $tfile = __DIR__ . '/../config/token.txt';
@@ -49,10 +52,11 @@ $map = [
     'BYPASS_CURRENT_OFF' => ['bypass_current' => false],
     'SYSTEM_OFF' => ['system_off' => true],
     'SYSTEM_ON' => ['system_off' => false],
-    'TEMP_OFF' => ['kill_temp' => true, 'bypass_temp' => true],
-    'VENTILADOR_OFF' => ['kill_fan' => true, 'bypass_fan' => true],
-    'CORRIENTE_OFF' => ['kill_current' => true, 'bypass_current' => true],
-    'CALENTADOR_OFF' => ['kill_heater' => true, 'bypass_heater' => true]
+    // Compatibilidad con firmware legado que reacciona a `raw`
+    'TEMP_OFF' => ['kill_temp' => true, 'bypass_temp' => true, 'raw' => 'temp_off'],
+    'VENTILADOR_OFF' => ['kill_fan' => true, 'bypass_fan' => true, 'raw' => 'ventilador_off'],
+    'CORRIENTE_OFF' => ['kill_current' => true, 'bypass_current' => true, 'raw' => 'corriente_off'],
+    'CALENTADOR_OFF' => ['kill_heater' => true, 'bypass_heater' => true, 'raw' => 'calentador_off']
 ];
 
 if (!isset($map[$accion])) {
@@ -143,6 +147,7 @@ if (isset($actionChanges['kill_temp'])) $control['kill_temp'] = (bool)$actionCha
 if (isset($actionChanges['kill_fan'])) $control['kill_fan'] = (bool)$actionChanges['kill_fan'];
 if (isset($actionChanges['kill_heater'])) $control['kill_heater'] = (bool)$actionChanges['kill_heater'];
 if (isset($actionChanges['kill_current'])) $control['kill_current'] = (bool)$actionChanges['kill_current'];
+if (isset($actionChanges['raw'])) $control['raw'] = (string)$actionChanges['raw'];
 
 if ($accion === 'SYSTEM_OFF') {
     $control['command'] = 'emergency_off';

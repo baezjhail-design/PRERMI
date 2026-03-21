@@ -7,14 +7,14 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
-$host = "localhost";
-$db   = "prer_mi";
-$user = "root";
-$pass = "";
+date_default_timezone_set('America/Santo_Domingo');
+require_once __DIR__ . '/../config/db_config.php';
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass);
+    $pdo = new PDO("mysql:host=$DB_HOST;dbname=$DB_NAME;charset=utf8mb4", $DB_USER, $DB_PASS);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Asegura consistencia de hora/fecha con RD en las consultas SQL.
+    $pdo->exec("SET time_zone = '-04:00'");
 } catch(PDOException $e) {
     die(json_encode(['status' => 'error', 'msg' => 'Error de conexión BD: ' . $e->getMessage()]));
 }
@@ -71,9 +71,7 @@ try {
             peltier2, 
             gases,
             fecha,
-            DATE_FORMAT(fecha, '%H:%i') as hora,
-            DATE_FORMAT(fecha, '%d/%m %H:%i') as hora_mes,
-            DATE_FORMAT(fecha, '%d/%m/%Y') as hora_anual
+            DATE_FORMAT(fecha, '%d/%m/%Y %H:%i:%s') as fecha_hora
         FROM mediciones_biomasa
         WHERE DATE(fecha) BETWEEN :fecha_inicio AND :fecha_fin
         ORDER BY fecha ASC
@@ -97,14 +95,8 @@ try {
     $totalConsumo = 0;
     
     foreach($mediciones as $row) {
-        // Seleccionar formato de hora según período
-        if ($periodo === 'dia') {
-            $labels[] = $row['hora'];
-        } elseif ($periodo === 'mes') {
-            $labels[] = $row['hora_mes'];
-        } else {
-            $labels[] = $row['hora_anual'];
-        }
+        // Siempre usar fecha + hora exacta (segundos incluidos).
+        $labels[] = $row['fecha_hora'];
         
         $temp = (float)$row['temperatura'];
         $energia = (float)$row['energia'] / 1000; // Convertir Wh a kWh
@@ -283,9 +275,10 @@ function generarCSV($rutaCSV, $mediciones, $periodo) {
     
     // Datos
     foreach($mediciones as $row) {
+        $fechaRow = strtotime((string)$row['fecha']);
         $fila = [
-            $row['fecha'],
-            ($periodo === 'dia') ? $row['hora'] : (($periodo === 'mes') ? $row['hora_mes'] : $row['hora_anual']),
+            date('Y-m-d', $fechaRow),
+            date('H:i:s', $fechaRow),
             $row['temperatura'],
             (float)$row['energia'] / 1000,
             $row['relay'],

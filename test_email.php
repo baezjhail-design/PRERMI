@@ -2,6 +2,9 @@
 // PRUEBA RÁPIDA: test_email.php
 // Accede a: http://localhost:8080/PRERMI/test_email.php
 
+require_once __DIR__ . '/api/utils.php';
+requireLocalAccess(false);
+
 require_once __DIR__ . '/config/mailer.php';
 
 echo "<style>

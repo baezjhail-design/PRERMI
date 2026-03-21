@@ -7,12 +7,53 @@ session_start();
 if (!isset($_SESSION['admin_id'])) { header("Location: loginA.php"); exit; }
 require_once __DIR__ . '/../../api/utils.php';
 
+date_default_timezone_set('America/Santo_Domingo');
+
+function formatDateTimeRD(?string $value, string $format = 'd/m/Y H:i:s'): string {
+  if (empty($value)) return '—';
+
+  try {
+    $tz = new DateTimeZone('America/Santo_Domingo');
+    $dt = new DateTimeImmutable($value);
+    return $dt->setTimezone($tz)->format($format);
+  } catch (Exception $e) {
+    return (string)$value;
+  }
+}
+
 $pdo = getPDO();
+$pdo->exec("SET time_zone = '-04:00'");
 $stA = $pdo->prepare("SELECT id,usuario,email,rol FROM usuarios_admin WHERE id=? LIMIT 1");
 $stA->execute([$_SESSION['admin_id']]);
 $admin = $stA->fetch(PDO::FETCH_ASSOC) ?: ['usuario'=>'Admin','email'=>'','rol'=>'admin'];
 
 $TARIFA_RD = 14.00;
+
+// ===== MODELO BIOMASA + PELTIER TEG — Parámetros configurables =====
+$cfg_rendimiento  = max(0.01, min(0.30, floatval($_GET['rendimiento']  ?? 0.08)));
+$cfg_eficiencia   = max(0.10, min(0.50, floatval($_GET['eficiencia']   ?? 0.28)));
+$cfg_residuos_dia = max(10,  min(10000, floatval($_GET['residuos_dia'] ?? 200)));
+$cfg_modulos      = max(1,   min(1000,  intval($_GET['modulos']        ?? 40)));
+$cfg_potencia_w   = max(0.5, min(50.0,  floatval($_GET['potencia_w']   ?? 2.5)));
+$cfg_horas        = max(1.0, min(24.0,  floatval($_GET['horas']        ?? 12)));
+
+function calcEscenario(float $r_dia, float $rend, float $efic, int $mod, float $pw, float $h, float $tar): array {
+    $eb = $r_dia * $rend * 6.0 * $efic * 30.0;
+    $ep = ($mod * $pw * $h * 30.0) / 1000.0;
+    $et = $eb + $ep;
+    return [
+        'e_biomasa'   => round($eb, 2),
+        'e_peltier'   => round($ep, 2),
+        'e_total'     => round($et, 2),
+        'ahorro_rd'   => round($et * $tar, 2),
+        'pct_biomasa' => $et > 0 ? round($eb / $et * 100, 1) : 0,
+        'pct_peltier' => $et > 0 ? round($ep / $et * 100, 1) : 0,
+    ];
+}
+$esc_conservador = calcEscenario($cfg_residuos_dia, 0.06, 0.22, (int)$cfg_modulos, $cfg_potencia_w, $cfg_horas, $TARIFA_RD);
+$esc_base        = calcEscenario($cfg_residuos_dia, $cfg_rendimiento, $cfg_eficiencia, (int)$cfg_modulos, $cfg_potencia_w, $cfg_horas, $TARIFA_RD);
+$esc_optimista   = calcEscenario($cfg_residuos_dia, 0.12, 0.35, (int)$cfg_modulos, $cfg_potencia_w, $cfg_horas, $TARIFA_RD);
+
 $flash = null;
 
 $filtroPeriodo = $_GET['periodo'] ?? '30d';
@@ -154,6 +195,7 @@ if (file_exists($statusPath)) {
     $raw = json_decode(file_get_contents($statusPath), true);
     if ($raw) $liveData = array_merge($liveData, $raw);
 }
+$liveData['updated_at'] = formatDateTimeRD($liveData['updated_at'] ?? null);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -226,6 +268,47 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
 [data-theme="dark"] .live-item.warn{background:#1a1a05;border-color:#713f12;}
 [data-theme="dark"] .live-updated{color:#475569;}
 [data-theme="dark"] .filtro-bar .btn-outline-secondary{color:#94a3b8;border-color:#475569;}
+
+/* ── MODELO BIOMASA + PELTIER TEG ── */
+.modelo-panel{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.07);margin-bottom:1.5rem;overflow:hidden;}
+.modelo-head{padding:.85rem 1.25rem;background:linear-gradient(135deg,#134e4a,#059669,#065f46);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;}
+.modelo-head .m-title{font-weight:700;font-size:.95rem;}
+.modelo-head .m-subtitle{font-size:.78rem;opacity:.82;}
+.esc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;padding:1.25rem;}
+.esc-card{border-radius:12px;padding:1.1rem;color:#fff;position:relative;overflow:hidden;}
+.esc-card.cons{background:linear-gradient(135deg,#1e293b,#334155);}
+.esc-card.base{background:linear-gradient(135deg,#065f46,#059669);}
+.esc-card.opti{background:linear-gradient(135deg,#5b21b6,#7c3aed);}
+.esc-badge{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.18);border-radius:20px;padding:.22rem .65rem;margin-bottom:.7rem;display:inline-block;}
+.esc-kwh{font-size:1.9rem;font-weight:900;line-height:1.1;margin:.3rem 0 .1rem;}
+.esc-rd{font-size:1.1rem;font-weight:800;opacity:.9;}
+.esc-sub{font-size:.74rem;opacity:.68;margin-top:.25rem;}
+.esc-bar-row{margin-top:.75rem;display:grid;gap:.35rem;}
+.esc-bar-lbl{font-size:.71rem;opacity:.75;margin-bottom:.08rem;}
+.esc-bar-track{background:rgba(255,255,255,.18);border-radius:20px;height:7px;overflow:hidden;}
+.esc-bar-fill{height:100%;border-radius:20px;background:rgba(255,255,255,.65);}
+.cfg-form{border-top:1px solid #f0f0f0;padding:1.1rem 1.25rem;background:#f8fafc;}
+.cfg-title{font-weight:700;font-size:.88rem;color:#1e293b;margin-bottom:.75rem;}
+.cfg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;}
+.cfg-item label{font-size:.77rem;color:#475569;font-weight:600;display:block;margin-bottom:.22rem;}
+.cfg-item input{width:100%;padding:.4rem .7rem;border:1.5px solid #cbd5e1;border-radius:7px;font-size:.86rem;background:#fff;color:#1e293b;}
+.cfg-item input:focus{border-color:#10b981;outline:none;}
+.cfg-submit{margin-top:.9rem;background:linear-gradient(135deg,#065f46,#10b981);color:#fff;border:none;padding:.55rem 1.4rem;border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer;transition:opacity .2s;}
+.cfg-submit:hover{opacity:.86;}
+.esc-anual-row{display:flex;gap:.75rem;padding:.75rem 1.25rem 1rem;flex-wrap:wrap;border-top:1px solid #f1f5f9;}
+.esc-anual-item{flex:1;min-width:155px;border-radius:10px;padding:.75rem 1rem;text-align:center;}
+.esc-anual-item.cons{border:1.5px dashed #475569;background:#f8fafc;}
+.esc-anual-item.base{border:1.5px dashed #059669;background:#f0fdf4;}
+.esc-anual-item.opti{border:1.5px dashed #7c3aed;background:#faf5ff;}
+.esc-anual-val{font-size:1.2rem;font-weight:800;}
+.esc-anual-lbl{font-size:.72rem;color:#64748b;}
+[data-theme="dark"] .modelo-panel{background:#1e293b;}
+[data-theme="dark"] .cfg-form{background:#0f172a;border-top-color:#334155;}
+[data-theme="dark"] .cfg-title{color:#e2e8f0;}
+[data-theme="dark"] .cfg-item label{color:#94a3b8;}
+[data-theme="dark"] .cfg-item input{background:#1e293b;color:#e2e8f0;border-color:#475569;}
+[data-theme="dark"] .esc-anual-item{background:#1e293b!important;}
+[data-theme="dark"] .esc-anual-lbl{color:#94a3b8;}
 </style>
 </head>
 <body>
@@ -258,6 +341,92 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
     <h1><i class="fas fa-bolt"></i> Ahorro Eléctrico — BIOMASA</h1>
     <p>Ciclos de generación energética, kWh producidos y ahorro estimado en RD$</p>
   </div>
+
+  <!-- ===== MODELO BIOMASA + PELTIER TEG ===== -->
+  <div class="modelo-panel">
+    <div class="modelo-head">
+      <div>
+        <div class="m-title"><i class="fas fa-leaf"></i> Modelo BIOMASA + Peltier TEG — Proyección Mensual de Energía y Ahorro</div>
+        <div class="m-subtitle">Digestión anaerobia (biogás → electricidad) + recuperación termoeléctrica (calor residual → corriente) · <?php echo number_format($cfg_residuos_dia,0); ?> kg/día · <?php echo $cfg_modulos; ?> módulos Peltier</div>
+      </div>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);font-size:.78rem;white-space:nowrap;" onclick="var f=document.getElementById('cfgForm');f.style.display=f.style.display==='none'?'block':'none'">
+        <i class="fas fa-sliders-h"></i> Configurar parámetros
+      </button>
+    </div>
+
+    <!-- 3 Escenarios -->
+    <div class="esc-grid">
+      <div class="esc-card cons">
+        <span class="esc-badge">🌿 Conservador</span>
+        <div class="esc-kwh"><?php echo number_format($esc_conservador['e_total'],1); ?> kWh/mes</div>
+        <div class="esc-rd">RD$ <?php echo number_format($esc_conservador['ahorro_rd'],2); ?>/mes</div>
+        <div class="esc-sub">Rendimiento 0.06 m³/kg · Eficiencia 22% · <?php echo number_format($esc_conservador['e_biomasa'],1); ?> + <?php echo number_format($esc_conservador['e_peltier'],1); ?> kWh</div>
+        <div class="esc-bar-row">
+          <div><div class="esc-bar-lbl">BIOMASA: <?php echo $esc_conservador['pct_biomasa']; ?>%</div><div class="esc-bar-track"><div class="esc-bar-fill" style="width:<?php echo $esc_conservador['pct_biomasa']; ?>%"></div></div></div>
+          <div><div class="esc-bar-lbl">Peltier TEG: <?php echo $esc_conservador['pct_peltier']; ?>%</div><div class="esc-bar-track"><div class="esc-bar-fill" style="width:<?php echo $esc_conservador['pct_peltier']; ?>%"></div></div></div>
+        </div>
+      </div>
+      <div class="esc-card base">
+        <span class="esc-badge">⚡ Base (activo)</span>
+        <div class="esc-kwh"><?php echo number_format($esc_base['e_total'],1); ?> kWh/mes</div>
+        <div class="esc-rd">RD$ <?php echo number_format($esc_base['ahorro_rd'],2); ?>/mes</div>
+        <div class="esc-sub">Rend. <?php echo $cfg_rendimiento; ?> m³/kg · Efic. <?php echo round($cfg_eficiencia*100); ?>% · <?php echo number_format($esc_base['e_biomasa'],1); ?> + <?php echo number_format($esc_base['e_peltier'],1); ?> kWh</div>
+        <div class="esc-bar-row">
+          <div><div class="esc-bar-lbl">BIOMASA: <?php echo $esc_base['pct_biomasa']; ?>%</div><div class="esc-bar-track"><div class="esc-bar-fill" style="width:<?php echo $esc_base['pct_biomasa']; ?>%"></div></div></div>
+          <div><div class="esc-bar-lbl">Peltier TEG: <?php echo $esc_base['pct_peltier']; ?>%</div><div class="esc-bar-track"><div class="esc-bar-fill" style="width:<?php echo $esc_base['pct_peltier']; ?>%"></div></div></div>
+        </div>
+      </div>
+      <div class="esc-card opti">
+        <span class="esc-badge">🚀 Optimista</span>
+        <div class="esc-kwh"><?php echo number_format($esc_optimista['e_total'],1); ?> kWh/mes</div>
+        <div class="esc-rd">RD$ <?php echo number_format($esc_optimista['ahorro_rd'],2); ?>/mes</div>
+        <div class="esc-sub">Rendimiento 0.12 m³/kg · Eficiencia 35% · <?php echo number_format($esc_optimista['e_biomasa'],1); ?> + <?php echo number_format($esc_optimista['e_peltier'],1); ?> kWh</div>
+        <div class="esc-bar-row">
+          <div><div class="esc-bar-lbl">BIOMASA: <?php echo $esc_optimista['pct_biomasa']; ?>%</div><div class="esc-bar-track"><div class="esc-bar-fill" style="width:<?php echo $esc_optimista['pct_biomasa']; ?>%"></div></div></div>
+          <div><div class="esc-bar-lbl">Peltier TEG: <?php echo $esc_optimista['pct_peltier']; ?>%</div><div class="esc-bar-track"><div class="esc-bar-fill" style="width:<?php echo $esc_optimista['pct_peltier']; ?>%"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Proyección anual -->
+    <div class="esc-anual-row">
+      <div class="esc-anual-item cons">
+        <div class="esc-anual-val" style="color:#475569;"><?php echo number_format($esc_conservador['e_total']*12,0); ?> kWh/año</div>
+        <div class="esc-anual-lbl">Conservador — RD$ <?php echo number_format($esc_conservador['ahorro_rd']*12,2); ?>/año</div>
+      </div>
+      <div class="esc-anual-item base">
+        <div class="esc-anual-val" style="color:#059669;"><?php echo number_format($esc_base['e_total']*12,0); ?> kWh/año</div>
+        <div class="esc-anual-lbl">Base — RD$ <?php echo number_format($esc_base['ahorro_rd']*12,2); ?>/año</div>
+      </div>
+      <div class="esc-anual-item opti">
+        <div class="esc-anual-val" style="color:#7c3aed;"><?php echo number_format($esc_optimista['e_total']*12,0); ?> kWh/año</div>
+        <div class="esc-anual-lbl">Optimista — RD$ <?php echo number_format($esc_optimista['ahorro_rd']*12,2); ?>/año</div>
+      </div>
+    </div>
+
+    <!-- Gráfica comparativa de escenarios -->
+    <div style="padding:.4rem 1.25rem 1.2rem;">
+      <canvas id="chartEscenarios" height="75"></canvas>
+    </div>
+
+    <!-- Formulario de parámetros (oculto por defecto) -->
+    <div id="cfgForm" style="display:none;">
+      <form class="cfg-form" method="get" action="">
+        <input type="hidden" name="periodo" value="<?php echo htmlspecialchars($filtroPeriodo); ?>">
+        <div class="cfg-title"><i class="fas fa-sliders-h"></i> Parámetros del Modelo — Personaliza la proyección</div>
+        <div class="cfg-grid">
+          <div class="cfg-item"><label>Residuos disponibles (kg/día)</label><input type="number" name="residuos_dia" value="<?php echo $cfg_residuos_dia; ?>" min="10" max="10000" step="10"></div>
+          <div class="cfg-item"><label>Rendimiento biogás (m³/kg residuo)</label><input type="number" name="rendimiento" value="<?php echo $cfg_rendimiento; ?>" min="0.01" max="0.30" step="0.01"></div>
+          <div class="cfg-item"><label>Eficiencia eléctrica del generador (0.10–0.50)</label><input type="number" name="eficiencia" value="<?php echo $cfg_eficiencia; ?>" min="0.10" max="0.50" step="0.01"></div>
+          <div class="cfg-item"><label>N° módulos Peltier TEG</label><input type="number" name="modulos" value="<?php echo $cfg_modulos; ?>" min="1" max="1000" step="1"></div>
+          <div class="cfg-item"><label>Potencia por módulo (W)</label><input type="number" name="potencia_w" value="<?php echo $cfg_potencia_w; ?>" min="0.5" max="50" step="0.5"></div>
+          <div class="cfg-item"><label>Horas de operación diaria</label><input type="number" name="horas" value="<?php echo $cfg_horas; ?>" min="1" max="24" step="0.5"></div>
+        </div>
+        <button type="submit" class="cfg-submit"><i class="fas fa-calculator"></i> Recalcular escenarios</button>
+      </form>
+    </div>
+  </div>
+  <!-- /MODELO BIOMASA + PELTIER TEG -->
 
   <!-- Filtro periodo -->
   <div class="filtro-bar">
@@ -421,7 +590,7 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
           </td></tr>
           <?php else: ?>
           <?php foreach ($ciclos as $idx => $c):
-            $fecha   = $c['registrado_en'] ? date('d/m/Y H:i', strtotime($c['registrado_en'])) : '—';
+            $fecha   = formatDateTimeRD($c['registrado_en'] ?? null);
             $energWh = floatval($c['energia_wh'] ?? 0);
             $kwh     = round($energWh / 1000, 6);
             $rdCiclo = round($kwh * $TARIFA_RD, 4);
@@ -458,6 +627,23 @@ const dLabels   = <?php echo json_encode($dLabels); ?>;
 const dKwh      = <?php echo json_encode($dKwh); ?>;
 const dPotencia = <?php echo json_encode($dPotencia); ?>;
 const TARIFA    = <?php echo $TARIFA_RD; ?>;
+const APP_TIMEZONE = 'America/Santo_Domingo';
+
+function formatDateTimeRD(value) {
+  if (!value) return '—';
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return String(value);
+  return new Intl.DateTimeFormat('es-DO', {
+    timeZone: APP_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).format(dt);
+}
 
 // kWh por día
 const c1 = document.getElementById('chartKwh');
@@ -547,11 +733,42 @@ function refrescarLive() {
       const statusEl = document.getElementById('liveStatus');
       if (statusEl) statusEl.textContent = d.sistema_activo ? 'ACTIVO' : 'INACTIVO';
       const updEl = document.getElementById('liveUpdated');
-      if (updEl) updEl.textContent = 'Última actualización: ' + (d.updated_at || new Date().toISOString());
+      if (updEl) updEl.textContent = 'Última actualización: ' + formatDateTimeRD(d.updated_at || new Date().toISOString());
     })
     .catch(() => {})
     .finally(() => { if (icon) icon.style.animation = ''; });
 }
+
+// ── Gráfica de escenarios BIOMASA+Peltier ──
+(function(){
+  const cEsc = document.getElementById('chartEscenarios');
+  if (!cEsc) return;
+  const labels  = ['Conservador','Base (activo)','Optimista'];
+  const bData   = [<?php echo $esc_conservador['e_biomasa'].','. $esc_base['e_biomasa'].','. $esc_optimista['e_biomasa']; ?>];
+  const pData   = [<?php echo $esc_conservador['e_peltier'].','. $esc_base['e_peltier'].','. $esc_optimista['e_peltier']; ?>];
+  const ahRD    = [<?php echo $esc_conservador['ahorro_rd'].','. $esc_base['ahorro_rd'].','. $esc_optimista['ahorro_rd']; ?>];
+  new Chart(cEsc, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'BIOMASA (kWh/mes)', data: bData, backgroundColor: ['rgba(71,85,105,.8)','rgba(5,150,105,.8)','rgba(109,40,217,.8)'], borderRadius: 6 },
+        { label: 'Peltier TEG (kWh/mes)', data: pData, backgroundColor: ['rgba(71,85,105,.4)','rgba(16,185,129,.45)','rgba(139,92,246,.45)'], borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color:'#94a3b8' } },
+        tooltip: { callbacks: { afterLabel: ctx => ctx.datasetIndex===1 ? ` → Total RD$ ${ahRD[ctx.dataIndex].toLocaleString('es-DO')} /mes` : '' } }
+      },
+      scales: {
+        x: { stacked:true, ticks:{color:'#94a3b8'}, grid:{color:'rgba(148,163,184,.1)'} },
+        y: { stacked:true, ticks:{color:'#10b981', callback:v=>v+' kWh'}, grid:{color:'rgba(148,163,184,.1)'} }
+      }
+    }
+  });
+})();
 
 // Auto-refresh every 8 seconds
 liveInterval = setInterval(refrescarLive, 8000);

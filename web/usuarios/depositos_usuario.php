@@ -8,10 +8,24 @@ if (!isset($_SESSION['usuario_id'])) {
 require_once "../../config/db_config.php";
 require_once "../../api/utils.php";
 
+date_default_timezone_set('America/Santo_Domingo');
+
+function formatDateTimeRD(?string $value, string $format = 'd/m/Y H:i:s'): string {
+    if (empty($value)) return '—';
+    try {
+        $tz = new DateTimeZone('America/Santo_Domingo');
+        $dt = new DateTimeImmutable($value);
+        return $dt->setTimezone($tz)->format($format);
+    } catch (Exception $e) {
+        return (string)$value;
+    }
+}
+
 $id = $_SESSION['usuario_id'];
 
 try {
     $pdo = getPDO();
+    $pdo->exec("SET time_zone = '-04:00'");
     $stmt = $pdo->prepare("
         SELECT d.id, d.id_contenedor, d.peso, d.tipo_residuo, d.credito_kwh, d.fecha_hora, d.token_usado, c.codigo_contenedor, c.ubicacion 
         FROM depositos d 
@@ -32,11 +46,19 @@ try {
     <meta charset="UTF-8">
     <title>Mis Depósitos - PRERMI</title>
     <link rel="stylesheet" href="estilos_usuario.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        table {
-            width: 90%;
+        .table-wrap {
+            width: 92%;
             margin: 25px auto;
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+        }
+        table {
+            width: 100%;
+            margin: 0;
             background: white;
             border-radius: 10px;
             border-collapse: collapse;
@@ -48,6 +70,22 @@ try {
         th {
             background: #00aa99;
             color: white;
+            white-space: nowrap;
+        }
+        td {
+            color: #263238;
+        }
+        .fecha-cell {
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+        .token-cell {
+            white-space: nowrap;
+        }
+        @media (max-width: 768px) {
+            table {
+                min-width: 860px;
+            }
         }
     </style>
 </head>
@@ -60,6 +98,7 @@ try {
 
 <h2 style="text-align:center; color:white;">Historial de Depósitos</h2>
 
+<div class="table-wrap">
 <table>
     <tr>
         <th>Contenedor</th>
@@ -78,8 +117,8 @@ try {
             <td><?php echo number_format($row['peso'], 2); ?></td>
             <td><?php echo htmlspecialchars($row['tipo_residuo'] ?? 'general'); ?></td>
             <td><?php echo number_format($row['credito_kwh'], 4); ?></td>
-            <td><?php echo date('d/m/Y H:i:s', strtotime($row['fecha_hora'])); ?></td>
-            <td><code style="font-size: 0.75rem;"><?php echo substr($row['token_usado'] ?? 'N/A', 0, 12); ?>...</code></td>
+            <td class="fecha-cell"><?php echo htmlspecialchars(formatDateTimeRD($row['fecha_hora'] ?? null)); ?></td>
+            <td class="token-cell"><code style="font-size: 0.75rem;"><?php $tok = trim((string)($row['token_usado'] ?? '')); echo $tok !== '' ? htmlspecialchars(substr($tok, 0, 12) . '...') : 'N/A'; ?></code></td>
             <td><?php echo htmlspecialchars($row['ubicacion'] ?? 'No especificada'); ?></td>
         </tr>
         <?php endforeach; ?>
@@ -93,6 +132,7 @@ try {
         </tr>
     <?php endif; ?>
 </table>
+</div>
 
 <p style="text-align:center;">
     <a href="dashboard_usuario.php">← Volver al Dashboard</a>

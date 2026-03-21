@@ -12,11 +12,15 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
     Require all granted
 </IfModule>
 
-# Habilitar CORS para API
+# Habilitar CORS solo para origenes de confianza
+SetEnvIfNoCase Origin "^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$" ACCESS_CONTROL_ALLOW_ORIGIN=$0
+SetEnvIfNoCase Origin "^https://prermi\.duckdns\.org$" ACCESS_CONTROL_ALLOW_ORIGIN=$0
+
 <IfModule mod_headers.c>
-    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Origin "%{ACCESS_CONTROL_ALLOW_ORIGIN}e" env=ACCESS_CONTROL_ALLOW_ORIGIN
     Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
     Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-API-KEY, X-Requested-With"
+    Header always set Vary "Origin"
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set X-Content-Type-Options "nosniff"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
@@ -40,8 +44,18 @@ RewriteRule ^(.*)$ $1 [R=200,L]
 # Desactivar listado de directorios
 Options -Indexes
 
+# Restringir herramientas de instalacion, diagnostico y simulacion fuera de localhost
+RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)$ [NC]
+RewriteRule ^((.+/)?test_[^/]+\.php|instalar_bd\.php|verificar_bd_integridad\.php|testing_interactivo\.php|index_herramientas\.php|scripts/simular_esp32s3_cam\.php|BIOMASA/instalar_tabla_graficas\.php)$ - [F,L]
+
 # Proteger archivos de configuración
 <FilesMatch "^(db_config|mailer|app_config)\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>
+
+<FilesMatch "\.(sql|md|txt|log|ini)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>

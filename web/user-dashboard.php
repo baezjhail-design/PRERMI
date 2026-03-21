@@ -14,8 +14,22 @@ $fotoFacialDisponible = file_exists($fotoFacialRutaFisica);
 require_once __DIR__ . '/../config/db_config.php';
 require_once __DIR__ . '/../api/utils.php';
 
+date_default_timezone_set('America/Santo_Domingo');
+
+function formatDateTimeRD(?string $value, string $format = 'd/m/Y H:i:s'): string {
+    if (empty($value)) return '—';
+    try {
+        $tz = new DateTimeZone('America/Santo_Domingo');
+        $dt = new DateTimeImmutable($value);
+        return $dt->setTimezone($tz)->format($format);
+    } catch (Exception $e) {
+        return (string)$value;
+    }
+}
+
 try {
     $pdo = getPDO();
+    $pdo->exec("SET time_zone = '-04:00'");
 
     // Get user info
     $stmtUser = $pdo->prepare("SELECT nombre, apellido, usuario, email, token FROM usuarios WHERE id = ?");
@@ -294,6 +308,10 @@ try {
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            white-space: nowrap;
         }
 
         .badge-ok {
@@ -303,6 +321,15 @@ try {
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            white-space: nowrap;
+        }
+
+        .fecha-cell {
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
         }
 
         .chart-container {
@@ -637,7 +664,7 @@ try {
                                     <tr>
                                         <td><?php echo htmlspecialchars($s['descripcion'] ?? 'N/A'); ?></td>
                                         <td><?php echo isset($s['peso']) ? number_format($s['peso'],3) : '-'; ?></td>
-                                        <td><?php echo date('d/m/Y H:i', strtotime($s['creado_en'])); ?></td>
+                                        <td class="fecha-cell"><?php echo htmlspecialchars(formatDateTimeRD($s['creado_en'] ?? null)); ?></td>
                                         <td><?php echo (isset($s['seen_by_admin']) && $s['seen_by_admin']) ? 'Sí' : 'No'; ?></td>
                                     </tr>
                                     <?php endforeach; ?>
@@ -849,7 +876,7 @@ try {
                                     ?>
                                 </td>
                                 <td><strong><?php echo number_format($dep['credito_kwh'], 4); ?> kWh</strong></td>
-                                <td><?php echo date('d/m/Y H:i', strtotime($dep['creado_en'])); ?></td>
+                                <td class="fecha-cell"><?php echo htmlspecialchars(formatDateTimeRD($dep['creado_en'] ?? null)); ?></td>
                             </tr>
                             <?php endforeach; ?>
                             <?php if (empty($depositos)): ?>

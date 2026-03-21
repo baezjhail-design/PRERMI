@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Reactor de biomasa">
+  <rect width="1200" height="800" fill="#0f172a"/>
+  <rect x="280" y="120" width="640" height="560" rx="40" fill="#1e293b" stroke="#22c55e" stroke-width="6"/>
+  <rect x="340" y="180" width="520" height="360" rx="24" fill="#0b1f3a"/>
+  <path d="M380 470 C470 380, 730 540, 820 360" fill="none" stroke="#34d399" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="460" cy="330" r="22" fill="#22c55e"/>
+  <circle cx="600" cy="300" r="30" fill="#22d3ee"/>
+  <circle cx="730" cy="380" r="18" fill="#86efac"/>
+  <rect x="390" y="580" width="420" height="28" rx="14" fill="#334155"/>
+  <rect x="420" y="630" width="160" height="20" rx="10" fill="#22c55e"/>
+  <rect x="620" y="630" width="160" height="20" rx="10" fill="#22d3ee"/>
+  <text x="600" y="95" text-anchor="middle" fill="#bbf7d0" font-size="40" font-family="Sora, Arial, sans-serif">Reactor de Biomasa</text>
+</svg>

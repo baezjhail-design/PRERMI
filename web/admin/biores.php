@@ -760,6 +760,7 @@ canvas{
                 </button>
             </div>
             <div style="margin-top:12px; text-align:center;">
+                <button class="control-btn btn-stop" style="background:#b91c1c;color:#fff;margin-right:8px" onclick="paradaEmergenciaTotal()">⚠ Emergencia Total</button>
                 <button class="control-btn btn-stop" style="background:#5b21b6;color:#fff" onclick="sendSystemOff()">Apagado Sistema Completo</button>
             </div>
             <div class="alert-info" id="statusMessage">
@@ -934,11 +935,60 @@ const energiaData = [];
 const consumoData = [];
 const MAX_POINTS = 40;
 const PRECIO_KWH_DOP = 65.00; // Precio aproximado por kWh en pesos dominicanos
+const APP_TIMEZONE = 'America/Santo_Domingo';
 let maxTempHistorica = 0;
 let ultimoTotalEnergiaWh = 0;
 let lastSystemOffFlag = null;
 let fechaDiaPicker, fechaMesPicker, fechaAnualPicker;
 let chartTemp, chartEnergia, chartGanancias;
+
+function formatDateOnlyLocal(dateObj = new Date()) {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function formatDateTimeRD(value) {
+    if (!value) return 'Sin fecha';
+    const dt = (value instanceof Date) ? value : new Date(value);
+    if (Number.isNaN(dt.getTime())) return String(value);
+    return new Intl.DateTimeFormat('es-DO', {
+        timeZone: APP_TIMEZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    }).format(dt);
+}
+
+async function postControlAction(accion) {
+    const response = await fetch('/PRERMI/BIOMASA/control_biomasa.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'accion=' + encodeURIComponent(accion)
+    });
+
+    const text = await response.text();
+    let payload = {};
+    try {
+        payload = text ? JSON.parse(text) : {};
+    } catch (e) {
+        payload = { status: 'error', msg: 'respuesta_no_json', raw: text };
+    }
+
+    if (!response.ok || payload.status !== 'ok') {
+        const msg = payload.msg || `HTTP ${response.status}`;
+        throw new Error(msg);
+    }
+
+    return payload;
+}
 
 // ===== GRÁFICOS INICIALES VACÍOS =====
 chartTemp = new Chart(document.getElementById('chartTemp'), {
@@ -1078,7 +1128,7 @@ function pushHistorico(tempVal, energiaWh, ts) {
     // Solo actualizar si los gráficos están inicializados
     if (!chartTemp || !chartEnergia) return;
     
-    const nowLabel = ts ? new Date(ts).toLocaleTimeString() : new Date().toLocaleTimeString();
+    const nowLabel = formatDateTimeRD(ts || new Date());
     const safeTemp = Number.isFinite(tempVal) ? tempVal : 0;
     const energiaKwh = (Number.isFinite(energiaWh) ? energiaWh : 0) / 1000;
 
@@ -1141,14 +1191,7 @@ function iniciarSistema() {
     
     console.log('📡 Enviando comando INICIO al Arduino...');
     
-    fetch('/PRERMI/BIOMASA/control_biomasa.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: 'accion=START'
-    })
-    .then(response => response.json())
+    postControlAction('START')
     .then(data => {
         if (data.status === 'ok') {
             // Sistema iniciado exitosamente
@@ -1179,10 +1222,7 @@ function iniciarSistema() {
 }
 
 function sendSystemOff(){
-    fetch('/PRERMI/BIOMASA/control_biomasa.php', {
-        method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'},
-        body: 'accion=SYSTEM_OFF'
-    }).then(r=>r.json()).then(j=>{
+    postControlAction('SYSTEM_OFF').then(j=>{
         if (j.status==='ok') {
             estadoSistema = false;
             actualizarInterfaz();
@@ -1190,7 +1230,18 @@ function sendSystemOff(){
         } else {
             setStatusMessage('❌ Error al apagar el sistema', 'error');
         }
-    }).catch(e=>setStatusMessage('❌ Error de conexión', 'error'));
+    }).catch(e=>setStatusMessage('❌ Error de conexión: ' + e.message, 'error'));
+}
+
+function paradaEmergenciaTotal(){
+    postControlAction('EMERGENCY').then(() => {
+        estadoSistema = false;
+        actualizarInterfaz();
+        setStatusMessage('🚨 Parada de emergencia enviada al sistema', 'warn');
+        setTimeout(() => {
+            cargarEstadoSensores();
+        }, 1500);
+    }).catch(e => setStatusMessage('❌ Error en emergencia: ' + e.message, 'error'));
 }
 
 function detenerSistema() {
@@ -1203,14 +1254,7 @@ function detenerSistema() {
     
     console.log('🛑 Enviando comando PARADA al Arduino...');
     
-    fetch('/PRERMI/BIOMASA/control_biomasa.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: 'accion=STOP'
-    })
-    .then(response => response.json())
+    postControlAction('STOP')
     .then(data => {
         if (data.status === 'ok') {
             // Sistema detenido exitosamente
@@ -1241,12 +1285,13 @@ function detenerSistema() {
 // Inicializar interfaz al cargar
 window.addEventListener('DOMContentLoaded', () => {
     // Establecer fecha actual como valor por defecto
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoyObj = new Date();
+    const hoy = formatDateOnlyLocal(hoyObj);
     document.getElementById('fechaDia').value = hoy;
-    document.getElementById('fechaAnual').value = new Date().getFullYear();
+    document.getElementById('fechaAnual').value = hoyObj.getFullYear();
     
     // Establecer rango del mes actual para el filtro de mes
-    const primerDia = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+    const primerDia = formatDateOnlyLocal(new Date(hoyObj.getFullYear(), hoyObj.getMonth(), 1));
     document.getElementById('fechaMes').value = primerDia + ' - ' + hoy;
     
     actualizarInterfaz();
@@ -1391,7 +1436,7 @@ function actualizarSensor(nombre, sensor, id, unidad) {
     
     // Actualizar timestamp
     if (timestamp && timestamp !== 'Esperando señal...') {
-        timestampEl.textContent = 'Última actualización: ' + new Date(timestamp).toLocaleTimeString();
+        timestampEl.textContent = 'Última actualización: ' + formatDateTimeRD(timestamp);
     } else {
         timestampEl.textContent = 'Esperando señal...';
     }
@@ -1424,14 +1469,7 @@ function apagarEmergencia(sensor, btn) {
             return;
     }
     
-    fetch('/PRERMI/BIOMASA/control_biomasa.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: 'accion=' + encodeURIComponent(accion)
-    })
-    .then(response => response.json())
+    postControlAction(accion)
     .then(data => {
         if (data.status === 'ok') {
             setStatusMessage('⚠️ Sensor detenido por emergencia', 'warn');

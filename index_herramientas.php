@@ -7,6 +7,9 @@
  */
 
 header('Content-Type: text/html; charset=utf-8');
+
+require_once __DIR__ . '/api/utils.php';
+requireLocalAccess(false);
 ?>
 <!DOCTYPE html>
 <html lang="es">

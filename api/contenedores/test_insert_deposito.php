@@ -4,6 +4,9 @@
  * Script para verificar que el ID=1 se acepta en la tabla depositos
  */
 
+require_once __DIR__ . '/../utils.php';
+requireLocalAccess(false);
+
 require_once __DIR__ . '/../../config/db_config.php';
 
 $conn = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);

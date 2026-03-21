@@ -3,6 +3,13 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
+// Zona horaria operacional del sistema (RD)
+date_default_timezone_set('America/Santo_Domingo');
+
+function nowIsoRD() {
+    return date('c');
+}
+
 // Optional token validation
 function expected_token() {
     $tfile = __DIR__ . '/../config/token.txt';
@@ -58,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             if (isset($_GET['calentador'])) $status['calentador'] = intval($_GET['calentador']);
             if (isset($_GET['energia_generada'])) $status['energia_generada'] = floatval($_GET['energia_generada']);
             if (isset($_GET['sistema_activo'])) $status['sistema_activo'] = intval($_GET['sistema_activo']);
-            $status['updated_at'] = date(DATE_ATOM);
+            $status['updated_at'] = nowIsoRD();
             file_put_contents($apiStatus, json_encode($status, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
             // Guardar en historial de mediciones
@@ -173,7 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $control[$k] = $v;
             }
             $control['raw'] = strtolower($accion);
-            $control['created_at'] = date(DATE_ATOM);
+            $control['created_at'] = nowIsoRD();
             $control['sent_at'] = null;
             $control['command_id'] = intval($control['command_id'] ?? 0) + 1;
             file_put_contents($apiControl, json_encode($control, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -191,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($data['energia_generada'])) $status['energia_generada'] = floatval($data['energia_generada']);
     if (isset($data['sistema_activo'])) $status['sistema_activo'] = intval($data['sistema_activo']);
     
-    $status['updated_at'] = date(DATE_ATOM);
+    $status['updated_at'] = nowIsoRD();
     
     // Guardar status
     if (file_put_contents($apiStatus, json_encode($status, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) === false) {

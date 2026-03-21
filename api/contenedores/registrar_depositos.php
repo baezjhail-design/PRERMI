@@ -69,7 +69,7 @@ $stmt->bind_param($types,
 if ($stmt->execute()) {
     $deposito_id = $stmt->insert_id;
 
-    // Enviar factura de deposito por email
+    // Enviar factura de deposito por email (no debe romper el flujo principal)
     try {
         $stmtU = $conn->prepare("SELECT email, nombre, apellido FROM usuarios WHERE id = ? LIMIT 1");
         $stmtU->bind_param("i", $id_usuario);
@@ -79,7 +79,9 @@ if ($stmt->execute()) {
         if (!empty($u['email'])) {
             $fullName = trim(($u['nombre'] ?? '') . ' ' . ($u['apellido'] ?? '')) ?: $u['email'];
             $creditoVal = $credito_kwh ?? round($peso * 0.5, 4);
-            sendDepositNotificationEmail($u['email'], $fullName, $peso, $creditoVal, $creado_en, $deposito_id);
+            if (function_exists('sendDepositNotificationEmail')) {
+                sendDepositNotificationEmail($u['email'], $fullName, $peso, $creditoVal, $creado_en, $deposito_id);
+            }
 
             // Si se detecto metal, enviar reporte de sancion
             if ($metal_detectado) {
@@ -89,11 +91,13 @@ if ($stmt->execute()) {
                 $stmtSanc->execute();
                 $sancion_id_local = $stmtSanc->insert_id;
                 $stmtSanc->close();
-                sendSanctionReportEmail($u['email'], $fullName, $sancion_id_local, $desc, $peso, 'Contenedor #' . $id_contenedor, $creado_en);
+                if (function_exists('sendSanctionReportEmail')) {
+                    sendSanctionReportEmail($u['email'], $fullName, $sancion_id_local, $desc, $peso, 'Contenedor #' . $id_contenedor, $creado_en);
+                }
             }
         }
         $stmtU->close();
-    } catch (Exception $emailEx) {
+    } catch (Throwable $emailEx) {
         error_log("[EMAIL] Error enviando notificacion deposito: " . $emailEx->getMessage());
     }
 

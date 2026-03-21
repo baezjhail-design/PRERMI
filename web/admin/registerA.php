@@ -79,8 +79,16 @@ session_start();
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
-                msg.textContent = data.message || data.msg || 'Proceso completado.';
-                msg.className = data.success ? 'msg ok' : 'msg err';
+                if (data.success) {
+                    form.style.display = 'none';
+                    msg.innerHTML = (data.message || data.msg || 'Registro completado.') +
+                        '<br><br><strong style="color:#17663a;">&#128231; Revisa tu correo electrónico para verificar tu cuenta.</strong>' +
+                        '<br><span style="display:inline-block;margin-top:8px;background:#fff8e1;border:1px solid #f59e0b;border-radius:6px;padding:8px 12px;font-size:0.88rem;">&#9888;&#65039; <strong>Si no encuentras el correo, revisa tu carpeta de <span style="color:#d97706;">Spam / Correo no deseado</span>.</strong></span>';
+                    msg.className = 'msg ok';
+                } else {
+                    msg.textContent = data.message || data.msg || 'Error en el proceso.';
+                    msg.className = 'msg err';
+                }
                 if (data.success) form.reset();
             } catch (err) {
                 msg.textContent = 'No se pudo conectar con el servidor.';

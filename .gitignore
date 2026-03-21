@@ -1,0 +1,36 @@
+# =======================================================
+#  PRERMI — .gitignore
+#  Archivos que NUNCA deben llegar al repositorio.
+#  Los colaboradores deben copiar los archivos *.example
+#  y completar sus propios valores.
+# =======================================================
+
+# ---- Credenciales y configuración sensible ----
+config/db_config.php
+config/mailer.php
+api/security.php
+api/admin/api_estado.php
+
+# ---- Variables de entorno ----
+.env
+.env.local
+.env.production
+.env.*.local
+
+# ---- Datos biométricos y fotos de usuarios (PII) ----
+uploads/
+python/known_faces/
+python/models/
+
+# ---- Logs del sistema ----
+logs/
+*.log
+
+# ---- Dependencias de Composer (regenerar con: composer install) ----
+vendor/
+
+# ---- Archivos temporales / IDE ----
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

@@ -4,7 +4,11 @@
 // Simula el ciclo completo del contenedor inteligente
 // Uso: POST JSON con parámetros opcionales para simular eventos
 
+require_once __DIR__ . '/../api/utils.php';
+
 header('Content-Type: application/json; charset=utf-8');
+
+requireLocalAccess(true);
 
 // --- Configuración fija (simula hardware y credenciales) ---
 $CONTAINER_ID_FIXED = 15;
