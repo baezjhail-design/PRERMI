@@ -1,7 +1,7 @@
-﻿<?php
+<?php
 /**
- * dashboard.php — Panel de Control (ultimas 24 horas)
- * PRERMI Admin — Hub principal con acceso a modulos independientes
+ * dashboard.php - Panel de control (ultimas 24 horas)
+ * PRERMI Admin - Hub principal con acceso a modulos independientes
  */
 session_start();
 if (!isset($_SESSION['admin_id'])) { header("Location: loginA.php"); exit; }
@@ -69,7 +69,7 @@ $ahorro24h = round($kwh24h * 14.00, 2);
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Panel de Control — PRERMI Admin</title>
+<title>Panel de Control | PRERMI Admin</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="/PRERMI/web/assets/css/theme.css">
@@ -180,7 +180,7 @@ body{background:#f1f5f9;min-height:100vh;font-family:'Segoe UI',sans-serif;}
   <div class="hero">
     <div>
       <h1><i class="fas fa-chart-line"></i> Panel de Control</h1>
-      <p>Ultimas 24 horas &nbsp;|&nbsp; <?php echo date('d/m/Y H:i', strtotime('-24 hours')); ?> — <?php echo date('d/m/Y H:i'); ?></p>
+      <p>Ultimas 24 horas &nbsp;|&nbsp; <?php echo date('d/m/Y H:i', strtotime('-24 hours')); ?> | <?php echo date('d/m/Y H:i'); ?></p>
     </div>
     <div class="hero-badge"><i class="fas fa-circle" style="color:#4ade80;font-size:.6rem;"></i> Sistema activo</div>
   </div>
@@ -242,8 +242,8 @@ body{background:#f1f5f9;min-height:100vh;font-family:'Segoe UI',sans-serif;}
     <a href="depositos.php" class="section-card sc-card-green">
       <div class="sc-icon sc-green"><i class="fas fa-box-open"></i></div>
       <div>
-        <p class="sc-title">Depositos y Energia</p>
-        <p class="sc-desc">Depositos de biomasa/basura, generacion de kWh y ahorro electrico en RD$.</p>
+        <p class="sc-title">Depositos y energia</p>
+        <p class="sc-desc">Depositos de biomasa y basura, generacion de kWh y ahorro electrico en RD$.</p>
       </div>
       <div class="d-flex align-items-center gap-2">
         <span class="sc-stat" style="background:#d1fae5;color:#065f46;"><?php echo $depositos24h; ?> hoy</span>
@@ -267,7 +267,7 @@ body{background:#f1f5f9;min-height:100vh;font-family:'Segoe UI',sans-serif;}
       <div class="sc-icon sc-purple"><i class="fas fa-users-cog"></i></div>
       <div>
         <p class="sc-title">Administradores</p>
-        <p class="sc-desc">Gestion de admins y usuarios: aprobar, banear, enviar mensajes y cambiar roles.</p>
+        <p class="sc-desc">Gestion de administradores: aprobar, bloquear, enviar mensajes y cambiar roles.</p>
       </div>
       <div class="d-flex align-items-center gap-2">
         <span class="sc-stat" style="background:#ede9fe;color:#5b21b6;"><?php echo $totAdmins; ?> admins</span>
@@ -279,7 +279,7 @@ body{background:#f1f5f9;min-height:100vh;font-family:'Segoe UI',sans-serif;}
 
   <!-- Grafica de actividad 24h -->
   <div class="chart-box">
-    <div class="chart-title"><i class="fas fa-chart-bar" style="color:#06b6d4;"></i> Actividad por hora — ultimas 24 horas</div>
+    <div class="chart-title"><i class="fas fa-chart-bar" style="color:#06b6d4;"></i> Actividad por hora | ultimas 24 horas</div>
     <canvas id="chartActividad" height="90"></canvas>
   </div>
 
@@ -292,7 +292,7 @@ body{background:#f1f5f9;min-height:100vh;font-family:'Segoe UI',sans-serif;}
       <div class="act-item">
         <div class="act-dot dot-blue" style="<?php echo floatval($c['probabilidad'])>0.8?'background:#ef4444':''; ?>"></div>
         <div class="act-text">
-          <strong><?php echo htmlspecialchars($c['placa']??'N/A'); ?></strong> — <?php echo htmlspecialchars($c['ubicacion']??'Sin ubicacion'); ?>
+          <strong><?php echo htmlspecialchars($c['placa']??'N/A'); ?></strong> | <?php echo htmlspecialchars($c['ubicacion']??'Sin ubicacion'); ?>
           <span style="font-size:.75rem;color:#94a3b8;display:block;"><?php echo htmlspecialchars($c['tipo_vehiculo']??''); ?></span>
         </div>
         <span class="act-time"><?php echo date('H:i',strtotime($c['creado_en'])); ?></span>
@@ -307,7 +307,7 @@ body{background:#f1f5f9;min-height:100vh;font-family:'Segoe UI',sans-serif;}
       <div class="act-item">
         <div class="act-dot dot-green"></div>
         <div class="act-text">
-          <strong><?php echo htmlspecialchars($d['usuario']??'Usuario'); ?></strong> — <?php echo htmlspecialchars($d['codigo_contenedor']??'Contenedor'); ?>
+          <strong><?php echo htmlspecialchars($d['usuario']??'Usuario'); ?></strong> | <?php echo htmlspecialchars($d['codigo_contenedor']??'Contenedor'); ?>
           <span style="font-size:.75rem;color:#94a3b8;display:block;"><?php echo $d['peso']!==null?number_format(floatval($d['peso']),2).'kg':''; ?> | <?php echo $d['credito_kwh']!==null?number_format(floatval($d['credito_kwh']),3).' kWh':''; ?></span>
         </div>
         <span class="act-time"><?php echo date('H:i',strtotime($d['ts'])); ?></span>
@@ -335,7 +335,7 @@ body{background:#f1f5f9;min-height:100vh;font-family:'Segoe UI',sans-serif;}
   <!-- Logs del sistema -->
   <?php if(!empty($logs)): ?>
   <div class="log-panel">
-    <h6 style="font-weight:700;color:#1e293b;margin-bottom:.75rem;"><i class="fas fa-list text-secondary"></i> Logs del sistema — ultimas 24h</h6>
+    <h6 style="font-weight:700;color:#1e293b;margin-bottom:.75rem;"><i class="fas fa-list text-secondary"></i> Logs del sistema | ultimas 24h</h6>
     <?php foreach($logs as $lg): ?>
     <div class="log-entry">
       <span class="badge-tipo tipo-<?php echo htmlspecialchars($lg['tipo']); ?>"><?php echo strtoupper(htmlspecialchars($lg['tipo'])); ?></span>

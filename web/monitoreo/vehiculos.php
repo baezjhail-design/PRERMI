@@ -107,6 +107,35 @@ if (!isset($_SESSION['admin_id'])) {
             border-radius: 8px;
             object-fit: cover;
         }
+
+        .catalog-mini-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .catalog-mini-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .catalog-mini-card img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            background: #f8fafc;
+        }
+
+        .catalog-mini-body {
+            padding: 0.75rem;
+        }
+
+        .text-mini {
+            font-size: 0.82rem;
+            color: #6b7280;
+        }
     </style>
 </head>
 <body>
@@ -300,6 +329,64 @@ if (!isset($_SESSION['admin_id'])) {
                     </div>
                 </div>
             </div>
+
+            <!-- CATALOGO ACTIVO Y PRUEBA DE VERIFICACION -->
+            <div class="row mt-4 mb-4">
+                <div class="col-lg-7">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-camera"></i> Catalogo activo de deteccion</span>
+                            <button class="btn btn-sm btn-outline-primary" onclick="loadCatalogoActivo()">
+                                <i class="fas fa-rotate"></i> Refrescar
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3 row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Filtrar tipo</label>
+                                    <select class="form-control" id="catalogTipoFilter" onchange="loadCatalogoActivo()">
+                                        <option value="">Todos</option>
+                                        <option value="accidente">Accidente</option>
+                                        <option value="vehiculo_empresa">Vehiculo empresa</option>
+                                        <option value="camion_recolector">Camion recolector</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end justify-content-md-end">
+                                    <span class="badge bg-primary" id="catalogoActivoCount">0 activos</span>
+                                </div>
+                            </div>
+                            <div id="catalogMiniContainer" class="catalog-mini-grid">
+                                <div class="text-muted">Cargando catalogo...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <i class="fas fa-vial"></i> Prueba rapida de verificacion
+                        </div>
+                        <div class="card-body">
+                            <p class="text-mini mb-3">Prueba manual para validar que el endpoint de verificacion responde categoria y confianza.</p>
+                            <form id="verifyTestForm">
+                                <div class="mb-2">
+                                    <label class="form-label">Imagen JPG</label>
+                                    <input type="file" class="form-control" id="verifyImage" accept="image/jpeg,image/jpg" required>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">Evento</label>
+                                    <input type="text" class="form-control" id="verifyEvent" value="test_manual" maxlength="60">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="btnVerifyNow">
+                                    <i class="fas fa-play"></i> Verificar imagen
+                                </button>
+                            </form>
+                            <pre id="verifyResult" class="mt-3 p-2 bg-light rounded text-mini" style="max-height: 220px; overflow: auto;">Sin resultados</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -340,6 +427,100 @@ if (!isset($_SESSION['admin_id'])) {
 
             marker.bindPopup(`<strong>${vehicle.name}</strong><br>Estado: ${vehicle.status}`);
         });
+
+        async function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '');
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function loadCatalogoActivo() {
+            const tipo = document.getElementById('catalogTipoFilter').value;
+            const params = new URLSearchParams({ action: 'list', estado: 'activo' });
+            if (tipo) params.append('tipo', tipo);
+
+            const target = document.getElementById('catalogMiniContainer');
+            target.innerHTML = '<div class="text-muted">Cargando...</div>';
+
+            try {
+                const res = await fetch('/PRERMI/api/vehiculos/manage_catalogo.php?' + params.toString());
+                const data = await res.json();
+
+                if (!data.success) {
+                    target.innerHTML = '<div class="text-danger">' + (data.msg || 'Error cargando catalogo') + '</div>';
+                    return;
+                }
+
+                const items = data.catalogo || [];
+                document.getElementById('catalogoActivoCount').innerText = items.length + ' activos';
+
+                if (!items.length) {
+                    target.innerHTML = '<div class="text-muted">No hay referencias activas.</div>';
+                    return;
+                }
+
+                target.innerHTML = items.map(item => (
+                    '<div class="catalog-mini-card">' +
+                        '<img src="' + item.ruta_archivo + '" alt="catalog-item">' +
+                        '<div class="catalog-mini-body">' +
+                            '<div><strong>' + (item.etiqueta || '') + '</strong></div>' +
+                            '<div class="text-mini">Tipo: ' + item.tipo_vehiculo + '</div>' +
+                            '<div class="text-mini">Estado: ' + item.estado + '</div>' +
+                        '</div>' +
+                    '</div>'
+                )).join('');
+            } catch (err) {
+                target.innerHTML = '<div class="text-danger">Error de red cargando catalogo.</div>';
+            }
+        }
+
+        document.getElementById('verifyTestForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const file = document.getElementById('verifyImage').files[0];
+            const eventName = document.getElementById('verifyEvent').value.trim() || 'test_manual';
+            const resultBox = document.getElementById('verifyResult');
+            const btn = document.getElementById('btnVerifyNow');
+
+            if (!file) {
+                alert('Selecciona una imagen JPG');
+                return;
+            }
+
+            if (!/image\/jpeg/.test(file.type)) {
+                alert('Solo se permite formato JPEG');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+            resultBox.textContent = 'Procesando...';
+
+            try {
+                const imagen_base64 = await fileToBase64(file);
+                const res = await fetch('/PRERMI/api/vehiculos/verificar_vehiculo.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        imagen_base64,
+                        evento: eventName,
+                        origen: 'web_monitoreo_manual'
+                    })
+                });
+
+                const data = await res.json();
+                resultBox.textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                resultBox.textContent = 'Error de red al verificar imagen';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play"></i> Verificar imagen';
+            }
+        });
+
+        loadCatalogoActivo();
     </script>
 </body>
 </html>

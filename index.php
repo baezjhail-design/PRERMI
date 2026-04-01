@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Programa de Reabastecimiento Energético, Residuos y Monitoreo Inteligente (PRERMI). Solución industrial para convertir residuos en energía con trazabilidad y analítica en tiempo real.">
     <title>PRERMI | Feria Proindustria 2026</title>
+    <link rel="icon" type="image/x-icon" href="/PRERMI/web/assets/img/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="/PRERMI/web/assets/img/favicon.ico">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1517,11 +1519,11 @@
                             <li><a class="dropdown-item" href="#textil">🧵 Sector Textil</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item"><a class="nav-link" href="web/register.php">Registrarse</a></li>
+                    <li class="nav-item"><a class="nav-link" href="web/admin/register.php">Registrarse</a></li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
                         <ul class="dropdown-menu" aria-labelledby="navAdmin">
-                            <li><a class="dropdown-item" href="web/admin/registerA.php"><i class="fa-solid fa-user-shield"></i> Registrarse como Admin</a></li>
+                            <li><a class="dropdown-item" href="web/admin/register.php"><i class="fa-solid fa-user-shield"></i> Registrarse como Admin</a></li>
                             <li><a class="dropdown-item" href="web/admin/loginA.php"><i class="fa-solid fa-lock"></i> Iniciar sesión Admin</a></li>
                         </ul>
                     </li>
@@ -1531,7 +1533,7 @@
                             Contacto
                         </a>
                     </li>
-                    <li class="nav-item ms-lg-1"><a href="web/register.php" class="btn-outline-soft">Crear Cuenta</a></li>
+                    <li class="nav-item ms-lg-1"><a href="web/admin/register.php" class="btn-outline-soft">Crear Cuenta</a></li>
                     <li class="nav-item ms-lg-2"><a href="web/login.php" class="btn-main">Entrar</a></li>
                     <li class="nav-item ms-lg-2">
                         <button id="btnTheme" class="btn-theme-index" onclick="toggleTheme()" title="Cambiar tema"><i class="fas fa-moon"></i></button>
@@ -1698,7 +1700,7 @@
                     <p style="color: var(--muted);">Monitorea sensores en tiempo real, gestiona usuarios, emite sanciones y controla el biorreactor BIOMASA remotamente.</p>
                     <div class="access-actions">
                         <a class="btn-alt" href="web/admin/loginA.php"><i class="fa-solid fa-lock"></i> Ingresar como Admin</a>
-                        <a class="btn-outline-soft" href="web/admin/registerA.php"><i class="fa-solid fa-user-plus"></i> Registrar Admin</a>
+                        <a class="btn-outline-soft" href="web/admin/register.php"><i class="fa-solid fa-user-plus"></i> Registrar Admin</a>
                     </div>
                 </article>
             </div>

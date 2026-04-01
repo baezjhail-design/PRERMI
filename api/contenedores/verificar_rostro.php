@@ -119,17 +119,15 @@ $probability = isset($result["probability"]) ? floatval($result["probability"]) 
 $votes = isset($result["votes"]) ? intval($result["votes"]) : 1;
 $hour = (int) date('G');
 $isDay = ($hour >= 7 && $hour < 19);
-$nightMinProbability = 0.22;
-$nightMaxConfidence = 155.0;
+$nightMinProbability = 0.34;
+$nightMaxConfidence = 145.0;
 
-// Dia ligeramente mas estricto que noche.
-$minProbabilityServer = $isDay ? round($nightMinProbability * 1.03, 4) : $nightMinProbability;
-$maxConfidenceServer = $isDay ? round($nightMaxConfidence * 0.97, 2) : $nightMaxConfidence;
+// Dia mas estricto para reducir falsos positivos.
+$minProbabilityServer = $isDay ? round($nightMinProbability * 1.05, 4) : $nightMinProbability;
+$maxConfidenceServer = $isDay ? round($nightMaxConfidence * 0.94, 2) : $nightMaxConfidence;
 
 if (!empty($result["success"])) {
-    // Alinear la logica con Python: aceptar voto estable aunque probabilidad sea baja.
-    $voteStableMatch = ($votes >= 2 && $confidence <= ($maxConfidenceServer + 6.0));
-    if (!$voteStableMatch && ($probability < $minProbabilityServer || $confidence > $maxConfidenceServer)) {
+    if ($probability < $minProbabilityServer || $confidence > $maxConfidenceServer) {
         echo json_encode([
             "success" => false,
             "message" => "Low confidence match rejected",

@@ -1,0 +1,25 @@
+﻿PROMPT: EXAMEN INTEGRAL PRERMI
+
+Rol: Experto en IoT, web full-stack y evaluacion tecnica.
+Crea un examen de 50 preguntas sobre PRERMI (Programa de Reabastecimiento Energetico, Residuos y Monitoreo Inteligente).
+
+FORMATO: HTML+CSS+JS · puntaje automatico · barra de progreso · temporizador · borrador en localStorage · modo impresion · answer key + rubrica.
+
+DISTRIBUCION: 25 opcion multiple · 10 V/F · 10 respuesta corta · 5 casos practicos.
+
+BLOQUES OBLIGATORIOS:
+A0) General: nombre, alcance, roles, contexto.
+A) Vision: proposito, flujo MCU->servidor->web.
+B) Arquitectura: ESP32-S3 CAM, ESP8266MOD OLED, plataforma web, APIs.
+C) Firmware: librerias, telemetria, comandos remotos.
+D) Circuitos/pines: OLED I2C SDA=41/SCL=40, Servo GPIO2, HX711 DT=20/SCK=21, metal GPIO45, LEDs GPIO47/48, OV2640 XCLK=15..PCLK=13; biomasa: DS18B20 D2, PTC D7, ventilador D8, ACS712 A0.
+E) Servidor: Ubuntu 22.04, Apache 2.4, PHP 8.2, MySQL 8, Python 3.12+OpenCV LBPH, DuckDNS+SSL.
+F) API/Seguridad: endpoints, JSON, X-MCU-ID/X-MCU-KEY, logs, control de acceso.
+G) BD: usuarios, contenedores, depositos, sanciones, sensores.
+H) Operacion: flujos, diagnostico, pruebas funcionales.
+I) Frontend: UI, validaciones, fetch/AJAX, responsividad, monitoreo en tiempo real.
+J) BOM 1-59: HX711, ESP32-CAM, ESP32-S3, ESP8266, Arduino, servos, motores DC, OV2640, IR, inductivo PNP, DS18B20, nivel agua, rele SRD-05VDC, optoacoplador PC817, Peltier, PTC 12V, fuente 24V/10A, conv. DC-DC 24->3.3V/12V, fusible PTC 5A, diodo TVS 30V, capacitor 22uF, breaker, buzzer, resistencias 270R/10k.
+
+REGLAS: >=40% analisis · >=15 con ID BOM · >=10 circuitos/potencia · >=8 frontend · >=8 seguridad · >=10 HW+SW mixto · >=6 sensado · >=4 actuadores.
+
+SALIDA: HTML ejecutable · tabla pregunta->tema->ID BOM · answer key · rubrica · recomendaciones: IoT/MCU, Electronica, Frontend, Backend/API, Seguridad, DevOps.

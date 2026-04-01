@@ -114,7 +114,7 @@ try {
     }
 
     $insertStmt = $pdo->prepare(
-        "INSERT INTO rostros (user_id, filename, image, relative_path, calidad) VALUES (?, ?, ?, ?, ?)"
+        "INSERT INTO rostros (user_id, filename, image, relative_path, calidad) VALUES (?, ?, NULL, ?, ?)"
     );
 
     $savedCount = 0;
@@ -141,9 +141,8 @@ try {
 
         $insertStmt->bindValue(1, $userId, PDO::PARAM_INT);
         $insertStmt->bindValue(2, $filename, PDO::PARAM_STR);
-        $insertStmt->bindValue(3, $binary, PDO::PARAM_LOB);
-        $insertStmt->bindValue(4, $relativePath, PDO::PARAM_STR);
-        $insertStmt->bindValue(5, round($qualityScore, 2));
+        $insertStmt->bindValue(3, $relativePath, PDO::PARAM_STR);
+        $insertStmt->bindValue(4, round($qualityScore, 2));
         $insertStmt->execute();
 
         $savedCount++;
@@ -203,6 +202,6 @@ try {
         registrarLog('Error guardando lote facial: ' . $e->getMessage(), 'error');
     }
 
-    echo "<script>alert('No se pudo guardar el lote facial.'); window.location='Registrofac.php';</script>";
+    echo "<script>alert('Ocurrió un error al guardar las fotos. Intente de nuevo.'); window.location='Registrofac.php';</script>";
 }
 ?>

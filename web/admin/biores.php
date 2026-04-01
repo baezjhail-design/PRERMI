@@ -5,17 +5,17 @@ if (!isset($_SESSION['admin_id'])) {
     exit;
 }
 
-/* Usar configuración centralizada */
+/* Usar configuraci�n centralizada */
 require_once __DIR__ . '/../../config/db_config.php';
 
 try {
     $pdo = new PDO("mysql:host=$DB_HOST;dbname=$DB_NAME;charset=utf8mb4", $DB_USER, $DB_PASS);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $e) {
-    die("Error de conexión: " . $e->getMessage());
+    die("Error de conexi�n: " . $e->getMessage());
 }
 
-// Solo intentar conexión remota si estamos en InfinityFree
+// Solo intentar conexi�n remota si estamos en InfinityFree
 // (sql208.infinityfree.com no es accesible desde localhost)
 $pdo_remote = null;
 if ($isInfinityFree) {
@@ -42,7 +42,7 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS mediciones_biomasa (
     PRIMARY KEY(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-/* ÚLTIMO REGISTRO */
+/* �LTIMO REGISTRO */
 try {
     $stmt = $pdo->query("SELECT temperatura, energia FROM mediciones_biomasa ORDER BY fecha DESC LIMIT 1");
     $ultimo = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -54,7 +54,7 @@ $tempActual = $ultimo['temperatura'] ?? 0;
 $energiaActual = $ultimo['energia'] ?? 0;
 
 /* INICIALIZAR VARIABLES PARA JAVASCRIPT */
-// Se cargarán via AJAX cuando el usuario seleccione las fechas
+// Se cargar�n via AJAX cuando el usuario seleccione las fechas
 $labels = [];
 $tempData = [];
 $energiaData = [];
@@ -64,13 +64,63 @@ $consumoData = [];
 $fechaHoy = date('Y-m-d');
 $fechaPrimerDia = date('Y-m-01');
 $fechaAnioActual = date('Y');
+
+// === DEPOSITOS ORGANICOS: calculo de energia proyectada ===
+// Formula: kWh = peso_kg * FACTOR * min(horas_transcurridas / TIEMPO_COMPLETO, 1)
+$FACTOR_KWH_KG = 0.08;  // Rendimiento termoelectrico Peltier ~8%
+$TIEMPO_GEN_H  = 72;    // Horas para generacion completa por lote
+try {
+    $stDep = $pdo->prepare("
+        SELECT d.id, COALESCE(d.peso, 0) AS peso, d.tipo_residuo,
+               COALESCE(d.creado_en, d.fecha_hora) AS ts,
+               u.usuario,
+               TIMESTAMPDIFF(HOUR, COALESCE(d.creado_en, d.fecha_hora), NOW()) AS horas
+        FROM depositos d
+        LEFT JOIN usuarios u ON u.id = d.id_usuario
+        WHERE (d.tipo_residuo IS NULL OR d.tipo_residuo NOT LIKE '%metal%')
+          AND COALESCE(d.creado_en, d.fecha_hora) >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        ORDER BY COALESCE(d.creado_en, d.fecha_hora) DESC
+        LIMIT 20
+    ");
+    $stDep->execute();
+    $depositosRecientes = $stDep->fetchAll(PDO::FETCH_ASSOC);
+
+    $pesoTotalOrg  = 0;
+    $kwhProyectado = 0;
+    $deposConCalc  = [];
+    foreach ($depositosRecientes as $dep) {
+        $kg      = floatval($dep['peso']);
+        $h       = intval($dep['horas']);
+        $prog    = min($h / $TIEMPO_GEN_H, 1.0);
+        $kwh     = round($kg * $FACTOR_KWH_KG * $prog, 4);
+        $dep['kwh_est']  = $kwh;
+        $dep['prog_pct'] = round($prog * 100, 1);
+        $deposConCalc[]  = $dep;
+        $pesoTotalOrg   += $kg;
+        $kwhProyectado  += $kwh;
+    }
+
+    $resDepTotales = $pdo->query("
+        SELECT COUNT(*) AS total,
+               COALESCE(SUM(COALESCE(peso,0)), 0) AS peso_total,
+               COALESCE(SUM(COALESCE(credito_kwh,0)), 0) AS kwh_credito
+        FROM depositos
+        WHERE (tipo_residuo IS NULL OR tipo_residuo NOT LIKE '%metal%')
+          AND COALESCE(creado_en, fecha_hora) >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    ")->fetch(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $deposConCalc  = [];
+    $resDepTotales = ['total'=>0,'peso_total'=>0,'kwh_credito'=>0];
+    $kwhProyectado = 0;
+    $pesoTotalOrg  = 0;
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Panel Bioenergético</title>
+<title>Panel Bioenergetico</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -594,7 +644,7 @@ canvas{
     box-shadow:0 4px 12px rgba(31,64,55,0.3);
 }
 
-/* GRÁFICO DE GANANCIAS */
+/* GR�FICO DE GANANCIAS */
 .ganancias-summary{
     display:flex;
     justify-content:space-around;
@@ -697,6 +747,23 @@ canvas{
     }
 }
 
+/* DEPOSITOS ORGANICOS */
+.depositos-section{background:rgba(255,255,255,.95);border-radius:20px;padding:1.4rem 1.5rem;margin-bottom:1.5rem;border:1px solid rgba(31,64,55,.12);box-shadow:0 12px 28px rgba(15,23,42,.12);}
+.depositos-section h3{color:#1f4037;font-size:1.08rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;}
+.dep-stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.9rem;margin-bottom:1rem;}
+.dep-stat{background:#f7faf9;border-radius:12px;padding:.9rem;text-align:center;color:#1f2937;border:1px solid #d1e6de;}
+.dep-stat .dep-ic{font-size:1.3rem;margin-bottom:.3rem;opacity:.95;color:#2563eb;}
+.dep-stat .dep-val{font-size:1.3rem;font-weight:700;line-height:1.2;color:#111827;}
+.dep-stat .dep-lbl{font-size:.75rem;color:#475569;margin-top:.2rem;opacity:1;}
+.formula-info{background:#f8fafc;border:1px solid #dbe6ec;border-radius:8px;padding:.6rem .9rem;font-size:.8rem;color:#334155;margin-bottom:.9rem;}
+.dep-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+.dep-table th{background:#eef3f7;color:#0f172a;padding:.45rem .7rem;text-align:left;font-weight:700;white-space:nowrap;}
+.dep-table td{padding:.45rem .7rem;color:#334155;border-bottom:1px solid #e5edf3;}
+.dep-table tr:hover td{background:#f8fbfd;}
+.prog-wrap{background:#e2e8f0;border-radius:10px;height:14px;position:relative;min-width:70px;}
+.prog-fill{background:linear-gradient(90deg,#10b981,#34d399);border-radius:10px;height:100%;}
+.prog-lbl{position:absolute;right:4px;top:0;font-size:.68rem;line-height:14px;color:#fff;font-weight:700;}
+.kwh-cell{color:#34d399;font-weight:700;}
 /* NAVBAR ADMIN */
 .navbar-admin{background:linear-gradient(135deg,#1e40af 0%,#6d28d9 100%);padding:.75rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;box-shadow:0 4px 20px rgba(30,64,175,.4);}
 .nav-brand{color:#fff;font-weight:800;font-size:1.25rem;text-decoration:none;white-space:nowrap;}
@@ -717,8 +784,8 @@ canvas{
   <div class="nav-links">
     <a href="dashboard.php" class="nav-link-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
     <a href="monitoreo.php" class="nav-link-item"><i class="fas fa-video"></i> Monitoreo</a>
-    <a href="depositos.php" class="nav-link-item"><i class="fas fa-box-open"></i> Depositos</a>
-    <a href="sanciones.php" class="nav-link-item"><i class="fas fa-exclamation-triangle"></i> Sanciones</a>
+        <a href="depositos.php" class="nav-link-item"><i class="fas fa-box-open"></i> Depositos</a>
+        <a href="sanciones.php" class="nav-link-item"><i class="fas fa-exclamation-triangle"></i> Sanciones</a>
     <a href="administradores.php" class="nav-link-item"><i class="fas fa-users-cog"></i> Administradores</a>
     <a href="biores.php" class="nav-link-item active"><i class="fas fa-leaf"></i> BIOMASA</a>
     <a href="ahorro_electrico.php" class="nav-link-item"><i class="fas fa-bolt"></i> Ahorro</a>
@@ -732,11 +799,87 @@ canvas{
 
 <div class="dashboard-container container">
 
-<h2 class="dashboard-title">Panel Bioenergético </h2>
+<h2 class="dashboard-title">Panel Bioenergetico</h2>
+
+<!-- DEPOSITOS ORGANICOS SECTION -->
+<div class="depositos-section">
+    <h3><i class="fas fa-seedling"></i> Depositos organicos activos (ultimos 7 dias)</h3>
+    <div class="dep-stats-row">
+        <div class="dep-stat">
+            <div class="dep-ic"><i class="fas fa-box-open"></i></div>
+            <div class="dep-val"><?= intval($resDepTotales['total']) ?></div>
+            <div class="dep-lbl">Depositos registrados</div>
+        </div>
+        <div class="dep-stat">
+            <div class="dep-ic"><i class="fas fa-weight-hanging"></i></div>
+            <div class="dep-val"><?= round(floatval($resDepTotales['peso_total']), 2) ?> kg</div>
+            <div class="dep-lbl">Peso organico total</div>
+        </div>
+        <div class="dep-stat" style="background:rgba(52,211,153,.25);">
+            <div class="dep-ic"><i class="fas fa-bolt"></i></div>
+            <div class="dep-val"><?= round($kwhProyectado, 4) ?> kWh</div>
+            <div class="dep-lbl">Energia proyectada activa</div>
+        </div>
+        <div class="dep-stat">
+            <div class="dep-ic"><i class="fas fa-leaf"></i></div>
+            <div class="dep-val"><?= round(floatval($resDepTotales['kwh_credito']), 4) ?> kWh</div>
+            <div class="dep-lbl">Credito kWh acumulado</div>
+        </div>
+    </div>
+    <div class="formula-info">
+        <i class="fas fa-flask"></i>
+        <strong>Formula Peltier:</strong>&nbsp;
+        kWh = peso(kg) &times; 0.08 &times; min(horas_transcurridas&nbsp;/&nbsp;72,&nbsp;1)
+        &nbsp;&mdash;&nbsp;
+        <span style="opacity:.72">Rendimiento termoelectrico ~8% &bull; Ciclo completo: 72 h</span>
+    </div>
+    <?php if (!empty($deposConCalc)): ?>
+    <div style="overflow-x:auto;">
+    <table class="dep-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Usuario</th>
+                <th>Tipo residuo</th>
+                <th>Peso (kg)</th>
+                <th>Tiempo proceso</th>
+                <th>Progreso generacion</th>
+                <th>kWh estimado</th>
+                <th>Fecha deposito</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($deposConCalc as $dep): ?>
+            <tr>
+                <td>#<?= intval($dep['id']) ?></td>
+                <td><?= htmlspecialchars($dep['usuario'] ?? 'N/A') ?></td>
+                <td><?= htmlspecialchars($dep['tipo_residuo'] ?? 'No especificado') ?></td>
+                <td><?= round(floatval($dep['peso']), 2) ?></td>
+                <td><?= intval($dep['horas']) ?> h</td>
+                <td>
+                    <div class="prog-wrap">
+                        <div class="prog-fill" style="width:<?= $dep['prog_pct'] ?>%"></div>
+                        <span class="prog-lbl"><?= $dep['prog_pct'] ?>%</span>
+                    </div>
+                </td>
+                <td class="kwh-cell"><?= $dep['kwh_est'] ?></td>
+                <td><?= htmlspecialchars(substr($dep['ts'], 0, 16)) ?></td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+    </div>
+    <?php else: ?>
+    <div style="text-align:center;padding:22px;color:#64748b;">
+        <i class="fas fa-inbox" style="font-size:1.7rem;display:block;margin-bottom:.4rem;"></i>
+        No hay depositos organicos en los ultimos 7 dias
+    </div>
+    <?php endif; ?>
+</div>
 
 <!-- CONTROL TOTAL SECTION -->
 <div class="control-section">
-    <h3 class="control-title">🎛️ Control Total del Sistema</h3>
+    <h3 class="control-title"><i class="fas fa-sliders-h"></i> Control total del sistema</h3>
     
     <div class="control-content">
         <!-- LEFT SIDE: LED Indicators -->
@@ -752,19 +895,19 @@ canvas{
         <!-- RIGHT SIDE: Control Buttons -->
         <div class="control-group">
             <div class="button-group">
-                <button class="control-btn btn-start" id="btnStart" onclick="iniciarSistema()" title="Envía comando START al ESP8266 para iniciar el sistema BIORES">
-                    ▶ Iniciar Generación
+                <button class="control-btn btn-start" id="btnStart" onclick="iniciarSistema()" title="Envia comando START al ESP8266 para iniciar el sistema BIORES">
+                    <i class="fas fa-play"></i> Iniciar generacion
                 </button>
-                <button class="control-btn btn-stop" id="btnStop" onclick="detenerSistema()" title="Envía comando STOP al ESP8266 para detener el sistema y apagar todos los sensores">
-                    ⏹ Detener Sistema
+                <button class="control-btn btn-stop" id="btnStop" onclick="detenerSistema()" title="Envia comando STOP al ESP8266 para detener el sistema y apagar todos los sensores">
+                    <i class="fas fa-stop"></i> Detener sistema
                 </button>
             </div>
             <div style="margin-top:12px; text-align:center;">
-                <button class="control-btn btn-stop" style="background:#b91c1c;color:#fff;margin-right:8px" onclick="paradaEmergenciaTotal()">⚠ Emergencia Total</button>
+                <button class="control-btn btn-stop" style="background:#b91c1c;color:#fff;margin-right:8px" onclick="paradaEmergenciaTotal()"><i class="fas fa-triangle-exclamation"></i> Emergencia total</button>
                 <button class="control-btn btn-stop" style="background:#5b21b6;color:#fff" onclick="sendSystemOff()">Apagado Sistema Completo</button>
             </div>
             <div class="alert-info" id="statusMessage">
-                Sistema listo para operar - Presione "Iniciar Generación" para enviar señal al ESP8266
+                Sistema listo para operar - Presione "Iniciar generacion" para enviar senal al ESP8266
             </div>
         </div>
     </div>
@@ -772,61 +915,61 @@ canvas{
 
 <!-- SENSORES SECTION -->
 <div class="sensores-section">
-    <h3 class="sensores-title">📡 Estado de Sensores</h3>
+    <h3 class="sensores-title"><i class="fas fa-microchip"></i> Estado de sensores</h3>
     
     <div class="sensores-grid">
         <!-- Sensor de Temperatura -->
         <div class="sensor-card" id="sensorTemp">
             <div class="sensor-name">
-                <span>🌡️</span> Temperatura
+                <i class="fas fa-temperature-high"></i> Temperatura
             </div>
             <div class="bombilla-container">
                 <div class="bombilla" id="bombillaTemp"></div>
             </div>
             <div class="sensor-status apagado" id="statusTemp">Apagado</div>
             <div class="sensor-valor" id="valorTemp">N/A</div>
-            <div class="sensor-timestamp" id="timestampTemp">Esperando señal...</div>
+            <div class="sensor-timestamp" id="timestampTemp">Esperando senal...</div>
             <button class="sensor-emergency-btn" onclick="apagarEmergencia('temperatura', this)" title="Apago de emergencia del sensor de temperatura">
-                ⚠️ Apagado Emergencia
+                <i class="fas fa-power-off"></i> Apagado de emergencia
             </button>
         </div>
         
         <!-- Sensor de Ventilador -->
         <div class="sensor-card" id="sensorVent">
             <div class="sensor-name">
-                <span>❄️</span> Ventilador
+                <i class="fas fa-fan"></i> Ventilador
             </div>
             <div class="bombilla-container">
                 <div class="bombilla" id="bombillaVent"></div>
             </div>
             <div class="sensor-status apagado" id="statusVent">Apagado</div>
             <div class="sensor-valor" id="valorVent">N/A</div>
-            <div class="sensor-timestamp" id="timestampVent">Esperando señal...</div>
+            <div class="sensor-timestamp" id="timestampVent">Esperando senal...</div>
             <button class="sensor-emergency-btn" onclick="apagarEmergencia('ventilador', this)" title="Apago de emergencia del ventilador">
-                ⚠️ Apagado Emergencia
+                <i class="fas fa-power-off"></i> Apagado de emergencia
             </button>
         </div>
         
         <!-- Sensor de Corriente -->
         <div class="sensor-card" id="sensorCor">
             <div class="sensor-name">
-                <span>⚡</span> Corriente
+                <i class="fas fa-bolt"></i> Corriente
             </div>
             <div class="bombilla-container">
                 <div class="bombilla" id="bombillaCor"></div>
             </div>
             <div class="sensor-status apagado" id="statusCor">Apagado</div>
             <div class="sensor-valor" id="valorCor">N/A</div>
-            <div class="sensor-timestamp" id="timestampCor">Esperando señal...</div>
+            <div class="sensor-timestamp" id="timestampCor">Esperando senal...</div>
             <button class="sensor-emergency-btn" onclick="apagarEmergencia('corriente', this)" title="Apago de emergencia del sensor de corriente">
-                ⚠️ Apagado Emergencia
+                <i class="fas fa-power-off"></i> Apagado de emergencia
             </button>
         </div>
     </div>
     
     <div class="sensores-info">
-        ℹ️ Los datos se actualizan automáticamente cuando el ESP8266 envía información. 
-        Los sensores estarán <strong>apagados</strong> hasta que el sistema inicie.
+        <i class="fas fa-circle-info"></i> Los datos se actualizan automaticamente cuando el ESP8266 envia informacion.
+        Los sensores estaran <strong>apagados</strong> hasta que el sistema inicie.
     </div>
 </div>
 
@@ -834,15 +977,15 @@ canvas{
 
 <div class="col-md-6">
 <div class="stat-card">
-<div class="stat-value temp"><?= $tempActual ?> °C</div>
-<div class="stat-label">Temperatura de Operación</div>
+<div class="stat-value temp"><?= $tempActual ?> &deg;C</div>
+<div class="stat-label">Temperatura de operacion</div>
 </div>
 </div>
 
 <div class="col-md-6">
 <div class="stat-card">
 <div class="stat-value energy"><?= $energiaActual ?> kWh</div>
-<div class="stat-label">Energía Generada</div>
+<div class="stat-label">Energia generada</div>
 </div>
 </div>
 
@@ -851,14 +994,14 @@ canvas{
 <!-- FILTROS DE FECHA -->
 <div class="chart-box">
     <div class="date-filters">
-        <h5 style="text-align:center; margin-bottom:20px; color:#1f4037;">📅 Seleccione Período para Ver Gráficas</h5>
+        <h5 style="text-align:center; margin-bottom:20px; color:#1f4037;"><i class="fas fa-calendar-days"></i> Seleccione periodo para ver graficas</h5>
         <div class="date-filters-row">
             <div class="filter-group">
-                <label>Período:</label>
+                <label>Periodo:</label>
                 <select id="periodoSelect" onchange="actualizarRangoFechas()">
-                    <option value="dia" selected>Día</option>
+                    <option value="dia" selected>Dia</option>
                     <option value="mes">Mes</option>
-                    <option value="anual">Año</option>
+                    <option value="anual">Ano</option>
                 </select>
             </div>
             <div class="filter-group" id="fechaDiaGroup">
@@ -870,36 +1013,36 @@ canvas{
                 <input type="text" id="fechaMes" placeholder="YYYY-MM-DD - YYYY-MM-DD">
             </div>
             <div class="filter-group" id="fechaAnualGroup" style="display:none;">
-                <label>Año:</label>
+                <label>Ano:</label>
                 <input type="number" id="fechaAnual" min="2020" max="2100">
             </div>
         </div>
         <div style="text-align:center; margin-top:15px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-            <button class="btn-filter" onclick="aplicarFiltros()">📊 Cargar Gráficas</button>
-            <button class="btn-filter" style="background:linear-gradient(135deg, #667eea, #764ba2);" onclick="descargarDatos()">💾 Descargar Datos</button>
+            <button class="btn-filter" onclick="aplicarFiltros()"><i class="fas fa-chart-line"></i> Cargar graficas</button>
+            <button class="btn-filter" style="background:linear-gradient(135deg, #667eea, #764ba2);" onclick="descargarDatos()"><i class="fas fa-download"></i> Descargar datos</button>
         </div>
         <div id="loadingIndicator" style="text-align:center; display:none; margin-top:10px; color:#1f4037; font-weight:bold;">
-            ⏳ Cargando datos...
+            <i class="fas fa-spinner fa-spin"></i> Cargando datos...
         </div>
     </div>
 </div>
 
 <div class="chart-box">
-<h5 class="mb-3">Histórico de Temperatura</h5>
+<h5 class="mb-3">Historico de temperatura</h5>
 <div id="mensajeGraficas" style="text-align:center; padding:40px; color:#999; font-size:1.1rem;">
-    📊 Seleccione un período y presione "Cargar Gráficas" para visualizar los datos
+    Seleccione un periodo y presione "Cargar graficas" para visualizar los datos
 </div>
 <canvas id="chartTemp"></canvas>
 </div>
 
 <div class="chart-box">
-<h5 class="mb-3">Histórico de Energía</h5>
+<h5 class="mb-3">Historico de energia</h5>
 <canvas id="chartEnergia"></canvas>
 </div>
 
-<!-- NUEVO GRÁFICO DE GANANCIAS -->
+<!-- NUEVO GR�FICO DE GANANCIAS -->
 <div class="chart-box">
-<h5 class="mb-3">💰 Análisis de Ganancias del Sistema</h5>
+<h5 class="mb-3"><i class="fas fa-chart-column"></i> Analisis de ganancias del sistema</h5>
 <canvas id="chartGanancias"></canvas>
 <div class="ganancias-summary" id="gananciasSummary">
     <div class="ganancia-item generado">
@@ -936,6 +1079,36 @@ const consumoData = [];
 const MAX_POINTS = 40;
 const PRECIO_KWH_DOP = 65.00; // Precio aproximado por kWh en pesos dominicanos
 const APP_TIMEZONE = 'America/Santo_Domingo';
+
+// Datos de depositos organicos para proyeccion en grafica
+const depositosParaCalculo = <?= json_encode(array_map(fn($d) => [
+    'peso' => floatval($d['peso']),
+    'ts'   => $d['ts']
+], $deposConCalc)) ?>;
+const FACTOR_KWH_KG_JS = 0.08;
+const TIEMPO_GEN_MS    = 72 * 3600 * 1000;
+
+function calcularProyeccionEnPunto(lblStr) {
+    // Parsea etiqueta 'dd/mm/yyyy HH:ii:ss' o 'yyyy-mm-dd HH:ii:ss'
+    let tsRef;
+    const m = lblStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})$/);
+    if (m) {
+        tsRef = new Date(m[3], m[2]-1, m[1], m[4], m[5], m[6]);
+    } else {
+        tsRef = new Date(lblStr.replace(' ', 'T'));
+    }
+    if (!tsRef || isNaN(tsRef.getTime())) return 0;
+    let total = 0;
+    for (const dep of depositosParaCalculo) {
+        const tsD = new Date(dep.ts.replace(' ', 'T'));
+        if (tsD <= tsRef) {
+            const ms   = tsRef - tsD;
+            const prog = Math.min(ms / TIEMPO_GEN_MS, 1.0);
+            total += dep.peso * FACTOR_KWH_KG_JS * prog;
+        }
+    }
+    return parseFloat(total.toFixed(4));
+}
 let maxTempHistorica = 0;
 let ultimoTotalEnergiaWh = 0;
 let lastSystemOffFlag = null;
@@ -990,7 +1163,7 @@ async function postControlAction(accion) {
     return payload;
 }
 
-// ===== GRÁFICOS INICIALES VACÍOS =====
+// ===== GR�FICOS INICIALES VAC�OS =====
 chartTemp = new Chart(document.getElementById('chartTemp'), {
     type: 'line',
     data: {
@@ -1016,7 +1189,7 @@ chartEnergia = new Chart(document.getElementById('chartEnergia'), {
     data: {
         labels: [],
         datasets: [{
-            label: 'Energía (kWh)',
+            label: 'Energia (kWh)',
             data: [],
             borderColor: '#1d84b5',
             backgroundColor: 'rgba(29,132,181,0.2)',
@@ -1037,29 +1210,52 @@ chartGanancias = new Chart(document.getElementById('chartGanancias'), {
         labels: [],
         datasets: [
             {
-                label: 'Energía Generada (kWh)',
+                label: 'Energia generada (kWh)',
+                type: 'bar',
                 data: [],
-                backgroundColor: 'rgba(29,132,181,0.7)',
+                backgroundColor: 'rgba(29,132,181,0.65)',
                 borderColor: '#1d84b5',
-                borderWidth: 2
+                borderWidth: 2,
+                order: 2
             },
             {
-                label: 'Energía Consumida (kWh)',
+                label: 'Energia consumida (kWh)',
+                type: 'bar',
                 data: [],
-                backgroundColor: 'rgba(255,152,0,0.7)',
+                backgroundColor: 'rgba(255,152,0,0.65)',
                 borderColor: '#ff9800',
-                borderWidth: 2
+                borderWidth: 2,
+                order: 2
+            },
+            {
+                label: 'Proyeccion por depositos organicos (kWh)',
+                type: 'line',
+                data: [],
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16,185,129,0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 2,
+                borderWidth: 2,
+                order: 1
             }
         ]
     },
     options: {
         responsive: true,
         plugins: {
-            legend: { display: true, position: 'top' }
+            legend: { display: true, position: 'top' },
+            tooltip: {
+                callbacks: {
+                    label: ctx => `${ctx.dataset.label}: ${Number(ctx.raw).toFixed(4)} kWh`
+                }
+            }
         },
         scales: {
+            x: { ticks: { maxRotation: 45, font: { size: 10 } } },
             y: {
-                beginAtZero: true
+                beginAtZero: true,
+                title: { display: true, text: 'kWh' }
             }
         }
     }
@@ -1125,7 +1321,7 @@ function setStatusMessage(msg, mode = 'info') {
 }
 
 function pushHistorico(tempVal, energiaWh, ts) {
-    // Solo actualizar si los gráficos están inicializados
+    // Solo actualizar si los gr�ficos est�n inicializados
     if (!chartTemp || !chartEnergia) return;
     
     const nowLabel = formatDateTimeRD(ts || new Date());
@@ -1166,7 +1362,7 @@ function actualizarInterfaz() {
         ledIndicator.classList.add('on');
         statusDot.classList.remove('inactive');
         statusDot.classList.add('active');
-        statusText.textContent = 'En Operación';
+        statusText.textContent = 'En operacion';
         btnStart.disabled = true;
         btnStop.disabled = false;
     } else {
@@ -1187,36 +1383,36 @@ function iniciarSistema() {
     
     // Mostrar estado de carga
     btnStart.disabled = true;
-    setStatusMessage('<span class="loading"></span> 📡 Iniciando sistema BIOMASA...', 'info');
+    setStatusMessage('<span class="loading"></span> Iniciando sistema BIOMASA...', 'info');
     
-    console.log('📡 Enviando comando INICIO al Arduino...');
+    console.log('Enviando comando INICIO al Arduino...');
     
     postControlAction('START')
     .then(data => {
         if (data.status === 'ok') {
             // Sistema iniciado exitosamente
             estadoSistema = true;
-            console.log('✅ Comando INICIO encolado:', data);
+            console.log('Comando INICIO encolado:', data);
             
-            // Mostrar que el sistema está operando
-            setStatusMessage('✅ Sistema iniciado correctamente', 'ok');
+            // Mostrar que el sistema est� operando
+            setStatusMessage('Sistema iniciado correctamente', 'ok');
             
             // Actualizar interfaz inmediatamente
             actualizarInterfaz();
             
-            // Recargar estado de sensores después de 3 segundos
+            // Recargar estado de sensores despu�s de 3 segundos
             setTimeout(() => {
                 cargarEstadoSensores();
             }, 3500);
         } else {
-            console.error('❌ Error del servidor:', data.msg);
-            setStatusMessage('⚠️ Error al iniciar el sistema', 'error');
+            console.error('Error del servidor:', data.msg);
+            setStatusMessage('Error al iniciar el sistema', 'error');
             btnStart.disabled = false;
         }
     })
     .catch(error => {
-        console.error('❌ Error de conexión:', error);
-        setStatusMessage('❌ Error de conexión con el dispositivo', 'error');
+        console.error('Error de conexion:', error);
+        setStatusMessage('Error de conexion con el dispositivo', 'error');
         btnStart.disabled = false;
     });
 }
@@ -1226,22 +1422,22 @@ function sendSystemOff(){
         if (j.status==='ok') {
             estadoSistema = false;
             actualizarInterfaz();
-            setStatusMessage('🛑 Sistema apagado completamente', 'warn');
+            setStatusMessage('Sistema apagado completamente', 'warn');
         } else {
-            setStatusMessage('❌ Error al apagar el sistema', 'error');
+            setStatusMessage('Error al apagar el sistema', 'error');
         }
-    }).catch(e=>setStatusMessage('❌ Error de conexión: ' + e.message, 'error'));
+    }).catch(e=>setStatusMessage('Error de conexion: ' + e.message, 'error'));
 }
 
 function paradaEmergenciaTotal(){
     postControlAction('EMERGENCY').then(() => {
         estadoSistema = false;
         actualizarInterfaz();
-        setStatusMessage('🚨 Parada de emergencia enviada al sistema', 'warn');
+        setStatusMessage('Parada de emergencia enviada al sistema', 'warn');
         setTimeout(() => {
             cargarEstadoSensores();
         }, 1500);
-    }).catch(e => setStatusMessage('❌ Error en emergencia: ' + e.message, 'error'));
+    }).catch(e => setStatusMessage('Error en emergencia: ' + e.message, 'error'));
 }
 
 function detenerSistema() {
@@ -1250,34 +1446,34 @@ function detenerSistema() {
     
     // Mostrar estado de carga
     btnStop.disabled = true;
-    setStatusMessage('<span class="loading"></span> 🛑 Deteniendo sistema BIOMASA...', 'warn');
+    setStatusMessage('<span class="loading"></span> Deteniendo sistema BIOMASA...', 'warn');
     
-    console.log('🛑 Enviando comando PARADA al Arduino...');
+    console.log('Enviando comando PARADA al Arduino...');
     
     postControlAction('STOP')
     .then(data => {
         if (data.status === 'ok') {
             // Sistema detenido exitosamente
             estadoSistema = false;
-            console.log('✅ Comando PARADA encolado:', data);
+            console.log('Comando PARADA encolado:', data);
             
-            setStatusMessage('✅ Sistema detenido correctamente', 'ok');
+            setStatusMessage('Sistema detenido correctamente', 'ok');
             
             actualizarInterfaz();
             
-            // Recargar estado después de 3 segundos
+            // Recargar estado despu�s de 3 segundos
             setTimeout(() => {
                 cargarEstadoSensores();
             }, 3500);
         } else {
-            console.error('❌ Error del servidor:', data.msg);
-            setStatusMessage('⚠️ Error al detener el sistema', 'error');
+            console.error('Error del servidor:', data.msg);
+            setStatusMessage('Error al detener el sistema', 'error');
             btnStop.disabled = false;
         }
     })
     .catch(error => {
-        console.error('❌ Error de conexión:', error);
-        setStatusMessage('❌ Error de conexión con el dispositivo', 'error');
+        console.error('Error de conexion:', error);
+        setStatusMessage('Error de conexion con el dispositivo', 'error');
         btnStop.disabled = false;
     });
 }
@@ -1309,7 +1505,7 @@ function cargarEstadoSensores() {
             if (data.status === 'ok') {
                 const sensores = data.data;
                 
-                // Actualizar indicador LED según estado del sistema
+                // Actualizar indicador LED seg�n estado del sistema
                 const ledIndicator = document.getElementById('ledIndicator');
                 const statusDot = document.getElementById('statusDot');
                 const statusText = document.getElementById('statusText');
@@ -1319,7 +1515,7 @@ function cargarEstadoSensores() {
                     ledIndicator.classList.add('on');
                     statusDot.classList.remove('inactive');
                     statusDot.classList.add('active');
-                    statusText.textContent = 'En Operación';
+                    statusText.textContent = 'En operacion';
                     estadoSistema = true;
                 } else {
                     ledIndicator.classList.remove('on');
@@ -1337,12 +1533,12 @@ function cargarEstadoSensores() {
                 actualizarSensor('Ventilador', sensores.ventilador, 'Vent', '%');
                 actualizarSensor('Corriente', sensores.corriente, 'Cor', 'A');
                 
-                // Actualizar energía generada en tiempo real
+                // Actualizar energ�a generada en tiempo real
                 const energiaWh = parseFloat(sensores.energia_generada || 0);
                 ultimoTotalEnergiaWh = Number.isFinite(energiaWh) ? energiaWh : 0;
                 actualizarEnergiaGenerada(ultimoTotalEnergiaWh);
                 
-                // Actualizar temperatura en card de estadísticas
+                // Actualizar temperatura en card de estad�sticas
                 const tempValor = parseFloat((sensores.temperatura && sensores.temperatura.valor) || 0);
                 actualizarTemperaturaCard(tempValor);
 
@@ -1354,7 +1550,7 @@ function cargarEstadoSensores() {
                 if (lastSystemOffFlag !== systemOffActivo) {
                     lastSystemOffFlag = systemOffActivo;
                     if (systemOffActivo) {
-                        setStatusMessage('⚠️ Sistema en modo de seguridad', 'warn');
+                        setStatusMessage('Sistema en modo de seguridad', 'warn');
                     }
                 }
             }
@@ -1382,7 +1578,7 @@ function actualizarTemperaturaCard(temperatura) {
 function actualizarSensor(nombre, sensor, id, unidad) {
     const estado = sensor.estado || 'apagado';
     const valor = sensor.valor || 'N/A';
-    const timestamp = sensor.timestamp || 'Esperando señal...';
+    const timestamp = sensor.timestamp || 'Esperando senal...';
     
     // Actualizar card
     const card = document.getElementById('sensor' + id);
@@ -1396,7 +1592,7 @@ function actualizarSensor(nombre, sensor, id, unidad) {
     bombilla.classList.remove('activa', 'sensando');
     statusEl.classList.remove('activo', 'sensando', 'apagado');
     
-    // Actualizar según estado
+    // Actualizar seg�n estado
     if (estado === 'apagado') {
         statusEl.textContent = 'Apagado';
         statusEl.classList.add('apagado');
@@ -1405,9 +1601,9 @@ function actualizarSensor(nombre, sensor, id, unidad) {
         card.classList.add('activo');
         bombilla.classList.add('activa');
         
-        // Para ventilador: mostrar "Automático" si está activo por temperatura > 40°C
+        // Para ventilador: mostrar "Autom�tico" si est� activo por temperatura > 40�C
         if (id === 'Vent') {
-            statusEl.textContent = 'Automático';
+            statusEl.textContent = 'Automatico';
         } else {
             statusEl.textContent = 'Activo';
         }
@@ -1418,8 +1614,8 @@ function actualizarSensor(nombre, sensor, id, unidad) {
         let valorFormato = 'N/A';
         if (valor !== 'N/A') {
             if (id === 'Vent') {
-                // Para ventilador: mostrar que está activo (no necesita valor numérico)
-                valorFormato = '✓ En marcha';
+                // Para ventilador: mostrar que est� activo (no necesita valor num�rico)
+                valorFormato = 'En marcha';
             } else {
                 valorFormato = valor + ' ' + unidad;
             }
@@ -1435,22 +1631,22 @@ function actualizarSensor(nombre, sensor, id, unidad) {
     }
     
     // Actualizar timestamp
-    if (timestamp && timestamp !== 'Esperando señal...') {
-        timestampEl.textContent = 'Última actualización: ' + formatDateTimeRD(timestamp);
+    if (timestamp && timestamp !== 'Esperando senal...') {
+        timestampEl.textContent = 'Ultima actualizacion: ' + formatDateTimeRD(timestamp);
     } else {
-        timestampEl.textContent = 'Esperando señal...';
+        timestampEl.textContent = 'Esperando senal...';
     }
 }
 
 // ===== APAGADO DE EMERGENCIA =====
 function apagarEmergencia(sensor, btn) {
-    // Confirmación de apagado de emergencia
-    if (!confirm('⚠️ APAGADO DE EMERGENCIA\n\nEstá a punto de detener el sensor de ' + sensor.toUpperCase() + '.\n\n¿Está seguro?')) {
+    // Confirmaci�n de apagado de emergencia
+    if (!confirm('APAGADO DE EMERGENCIA\n\nEsta a punto de detener el sensor de ' + sensor.toUpperCase() + '.\n\nEsta seguro?')) {
         return;
     }
     
     btn.disabled = true;
-    btn.innerHTML = '⏳ Apagando...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Apagando...';
     
     let accion = '';
     switch(sensor.toLowerCase()) {
@@ -1465,26 +1661,26 @@ function apagarEmergencia(sensor, btn) {
             break;
         default:
             btn.disabled = false;
-            btn.innerHTML = '⚠️ Apagado Emergencia';
+            btn.innerHTML = '<i class="fas fa-power-off"></i> Apagado de emergencia';
             return;
     }
     
     postControlAction(accion)
     .then(data => {
         if (data.status === 'ok') {
-            setStatusMessage('⚠️ Sensor detenido por emergencia', 'warn');
+            setStatusMessage('Sensor detenido por emergencia', 'warn');
         } else {
-            setStatusMessage('⚠️ Error en apagado de emergencia', 'error');
+            setStatusMessage('Error en apagado de emergencia', 'error');
         }
         btn.disabled = false;
-        btn.innerHTML = '⚠️ Apagado Emergencia';
+        btn.innerHTML = '<i class="fas fa-power-off"></i> Apagado de emergencia';
         cargarEstadoSensores(); // Refrescar estado
     })
     .catch(error => {
         console.error('Error:', error);
-        setStatusMessage('❌ Error de conexión', 'error');
+        setStatusMessage('Error de conexion', 'error');
         btn.disabled = false;
-        btn.innerHTML = '⚠️ Apagado Emergencia';
+        btn.innerHTML = '<i class="fas fa-power-off"></i> Apagado de emergencia';
     });
 }
 
@@ -1528,7 +1724,7 @@ function aplicarFiltros() {
         }
         const partes = fechas.split(' - ');
         if (partes.length !== 2) {
-            alert('Por favor seleccione un rango válido');
+            alert('Por favor seleccione un rango valido');
             return;
         }
         fechaInicio = partes[0];
@@ -1536,7 +1732,7 @@ function aplicarFiltros() {
     } else if (periodo === 'anual') {
         const fecha = document.getElementById('fechaAnual').value;
         if (!fecha || isNaN(fecha)) {
-            alert('Por favor seleccione un año válido');
+            alert('Por favor seleccione un ano valido');
             return;
         }
         fechaInicio = fecha + '-01-01';
@@ -1552,72 +1748,66 @@ function cargarDatosGraficas(periodo, fechaInicio, fechaFin) {
     
     const url = `/PRERMI/BIOMASA/obtener_datos_graficas.php?periodo=${periodo}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`;
     
-    console.log('🔄 Cargando datos desde:', url);
+    console.log('Cargando datos desde:', url);
     
     fetch(url)
         .then(response => response.json())
         .then(data => {
             loading.style.display = 'none';
             
-            console.log('📦 Respuesta recibida:', data);
+            console.log('Respuesta recibida:', data);
             
             if (data.status === 'ok') {
                 if (data.resumen && data.resumen.registros === 0) {
-                    alert('⚠️ No hay datos disponibles para el período seleccionado.\n\nPor favor, seleccione otra fecha o verifique que existan mediciones en la base de datos.');
+                    alert('No hay datos disponibles para el periodo seleccionado.\n\nPor favor, seleccione otra fecha o verifique que existan mediciones en la base de datos.');
                     return;
                 }
                 
-                // Actualizar gráficos con los nuevos datos
+                // Actualizar gr�ficos con los nuevos datos
                 actualizarGraficas(data.datos, data.resumen);
                 
-                // Mostrar notificación de éxito
+                // Mostrar notificaci�n de �xito
                 const registros = data.resumen.registros || 0;
-                console.log(`✅ ${registros} registros cargados correctamente`);
+                console.log(`${registros} registros cargados correctamente`);
                 
             } else {
-                alert('❌ Error al cargar datos:\n' + data.msg);
+                alert('Error al cargar datos:\n' + data.msg);
             }
         })
         .catch(error => {
             loading.style.display = 'none';
-            console.error('❌ Error:', error);
-            alert('❌ Error de conexión al cargar datos:\n' + error.message + '\n\nVerifique que el servidor esté funcionando.');
+            console.error('Error:', error);
+            alert('Error de conexion al cargar datos:\n' + error.message + '\n\nVerifique que el servidor este funcionando.');
         });
 }
 
 function actualizarGraficas(datos, resumen) {
-    // Ocultar mensaje de instrucciones si existe
     const mensaje = document.getElementById('mensajeGraficas');
-    if (mensaje) {
-        mensaje.style.display = 'none';
-    }
-    
-    // Actualizar gráfico de temperatura
+    if (mensaje) mensaje.style.display = 'none';
+
+    // Grafica de temperatura
     chartTemp.data.labels = datos.labels;
     chartTemp.data.datasets[0].data = datos.tempData;
     chartTemp.update();
-    
-    // Actualizar gráfico de energía
+
+    // Grafica de energia
     chartEnergia.data.labels = datos.labels;
     chartEnergia.data.datasets[0].data = datos.energiaData;
     chartEnergia.update();
-    
-    // Actualizar gráfico de ganancias
+
+    // Calculo de proyeccion por depositos organicos para cada punto de medicion
+    const proyData = datos.labels.map(lbl => calcularProyeccionEnPunto(lbl));
+
+    // Grafica de ganancias: generada (barras) + consumida (barras) + proyeccion depositos (linea)
     chartGanancias.data.labels = datos.labels;
     chartGanancias.data.datasets[0].data = datos.energiaData;
     chartGanancias.data.datasets[1].data = datos.consumoData;
+    chartGanancias.data.datasets[2].data = proyData;
     chartGanancias.update();
-    
-    // Actualizar resumen
-    actualizarResumenGanancias(resumen);
-    
-    // Mostrar notificación de éxito
-    console.log('✅ Gráficas actualizadas:', {
-        registros: datos.labels.length,
-        periodo: resumen
-    });
-}
 
+    actualizarResumenGanancias(resumen);
+    console.log('Graficas actualizadas:', { registros: datos.labels.length, periodo: resumen });
+}
 function descargarDatos() {
     const periodo = document.getElementById('periodoSelect').value;
     let fechaInicio = null;
@@ -1639,7 +1829,7 @@ function descargarDatos() {
         }
         const partes = fechas.split(' - ');
         if (partes.length !== 2) {
-            alert('Por favor seleccione un rango válido');
+            alert('Por favor seleccione un rango valido');
             return;
         }
         fechaInicio = partes[0];
@@ -1647,7 +1837,7 @@ function descargarDatos() {
     } else if (periodo === 'anual') {
         const fecha = document.getElementById('fechaAnual').value;
         if (!fecha || isNaN(fecha)) {
-            alert('Por favor seleccione un año válido');
+            alert('Por favor seleccione un ano valido');
             return;
         }
         fechaInicio = fecha + '-01-01';
@@ -1661,7 +1851,7 @@ function descargarDatos() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'ok') {
-                alert('✅ Datos guardados correctamente en la carpeta de reportes (BIOMASA/reportes/)');
+                alert('? Datos guardados correctamente en la carpeta de reportes (BIOMASA/reportes/)');
             } else {
                 alert('Error: ' + data.msg);
             }

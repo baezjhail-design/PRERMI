@@ -290,8 +290,7 @@ try {
       <div class="nav-links">
         <a href="dashboard.php" class="nav-link-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
         <a href="monitoreo.php" class="nav-link-item"><i class="fas fa-video"></i> Monitoreo</a>
-        <a href="depositos.php" class="nav-link-item"><i class="fas fa-box-open"></i> Depositos</a>
-        <a href="sanciones.php" class="nav-link-item"><i class="fas fa-exclamation-triangle"></i> Sanciones</a>
+<a href="sanciones.php" class="nav-link-item"><i class="fas fa-exclamation-triangle"></i> Sanciones</a>
         <a href="administradores.php" class="nav-link-item"><i class="fas fa-users-cog"></i> Administradores</a>
         <a href="panel_admin_approval.php" class="nav-link-item active"><i class="fas fa-user-check"></i> Aprobaciones</a>
       </div>

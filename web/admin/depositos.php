@@ -1,7 +1,7 @@
-ï»¿<?php
+<?php
 /**
- * depositos.php â€” Depositos de Biomasa / Energia
- * PRERMI Admin â€” Pagina independiente de depositos
+ * depositos.php — Depositos de Biomasa / Energia
+ * PRERMI Admin — Pagina independiente de depositos
  */
 session_start();
 if (!isset($_SESSION['admin_id'])) { header("Location: loginA.php"); exit; }
@@ -65,7 +65,7 @@ try {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Depositos y Energia â€” PRERMI Admin</title>
+<title>Depositos y Energia — PRERMI Admin</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -118,8 +118,7 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
   <div class="nav-links">
     <a href="dashboard.php" class="nav-link-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
     <a href="monitoreo.php" class="nav-link-item"><i class="fas fa-video"></i> Monitoreo</a>
-    <a href="depositos.php" class="nav-link-item active"><i class="fas fa-box-open"></i> Depositos</a>
-    <a href="sanciones.php" class="nav-link-item"><i class="fas fa-exclamation-triangle"></i> Sanciones</a>
+<a href="sanciones.php" class="nav-link-item"><i class="fas fa-exclamation-triangle"></i> Sanciones</a>
     <a href="administradores.php" class="nav-link-item"><i class="fas fa-users-cog"></i> Administradores</a>
     <a href="biores.php" class="nav-link-item"><i class="fas fa-leaf"></i> BIOMASA</a>
     <a href="ahorro_electrico.php" class="nav-link-item"><i class="fas fa-bolt"></i> Ahorro</a>
@@ -169,7 +168,7 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
   <div class="row g-3 mb-4">
     <div class="col-lg-8">
       <div class="chart-dark">
-        <div class="chart-dark-title"><i class="fas fa-chart-bar" style="color:#06b6d4;"></i> Historial mensual â€” kWh y Ahorro RD$ (6 meses)</div>
+        <div class="chart-dark-title"><i class="fas fa-chart-bar" style="color:#06b6d4;"></i> Historial mensual — kWh y Ahorro RD$ (6 meses)</div>
         <canvas id="chartMensual" height="130"></canvas>
       </div>
     </div>

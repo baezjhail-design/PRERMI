@@ -1,7 +1,7 @@
-ï»¿<?php
+<?php
 /**
- * administradores.php â€” Gestion de Administradores y Usuarios
- * PRERMI Admin â€” Pagina independiente
+ * administradores.php — Gestion de Administradores y Usuarios
+ * PRERMI Admin — Pagina independiente
  */
 session_start();
 if (!isset($_SESSION['admin_id'])) { header("Location: loginA.php"); exit; }
@@ -39,7 +39,7 @@ try {
                         $pdo->prepare("UPDATE usuarios_admin SET active=1 WHERE id=?")->execute([$tId]);
                         $stDat=$pdo->prepare("SELECT usuario,email FROM usuarios_admin WHERE id=? LIMIT 1"); $stDat->execute([$tId]); $d=$stDat->fetch(PDO::FETCH_ASSOC);
                         if($d&&!empty($d['email'])){ require_once __DIR__.'/../../config/mailer.php'; if(function_exists('sendWelcomeEmail')) sendWelcomeEmail($d['email'],$d['usuario'],'admin_approved'); }
-                        $pdo->prepare("INSERT INTO logs_sistema(descripcion,tipo) VALUES(?,?)")->execute(["Superadmin #".intval($_SESSION['admin_id'])." aprobÃ³ admin #$tId",'info']);
+                        $pdo->prepare("INSERT INTO logs_sistema(descripcion,tipo) VALUES(?,?)")->execute(["Superadmin #".intval($_SESSION['admin_id'])." aprobó admin #$tId",'info']);
                         $flash=['type'=>'success','msg'=>'Administrador aprobado'];
                     } elseif ($accion==='rechazar_admin') {
                         $pdo->prepare("UPDATE usuarios_admin SET active=0 WHERE id=?")->execute([$tId]);
@@ -59,14 +59,14 @@ try {
                 $sU=$pdo->prepare("SELECT email,nombre,apellido,usuario FROM usuarios WHERE id=?"); $sU->execute([$uid]); $bU=$sU->fetch(PDO::FETCH_ASSOC);
                 $pdo->prepare("UPDATE usuarios SET activo=0 WHERE id=?")->execute([$uid]);
                 if($bU&&!empty($bU['email'])){ $nm=trim(($bU['nombre']??'').(' '.($bU['apellido']??'')))?: $bU['usuario']; require_once __DIR__.'/../../config/mailer.php'; if(function_exists('sendBanEmail')) sendBanEmail($bU['email'],$nm); }
-                $pdo->prepare("INSERT INTO logs_sistema(descripcion,tipo) VALUES(?,?)")->execute(["Admin #".intval($_SESSION['admin_id'])." baneÃ³ usuario #$uid",'warning']);
+                $pdo->prepare("INSERT INTO logs_sistema(descripcion,tipo) VALUES(?,?)")->execute(["Admin #".intval($_SESSION['admin_id'])." baneó usuario #$uid",'warning']);
                 $flash=['type'=>'warning','msg'=>'Usuario baneado'];
             }
         }
 
         if ($accion==='desbanear_usuario') {
             $uid=intval($_POST['usuario_id']??0);
-            if($uid>0){$pdo->prepare("UPDATE usuarios SET activo=1 WHERE id=?")->execute([$uid]); $pdo->prepare("INSERT INTO logs_sistema(descripcion,tipo) VALUES(?,?)")->execute(["Admin #".intval($_SESSION['admin_id'])." reactivÃ³ usuario #$uid",'info']); $flash=['type'=>'success','msg'=>'Usuario reactivado'];}
+            if($uid>0){$pdo->prepare("UPDATE usuarios SET activo=1 WHERE id=?")->execute([$uid]); $pdo->prepare("INSERT INTO logs_sistema(descripcion,tipo) VALUES(?,?)")->execute(["Admin #".intval($_SESSION['admin_id'])." reactivó usuario #$uid",'info']); $flash=['type'=>'success','msg'=>'Usuario reactivado'];}
         }
 
         if ($accion==='enviar_mensaje') {
@@ -106,7 +106,7 @@ try {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Administradores â€” PRERMI Admin</title>
+<title>Administradores — PRERMI Admin</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="/PRERMI/web/assets/css/theme.css">
@@ -161,8 +161,7 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
   <div class="nav-links">
     <a href="dashboard.php" class="nav-link-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
     <a href="monitoreo.php" class="nav-link-item"><i class="fas fa-video"></i> Monitoreo</a>
-    <a href="depositos.php" class="nav-link-item"><i class="fas fa-box-open"></i> Depositos</a>
-    <a href="sanciones.php" class="nav-link-item"><i class="fas fa-exclamation-triangle"></i> Sanciones</a>
+<a href="sanciones.php" class="nav-link-item"><i class="fas fa-exclamation-triangle"></i> Sanciones</a>
     <a href="administradores.php" class="nav-link-item active"><i class="fas fa-users-cog"></i> Administradores</a>
     <a href="biores.php" class="nav-link-item"><i class="fas fa-leaf"></i> BIOMASA</a>
     <a href="ahorro_electrico.php" class="nav-link-item"><i class="fas fa-bolt"></i> Ahorro</a>
@@ -248,7 +247,7 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
               <form method="POST" class="d-inline" onsubmit="return confirm('Cambiar rol?')"><input type="hidden" name="accion" value="cambiar_rol_admin"><input type="hidden" name="admin_id" value="<?php echo intval($ae['id']); ?>"><input type="hidden" name="nuevo_rol" value="<?php echo $ae['rol']==='superadmin'?'admin':'superadmin'; ?>"><button class="btn btn-sm btn-outline-primary"><i class="fas fa-<?php echo $ae['rol']==='superadmin'?'user-minus':'crown'; ?>"></i> <?php echo $ae['rol']==='superadmin'?'Quitar Super':'Dar Super'; ?></button></form>
             </div>
             <?php else: ?>
-            <div class="alert alert-light py-2 mb-0 small"><i class="fas fa-info-circle text-primary"></i> Tu cuenta â€” no modificable aqui.</div>
+            <div class="alert alert-light py-2 mb-0 small"><i class="fas fa-info-circle text-primary"></i> Tu cuenta — no modificable aqui.</div>
             <?php endif; ?>
           </div>
         </div>
@@ -287,7 +286,7 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
             </td>
             <td><?php echo htmlspecialchars($usr['usuario']); ?></td>
             <td style="font-size:.82rem;color:#64748b;"><?php echo htmlspecialchars($usr['email']); ?></td>
-            <td><?php echo htmlspecialchars($usr['telefono']??'â€”'); ?></td>
+            <td><?php echo htmlspecialchars($usr['telefono']??'—'); ?></td>
             <td>
               <?php if($banned): ?><span class="badge bg-danger"><i class="fas fa-ban"></i> Baneado</span>
               <?php elseif(!intval($usr['verified'])): ?><span class="badge bg-warning text-dark"><i class="fas fa-clock"></i> Sin verificar</span>
@@ -341,7 +340,7 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
       <div class="modal-body">
         <div class="alert alert-light border d-flex align-items-center gap-3 py-2 mb-3">
           <div class="mgmt-avatar-sm" style="background:linear-gradient(135deg,#667eea,#764ba2);"><i class="fas fa-user"></i></div>
-          <span>Enviando a: <strong id="msg_nombre">â€”</strong> &nbsp;<span class="small text-muted">&lt;<span id="msg_email"></span>&gt;</span></span>
+          <span>Enviando a: <strong id="msg_nombre">—</strong> &nbsp;<span class="small text-muted">&lt;<span id="msg_email"></span>&gt;</span></span>
         </div>
         <div class="mb-3">
           <label class="form-label fw-semibold">Tipo</label>

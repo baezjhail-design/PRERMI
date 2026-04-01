@@ -136,7 +136,9 @@ function registrarLog($descripcion, $tipo = "info") {
 // SESIÓN PARA ADMINISTRADORES
 // =====================================
 function requireAdminSession() {
-    session_start();
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
     if (!isset($_SESSION['admin_id'])) {
         jsonErr("No autorizado", 401);
     }

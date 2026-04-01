@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Dashboard de Datos para Negocios</title>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+	<style>
+		:root {
+			--bg: #f5fbff;
+			--surface: #ffffff;
+			--cyan: #13c4d8;
+			--cyan-soft: #dff8fc;
+			--purple: #6d46c2;
+			--purple-soft: #efe8ff;
+			--green: #23b26d;
+			--green-soft: #ddf7ea;
+			--orange: #f19b2c;
+			--red: #d95252;
+			--text: #1c2340;
+			--muted: #61708f;
+			--shadow: 0 12px 32px rgba(35, 44, 78, 0.12);
+			--radius: 16px;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font-family: "Segoe UI", "Trebuchet MS", "Gill Sans", sans-serif;
+			color: var(--text);
+			background:
+				radial-gradient(circle at 15% 20%, rgba(109, 70, 194, 0.12), transparent 36%),
+				radial-gradient(circle at 85% 0%, rgba(19, 196, 216, 0.15), transparent 32%),
+				linear-gradient(180deg, #f9feff 0%, #eef6ff 100%);
+			min-height: 100vh;
+			padding: 24px;
+		}
+
+		.dashboard {
+			max-width: 1250px;
+			margin: 0 auto;
+			display: grid;
+			gap: 18px;
+		}
+
+		.header {
+			background: linear-gradient(130deg, #ffffff 0%, #eef4ff 60%, #f3ebff 100%);
+			border-radius: var(--radius);
+			box-shadow: var(--shadow);
+			padding: 20px 24px;
+			border: 1px solid rgba(109, 70, 194, 0.15);
+		}
+
+		.header h1 {
+			margin: 0;
+			font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+			color: #2c2452;
+		}
+
+		.header p {
+			margin: 8px 0 0;
+			color: var(--muted);
+			font-size: 0.95rem;
+		}
+
+		.kpi-grid {
+			display: grid;
+			gap: 14px;
+			grid-template-columns: repeat(4, minmax(160px, 1fr));
+		}
+
+		.kpi-card {
+			border-radius: var(--radius);
+			box-shadow: var(--shadow);
+			background: var(--surface);
+			border: 1px solid rgba(36, 54, 89, 0.08);
+			padding: 14px 16px;
+			position: relative;
+			overflow: hidden;
+			animation: fadeUp 600ms ease both;
+		}
+
+		.kpi-card::after {
+			content: "";
+			position: absolute;
+			top: -36px;
+			right: -36px;
+			width: 92px;
+			height: 92px;
+			border-radius: 50%;
+			opacity: 0.18;
+			background: currentColor;
+		}
+
+		.kpi-title {
+			margin: 0;
+			font-size: 0.85rem;
+			font-weight: 700;
+			color: var(--muted);
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+		}
+
+		.kpi-value {
+			margin: 10px 0 0;
+			font-size: clamp(1.35rem, 2.2vw, 1.9rem);
+			font-weight: 800;
+			color: #1e2448;
+		}
+
+		.kpi-sub {
+			margin: 6px 0 0;
+			font-size: 0.82rem;
+			color: var(--muted);
+		}
+
+		.kpi-energy { color: var(--green); background: linear-gradient(145deg, #ffffff, var(--green-soft)); }
+		.kpi-income { color: var(--orange); background: linear-gradient(145deg, #ffffff, #fff1de); }
+		.kpi-cost { color: var(--red); background: linear-gradient(145deg, #ffffff, #ffe5e5); }
+		.kpi-profit { color: var(--purple); background: linear-gradient(145deg, #ffffff, var(--purple-soft)); }
+
+		.chart-grid {
+			display: grid;
+			gap: 14px;
+			grid-template-columns: repeat(2, minmax(280px, 1fr));
+		}
+
+		.chart-card {
+			background: var(--surface);
+			border-radius: var(--radius);
+			box-shadow: var(--shadow);
+			border: 1px solid rgba(36, 54, 89, 0.08);
+			padding: 14px;
+			animation: fadeUp 700ms ease both;
+		}
+
+		.chart-title {
+			margin: 0 0 6px;
+			font-size: 1rem;
+			font-weight: 700;
+			color: #2a305a;
+		}
+
+		.chart-wrap {
+			position: relative;
+			height: 315px;
+		}
+
+		@keyframes fadeUp {
+			from {
+				opacity: 0;
+				transform: translateY(8px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		@media (max-width: 1024px) {
+			.kpi-grid {
+				grid-template-columns: repeat(2, minmax(150px, 1fr));
+			}
+		}
+
+		@media (max-width: 760px) {
+			body {
+				padding: 14px;
+			}
+
+			.chart-grid {
+				grid-template-columns: 1fr;
+			}
+
+			.kpi-grid {
+				grid-template-columns: 1fr;
+			}
+
+			.chart-wrap {
+				height: 285px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="dashboard">
+		<section class="header">
+			<h1>Panel de Visualización de Datos Simulados</h1>
+			<p>Monitoreo interno: residuos procesados, energía, ingresos, costos y rentabilidad acumulada (10 años).</p>
+		</section>
+
+		<section class="kpi-grid">
+			<article class="kpi-card kpi-energy">
+				<h2 class="kpi-title">Energía Generada</h2>
+				<p class="kpi-value" id="kpiEnergia">0 GWh</p>
+				<p class="kpi-sub">Último año simulado</p>
+			</article>
+
+			<article class="kpi-card kpi-income">
+				<h2 class="kpi-title">Ingresos</h2>
+				<p class="kpi-value" id="kpiIngresos">$0</p>
+				<p class="kpi-sub">Último año simulado</p>
+			</article>
+
+			<article class="kpi-card kpi-cost">
+				<h2 class="kpi-title">Costos</h2>
+				<p class="kpi-value" id="kpiCostos">$0</p>
+				<p class="kpi-sub">Último año simulado</p>
+			</article>
+
+			<article class="kpi-card kpi-profit">
+				<h2 class="kpi-title">Ganancia Neta</h2>
+				<p class="kpi-value" id="kpiGanancia">$0</p>
+				<p class="kpi-sub">Punto rentable incluido</p>
+			</article>
+		</section>
+
+		<section class="chart-grid">
+			<article class="chart-card">
+				<h3 class="chart-title">Crecimiento de Energía por Año (GWh)</h3>
+				<div class="chart-wrap"><canvas id="chartEnergia"></canvas></div>
+			</article>
+
+			<article class="chart-card">
+				<h3 class="chart-title">Ingresos vs Costos (M USD)</h3>
+				<div class="chart-wrap"><canvas id="chartIngresosCostos"></canvas></div>
+			</article>
+
+			<article class="chart-card">
+				<h3 class="chart-title">Ganancia Acumulada (M USD)</h3>
+				<div class="chart-wrap"><canvas id="chartGananciaAcumulada"></canvas></div>
+			</article>
+
+			<article class="chart-card">
+				<h3 class="chart-title">Residuos Aprovechables vs No Aprovechables</h3>
+				<div class="chart-wrap"><canvas id="chartResiduos"></canvas></div>
+			</article>
+		</section>
+	</main>
+
+	<script>
+		const years = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
+
+		// Datos simulados con crecimiento progresivo y quiebre de rentabilidad.
+		const energyGWh = [6.2, 7.8, 9.4, 12.1, 15.7, 20.3, 25.4, 31.8, 38.5, 46.2];
+		const ingresosM = [1.25, 1.58, 1.92, 2.55, 3.35, 4.22, 5.31, 6.62, 8.15, 9.88];
+		const costosM = [2.85, 2.74, 2.61, 2.58, 2.77, 3.08, 3.42, 3.78, 4.14, 4.45];
+
+		const netoM = ingresosM.map((ing, i) => +(ing - costosM[i]).toFixed(2));
+		const acumuladaM = netoM.reduce((acc, value, i) => {
+			const prev = i === 0 ? 0 : acc[i - 1];
+			acc.push(+(prev + value).toFixed(2));
+			return acc;
+		}, []);
+
+		const rentabilidadIndex = netoM.findIndex(v => v > 0);
+		const rentabilidadYear = rentabilidadIndex >= 0 ? years[rentabilidadIndex] : "N/D";
+
+		const formatMoneyM = (value) =>
+			new Intl.NumberFormat("es-CL", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value * 1000000);
+
+		document.getElementById("kpiEnergia").textContent = `${energyGWh[energyGWh.length - 1].toFixed(1)} GWh`;
+		document.getElementById("kpiIngresos").textContent = formatMoneyM(ingresosM[ingresosM.length - 1]);
+		document.getElementById("kpiCostos").textContent = formatMoneyM(costosM[costosM.length - 1]);
+		document.getElementById("kpiGanancia").textContent = formatMoneyM(netoM[netoM.length - 1]);
+		document.querySelector(".kpi-profit .kpi-sub").textContent = `Rentable desde ${rentabilidadYear}`;
+
+		Chart.defaults.color = "#4f5f82";
+		Chart.defaults.font.family = '"Segoe UI", "Trebuchet MS", sans-serif';
+
+		const gridColor = "rgba(92, 111, 156, 0.16)";
+
+		const pointDelay = {
+			id: "pointDelay",
+			afterDatasetsDraw(chart) {
+				chart.data.datasets.forEach((dataset, datasetIndex) => {
+					const meta = chart.getDatasetMeta(datasetIndex);
+					meta.data.forEach((point, i) => {
+						point.options.animation = {
+							duration: 500,
+							delay: i * 75,
+							easing: "easeOutQuart"
+						};
+					});
+				});
+			}
+		};
+
+		new Chart(document.getElementById("chartEnergia"), {
+			type: "line",
+			data: {
+				labels: years,
+				datasets: [{
+					label: "Energía (GWh)",
+					data: energyGWh,
+					borderColor: "#23b26d",
+					backgroundColor: "rgba(35,178,109,0.22)",
+					tension: 0.34,
+					pointRadius: 4,
+					pointHoverRadius: 6,
+					fill: true
+				}]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				animation: { duration: 1100, easing: "easeOutCubic" },
+				plugins: {
+					legend: { display: true },
+					title: { display: false }
+				},
+				scales: {
+					x: { grid: { color: gridColor } },
+					y: {
+						beginAtZero: true,
+						grid: { color: gridColor },
+						title: { display: true, text: "GWh" }
+					}
+				}
+			},
+			plugins: [pointDelay]
+		});
+
+		new Chart(document.getElementById("chartIngresosCostos"), {
+			type: "bar",
+			data: {
+				labels: years,
+				datasets: [
+					{
+						label: "Ingresos (M USD)",
+						data: ingresosM,
+						backgroundColor: "rgba(241,155,44,0.82)",
+						borderColor: "#f19b2c",
+						borderWidth: 1,
+						borderRadius: 8
+					},
+					{
+						label: "Costos (M USD)",
+						data: costosM,
+						backgroundColor: "rgba(217,82,82,0.82)",
+						borderColor: "#d95252",
+						borderWidth: 1,
+						borderRadius: 8
+					}
+				]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				animation: { duration: 1050, easing: "easeOutQuart" },
+				plugins: {
+					legend: { position: "top" }
+				},
+				scales: {
+					x: { stacked: false, grid: { color: gridColor } },
+					y: {
+						beginAtZero: true,
+						grid: { color: gridColor },
+						title: { display: true, text: "Millones USD" }
+					}
+				}
+			}
+		});
+
+		new Chart(document.getElementById("chartGananciaAcumulada"), {
+			type: "line",
+			data: {
+				labels: years,
+				datasets: [{
+					label: "Ganancia acumulada (M USD)",
+					data: acumuladaM,
+					borderColor: "#6d46c2",
+					backgroundColor: "rgba(109,70,194,0.16)",
+					fill: true,
+					tension: 0.3,
+					pointRadius: 4
+				}]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				animation: { duration: 1200, easing: "easeOutExpo" },
+				plugins: {
+					legend: { display: true },
+					annotationLabel: { display: false }
+				},
+				scales: {
+					x: { grid: { color: gridColor } },
+					y: {
+						grid: { color: gridColor },
+						title: { display: true, text: "Millones USD" }
+					}
+				}
+			},
+			plugins: [pointDelay]
+		});
+
+		new Chart(document.getElementById("chartResiduos"), {
+			type: "pie",
+			data: {
+				labels: ["Aprovechables", "No aprovechables"],
+				datasets: [{
+					data: [72, 28],
+					backgroundColor: ["#23b26d", "#13c4d8"],
+					borderColor: ["#1f965d", "#1198a8"],
+					borderWidth: 1.2
+				}]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				animation: {
+					animateRotate: true,
+					animateScale: true,
+					duration: 1300,
+					easing: "easeOutBack"
+				},
+				plugins: {
+					legend: { position: "bottom" },
+					tooltip: {
+						callbacks: {
+							label: (ctx) => `${ctx.label}: ${ctx.parsed}%`
+						}
+					}
+				}
+			}
+		});
+	</script>
+</body>
+</html>

@@ -20,14 +20,14 @@ CAPTURAS_PATH   = os.path.join(BASE_PATH, "uploads", "capturas_cam")
 
 # ===== TOLERANCIA LBPH =====
 # LBPH retorna "confianza" donde valores MAS BAJOS = mejor match.
-# < 80: match excelente, < 120: muy bueno, < 140: util para camaras IoT con ruido.
-# Se flexibiliza para reducir falsos negativos en ESP32-S3 CAM.
-NIGHT_MATCH_THRESHOLD = 155.0
-DAY_STRICT_FACTOR = 0.97  # Dia ligeramente mas estricto que noche
+# < 80: match excelente, < 120: muy bueno, < 140: aceptable.
+# Ajuste mas estricto para reducir falsos positivos entre usuarios parecidos.
+NIGHT_MATCH_THRESHOLD = 145.0
+DAY_STRICT_FACTOR = 0.94  # Dia mas estricto para evitar confusiones
 
 # Probabilidad minima para considerar valido el match.
 # Protege contra detecciones "dudosas" aun cuando pasen por threshold LBPH.
-BASE_MIN_PROBABILITY = 0.22
+BASE_MIN_PROBABILITY = 0.34
 MIN_IMAGES_PER_USER = 15
 
 # ===== DETECTOR HAAR =====
@@ -450,10 +450,8 @@ def main():
         recognizer, roi_input, attempts=3
     )
 
-    # Aceptar si supera threshold principal o si pasa por decision estable por votos.
-    vote_stable_match = votes >= 2 and confidence <= (dynamic_threshold + 6.0)
-
-    if (confidence <= dynamic_threshold and probability >= dynamic_min_probability) or vote_stable_match:
+    # Aceptar solo cuando pasa ambos umbrales (sin bypass por votos).
+    if confidence <= dynamic_threshold and probability >= dynamic_min_probability:
         print(json.dumps({
             "success": True,
             "user_id": int(label),

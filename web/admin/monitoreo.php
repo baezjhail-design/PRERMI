@@ -1,7 +1,7 @@
-﻿<?php
+<?php
 /**
- * monitoreo.php — Monitoreo Vehicular ESP32-CAM
- * PRERMI Admin — Pagina independiente de monitoreo
+ * monitoreo.php - Monitoreo vehicular ESP32-CAM
+ * PRERMI Admin - Pagina independiente de monitoreo
  */
 session_start();
 if (!isset($_SESSION['admin_id'])) { header("Location: loginA.php"); exit; }
@@ -38,7 +38,7 @@ try {
                     $pdo->prepare("INSERT INTO capturas_semaforo_rojo (vehiculo_id,marcado_por_admin_id,nota,imagen) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE marcado_por_admin_id=VALUES(marcado_por_admin_id),imagen=COALESCE(imagen,VALUES(imagen))")
                         ->execute([$vid, intval($_SESSION['admin_id']), 'Marcado manualmente', $img]);
                     $pdo->prepare("INSERT INTO logs_sistema(descripcion,tipo) VALUES(?,?)")
-                        ->execute(["Admin #".intval($_SESSION['admin_id'])." marcó vehiculo #$vid en rojo", 'warning']);
+                        ->execute(["Admin #".intval($_SESSION['admin_id'])." marco vehiculo #$vid en rojo", 'warning']);
                     $flash = ['type'=>'success','msg'=>'Captura marcada en semaforo rojo'];
                 } else {
                     $pdo->prepare("DELETE FROM capturas_semaforo_rojo WHERE vehiculo_id=?")->execute([$vid]);
@@ -97,7 +97,7 @@ try {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Monitoreo Vehicular — PRERMI Admin</title>
+<title>Monitoreo Vehicular | PRERMI Admin</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -145,6 +145,12 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
 .conf-low{background:#fee2e2;color:#b91c1c;border-radius:8px;padding:2px 8px;font-size:.78rem;font-weight:600;}
 .chart-dark{background:#1e293b;border-radius:14px;padding:1.5rem;}
 .chart-dark-title{color:#e2e8f0;font-weight:700;font-size:.95rem;margin-bottom:1rem;}
+.quick-links{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem;}
+.quick-link-card{display:flex;align-items:center;gap:.85rem;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);padding:.85rem 1rem;border-radius:12px;color:#fff;text-decoration:none;min-width:260px;transition:all .2s;}
+.quick-link-card:hover{background:rgba(255,255,255,.18);color:#fff;transform:translateY(-1px);}
+.quick-link-icon{width:42px;height:42px;border-radius:10px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.quick-link-copy strong{display:block;font-size:.95rem;line-height:1.2;}
+.quick-link-copy span{display:block;font-size:.78rem;opacity:.85;}
 </style>
 </head>
 <body>
@@ -154,6 +160,7 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
     <a href="dashboard.php" class="nav-link-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
     <a href="monitoreo.php" class="nav-link-item active"><i class="fas fa-video"></i> Monitoreo</a>
     <a href="depositos.php" class="nav-link-item"><i class="fas fa-box-open"></i> Depositos</a>
+    <a href="vehiculos.php" class="nav-link-item"><i class="fas fa-camera"></i> Catalogo IA</a>
     <a href="sanciones.php" class="nav-link-item"><i class="fas fa-exclamation-triangle"></i> Sanciones</a>
     <a href="administradores.php" class="nav-link-item"><i class="fas fa-users-cog"></i> Administradores</a>
     <a href="biores.php" class="nav-link-item"><i class="fas fa-leaf"></i> BIOMASA</a>
@@ -175,6 +182,15 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
   <div class="page-header">
     <h1><i class="fas fa-video"></i> Monitoreo Vehicular ESP32-CAM</h1>
     <p>Capturas de vehiculos, semaforos en rojo e incidentes de transito</p>
+    <div class="quick-links">
+      <a class="quick-link-card" href="vehiculos.php">
+        <div class="quick-link-icon"><i class="fas fa-camera"></i></div>
+        <div class="quick-link-copy">
+          <strong>Gestionar catalogo de deteccion</strong>
+          <span>Sube imagenes de referencia y activa o desactiva coincidencias.</span>
+        </div>
+      </a>
+    </div>
   </div>
 
   <!-- Filtro de periodo -->
@@ -250,7 +266,7 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
     </div>
     <div class="col-lg-4">
       <div class="chart-dark" style="height:100%;">
-        <div class="chart-dark-title"><i class="fas fa-chart-pie" style="color:#7c3aed;"></i> Distribucion rojo vs normal</div>
+        <div class="chart-dark-title"><i class="fas fa-chart-pie" style="color:#7c3aed;"></i> Distribucion rojo vs. normal</div>
         <canvas id="chartDonut" height="170"></canvas>
       </div>
     </div>
@@ -292,7 +308,7 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif;}
     <div class="panel-head"><i class="fas fa-table" style="color:#1e40af;"></i> Registro completo de capturas</div>
     <div class="table-container">
       <table class="table table-hover mb-0">
-        <thead><tr><th>#</th><th>Placa</th><th>Tipo</th><th>Ubicacion</th><th>Fecha/Hora</th><th>Confianza</th><th>Imagen</th><th>Semaforo Rojo</th></tr></thead>
+        <thead><tr><th>#</th><th>Placa</th><th>Tipo</th><th>Ubicacion</th><th>Fecha/Hora</th><th>Confianza</th><th>Imagen</th><th>Semaforo rojo</th></tr></thead>
         <tbody>
           <?php foreach($vehiculos as $v): ?>
           <?php $vId=intval($v['id']); $isRojo=isset($rojoMap[$vId]); $conf=intval(floatval($v['probabilidad'])*100); ?>

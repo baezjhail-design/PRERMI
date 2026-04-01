@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRERMI | Dashboard Ejecutivo</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #eef6fb;
+      --surface: #ffffff;
+      --text: #152238;
+      --muted: #5c6d88;
+      --blue: #1982d1;
+      --green: #1ea56a;
+      --orange: #ea8c24;
+      --red: #cf4f4f;
+      --line: #d9e6f2;
+      --shadow: 0 14px 34px rgba(16, 41, 78, 0.12);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Manrope", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(25, 130, 209, 0.14), transparent 34%),
+        radial-gradient(circle at 88% 0%, rgba(30, 165, 106, 0.14), transparent 32%),
+        linear-gradient(180deg, #f7fcff 0%, var(--bg) 100%);
+      min-height: 100vh;
+      padding: 22px;
+    }
+
+    .dashboard {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero {
+      padding: 18px 22px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: linear-gradient(130deg, #ffffff 0%, #ecf5ff 62%, #ecfbf3 100%);
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2.1vw, 1.9rem);
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+
+    .hero p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .kpi {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      animation: rise 550ms ease both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi::after {
+      content: "";
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      position: absolute;
+      top: -42px;
+      right: -30px;
+      opacity: 0.12;
+      background: currentColor;
+    }
+
+    .kpi-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .kpi-label {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .kpi-icon {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .kpi-value {
+      margin: 0;
+      font-size: clamp(1.2rem, 1.7vw, 1.7rem);
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .kpi-note {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .kpi.blue { color: var(--blue); }
+    .kpi.green { color: var(--green); }
+    .kpi.orange { color: var(--orange); }
+    .kpi.red { color: var(--red); }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      animation: rise 650ms ease both;
+      display: grid;
+      gap: 8px;
+    }
+
+    .chart-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #203357;
+    }
+
+    .chart-box {
+      position: relative;
+      height: 290px;
+    }
+
+    .chart-message {
+      margin: 0;
+      font-size: 0.87rem;
+      color: #334c72;
+      background: #f3f8fe;
+      border: 1px solid #d7e7f9;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-weight: 600;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 1080px) {
+      .kpi-grid { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
+      .chart-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 12px; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .chart-box { height: 260px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="dashboard">
+    <section class="hero">
+      <h1>PRERMI | Dashboard Ejecutivo de Valor e Impacto</h1>
+      <p>Proyecto industrial de valorización de residuos: 200,000 t/año procesadas, 100,000 t/año aprovechadas y crecimiento energético escalable.</p>
+    </section>
+
+    <section class="kpi-grid" id="kpiGrid">
+      <article class="kpi blue">
+        <div class="kpi-top"><p class="kpi-label">Inversión Estimada</p><span class="kpi-icon">🏗</span></div>
+        <p class="kpi-value" id="kpiInversion">$0</p>
+        <p class="kpi-note">Capex inicial del proyecto</p>
+      </article>
+
+      <article class="kpi orange">
+        <div class="kpi-top"><p class="kpi-label">Ingresos Anuales</p><span class="kpi-icon">💰</span></div>
+        <p class="kpi-value" id="kpiIngresos">$0</p>
+        <p class="kpi-note">Flujo en el año 10</p>
+      </article>
+
+      <article class="kpi green">
+        <div class="kpi-top"><p class="kpi-label">Ganancia Neta Anual</p><span class="kpi-icon">📈</span></div>
+        <p class="kpi-value" id="kpiNeta">$0</p>
+        <p class="kpi-note">Ingresos menos costos</p>
+      </article>
+
+      <article class="kpi green">
+        <div class="kpi-top"><p class="kpi-label">ROI</p><span class="kpi-icon">🎯</span></div>
+        <p class="kpi-value" id="kpiRoi">0%</p>
+        <p class="kpi-note">Retorno anual esperado</p>
+      </article>
+
+      <article class="kpi blue">
+        <div class="kpi-top"><p class="kpi-label">Punto de Equilibrio</p><span class="kpi-icon">⏱</span></div>
+        <p class="kpi-value" id="kpiEquilibrio">0 años</p>
+        <p class="kpi-note">Recuperación de la inversión</p>
+      </article>
+
+      <article class="kpi green">
+        <div class="kpi-top"><p class="kpi-label">Energía Anual</p><span class="kpi-icon">⚡</span></div>
+        <p class="kpi-value" id="kpiEnergia">0 GWh</p>
+        <p class="kpi-note">Generación proyectada</p>
+      </article>
+
+      <article class="kpi blue">
+        <div class="kpi-top"><p class="kpi-label">Toneladas Aprovechadas</p><span class="kpi-icon">♻</span></div>
+        <p class="kpi-value" id="kpiToneladas">0 t</p>
+        <p class="kpi-note">50% de residuos procesados</p>
+      </article>
+
+      <article class="kpi orange">
+        <div class="kpi-top"><p class="kpi-label">Ahorro Gubernamental</p><span class="kpi-icon">🏛</span></div>
+        <p class="kpi-value" id="kpiAhorro">$0</p>
+        <p class="kpi-note">Reducción de costos operativos</p>
+      </article>
+    </section>
+
+    <section class="chart-grid">
+      <article class="chart-card">
+        <h2 class="chart-title">Escalabilidad Energética (10 años)</h2>
+        <div class="chart-box"><canvas id="chartEnergia"></canvas></div>
+        <p class="chart-message">PRERMI incrementa su capacidad energética de forma sostenida, habilitando expansión regional con bajo riesgo operativo.</p>
+      </article>
+
+      <article class="chart-card">
+        <h2 class="chart-title">Ingresos vs Costos Operativos</h2>
+        <div class="chart-box"><canvas id="chartFinanzas"></canvas></div>
+        <p class="chart-message">PRERMI transforma residuos en ingresos constantes y consolida una brecha positiva frente a costos a partir de la madurez operativa.</p>
+      </article>
+
+      <article class="chart-card">
+        <h2 class="chart-title">Ganancia Acumulada y Break-Even</h2>
+        <div class="chart-box"><canvas id="chartAcumulada"></canvas></div>
+        <p class="chart-message" id="msgEquilibrio">El sistema alcanza rentabilidad sostenible en X años.</p>
+      </article>
+
+      <article class="chart-card">
+        <h2 class="chart-title">Distribución de Beneficios Económicos</h2>
+        <div class="chart-box"><canvas id="chartBeneficios"></canvas></div>
+        <p class="chart-message">El modelo beneficia simultáneamente a industria, gobierno y ciudadano, alineando incentivos para adopción masiva.</p>
+      </article>
+
+      <article class="chart-card full">
+        <h2 class="chart-title">Impacto Ambiental del Procesamiento de Residuos</h2>
+        <div class="chart-box"><canvas id="chartAmbiental"></canvas></div>
+        <p class="chart-message">Reduce costos operativos del gobierno significativamente y genera beneficios económicos directos al ciudadano mediante una gestión más eficiente.</p>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const years = [2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036];
+
+    // Simulación realista con curva de maduración industrial y break-even dentro de 4-8 años.
+    const inversionInicialM = 34; // millones USD
+    const energiaGWh = [22, 27, 33, 40, 47, 54, 60, 64, 67, 70];
+    const ingresosM = [9.0, 10.5, 12.5, 14.8, 17.2, 19.6, 21.8, 23.7, 25.5, 27.0];
+    const costosM = [10.8, 10.9, 11.1, 11.4, 11.8, 12.2, 12.7, 13.1, 13.6, 14.1];
+
+    const netaM = ingresosM.map((v, i) => +(v - costosM[i]).toFixed(2));
+    const acumuladaM = [];
+    let running = -inversionInicialM;
+    for (let i = 0; i < netaM.length; i++) {
+      running += netaM[i];
+      acumuladaM.push(+running.toFixed(2));
+    }
+
+    const breakEvenIndex = acumuladaM.findIndex(v => v >= 0);
+    const breakEvenYears = breakEvenIndex >= 0 ? breakEvenIndex + 1 : null;
+
+    const utilidadTotalM = netaM.reduce((acc, value) => acc + value, 0);
+    const roiAnual = +(((utilidadTotalM / inversionInicialM) / years.length) * 100).toFixed(1);
+    const ahorroGobiernoM = 6.8;
+    const residuosProcesados = 200000;
+    const residuosAprovechados = 100000;
+    const residuosNoAprovechados = residuosProcesados - residuosAprovechados;
+
+    const fmtMoneyM = (v) => new Intl.NumberFormat("es-DO", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 1
+    }).format(v * 1000000);
+
+    const fmtInt = (v) => new Intl.NumberFormat("es-DO").format(v);
+
+    document.getElementById("kpiInversion").textContent = fmtMoneyM(inversionInicialM);
+    document.getElementById("kpiIngresos").textContent = fmtMoneyM(ingresosM[ingresosM.length - 1]);
+    document.getElementById("kpiNeta").textContent = fmtMoneyM(netaM[netaM.length - 1]);
+    document.getElementById("kpiRoi").textContent = `${roiAnual}%`;
+    document.getElementById("kpiEquilibrio").textContent = breakEvenYears ? `${breakEvenYears} años` : "No alcanzado";
+    document.getElementById("kpiEnergia").textContent = `${energiaGWh[energiaGWh.length - 1]} GWh`;
+    document.getElementById("kpiToneladas").textContent = `${fmtInt(residuosAprovechados)} t`;
+    document.getElementById("kpiAhorro").textContent = fmtMoneyM(ahorroGobiernoM);
+
+    document.getElementById("msgEquilibrio").textContent = breakEvenYears
+      ? `El sistema alcanza rentabilidad sostenible en ${breakEvenYears} años, dentro de la ventana esperada para proyectos de infraestructura.`
+      : "El sistema aún no alcanza punto de equilibrio en el período simulado.";
+
+    Chart.defaults.color = "#4d6285";
+    Chart.defaults.font.family = "Manrope, sans-serif";
+    const grid = "rgba(127, 154, 192, 0.2)";
+
+    const delayed = {
+      id: "delayed",
+      beforeDatasetsDraw(chart) {
+        const ctx = chart.ctx;
+        ctx.save();
+      }
+    };
+
+    new Chart(document.getElementById("chartEnergia"), {
+      type: "line",
+      data: {
+        labels: years,
+        datasets: [{
+          label: "Energía generada (GWh)",
+          data: energiaGWh,
+          borderColor: "#1ea56a",
+          backgroundColor: "rgba(30,165,106,0.20)",
+          pointBackgroundColor: "#1ea56a",
+          fill: true,
+          tension: 0.33,
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1150, easing: "easeOutCubic" },
+        plugins: { legend: { display: true } },
+        scales: {
+          x: { grid: { color: grid } },
+          y: { beginAtZero: true, grid: { color: grid }, title: { display: true, text: "GWh" } }
+        }
+      },
+      plugins: [delayed]
+    });
+
+    new Chart(document.getElementById("chartFinanzas"), {
+      type: "bar",
+      data: {
+        labels: years,
+        datasets: [
+          {
+            label: "Ingresos (M USD)",
+            data: ingresosM,
+            backgroundColor: "rgba(234,140,36,0.85)",
+            borderRadius: 8
+          },
+          {
+            label: "Costos (M USD)",
+            data: costosM,
+            backgroundColor: "rgba(207,79,79,0.85)",
+            borderRadius: 8
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1100, easing: "easeOutQuart" },
+        plugins: { legend: { position: "top" } },
+        scales: {
+          x: { grid: { color: grid } },
+          y: { beginAtZero: true, grid: { color: grid }, title: { display: true, text: "Millones USD" } }
+        }
+      }
+    });
+
+    new Chart(document.getElementById("chartAcumulada"), {
+      type: "line",
+      data: {
+        labels: years,
+        datasets: [{
+          label: "Ganancia acumulada (M USD)",
+          data: acumuladaM,
+          borderColor: "#1982d1",
+          backgroundColor: "rgba(25,130,209,0.18)",
+          fill: true,
+          tension: 0.25,
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1300, easing: "easeOutExpo" },
+        plugins: { legend: { display: true } },
+        scales: {
+          x: { grid: { color: grid } },
+          y: { grid: { color: grid }, title: { display: true, text: "Millones USD" } }
+        }
+      }
+    });
+
+    new Chart(document.getElementById("chartBeneficios"), {
+      type: "pie",
+      data: {
+        labels: ["Industria", "Gobierno", "Ciudadano"],
+        datasets: [{
+          data: [46, 34, 20],
+          backgroundColor: ["#ea8c24", "#1982d1", "#1ea56a"],
+          borderColor: ["#cf7a1f", "#1567a6", "#178053"],
+          borderWidth: 1.2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { animateRotate: true, animateScale: true, duration: 1350, easing: "easeOutBack" },
+        plugins: {
+          legend: { position: "bottom" },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.label}: ${ctx.parsed}%`
+            }
+          }
+        }
+      }
+    });
+
+    new Chart(document.getElementById("chartAmbiental"), {
+      type: "bar",
+      data: {
+        labels: ["Residuos aprovechados", "Residuos no aprovechados"],
+        datasets: [{
+          label: "Toneladas por año",
+          data: [residuosAprovechados, residuosNoAprovechados],
+          backgroundColor: ["rgba(30,165,106,0.85)", "rgba(207,79,79,0.82)"],
+          borderColor: ["#1a8d5b", "#b14444"],
+          borderWidth: 1,
+          borderRadius: 10,
+          maxBarThickness: 110
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1200, easing: "easeOutCubic" },
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: {
+            beginAtZero: true,
+            grid: { color: grid },
+            title: { display: true, text: "Toneladas" }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

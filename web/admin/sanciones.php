@@ -1,7 +1,7 @@
-﻿<?php
+<?php
 /**
- * sanciones.php — Gestion de Sanciones
- * PRERMI Admin — Pagina independiente de sanciones
+ * sanciones.php � Gestion de Sanciones
+ * PRERMI Admin � Pagina independiente de sanciones
  */
 session_start();
 if (!isset($_SESSION['admin_id'])) { header("Location: loginA.php"); exit; }
@@ -34,7 +34,7 @@ try {
                 $pdo->prepare("INSERT INTO {$sT}(user_id,contenedor_id,descripcion,peso) VALUES(?,?,?,?)")
                     ->execute([$userId,$contenedorId,$descripcion,$peso]);
                 $pdo->prepare("INSERT INTO logs_sistema(descripcion,tipo) VALUES(?,?)")
-                    ->execute(["Admin #".intval($_SESSION['admin_id'])." creó sancion para usuario #$userId",'warning']);
+                    ->execute(["Admin #".intval($_SESSION['admin_id'])." cre� sancion para usuario #$userId",'warning']);
                 $flash=['type'=>'success','msg'=>'Sancion creada correctamente'];
             } else {
                 $flash=['type'=>'danger','msg'=>'Debe seleccionar usuario y contenedor'];
@@ -97,7 +97,7 @@ try {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Sanciones — PRERMI Admin</title>
+<title>Sanciones � PRERMI Admin</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="/PRERMI/web/assets/css/theme.css">

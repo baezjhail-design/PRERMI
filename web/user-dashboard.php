@@ -109,6 +109,7 @@ try {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #0f172a;
         }
 
         .navbar-user {
@@ -126,8 +127,10 @@ try {
         }
 
         .navbar-user .nav-link {
-            color: rgba(255,255,255,0.9);
+            color: rgba(248,250,252,0.96);
             margin: 0 1rem;
+            font-size: 0.96rem;
+            font-weight: 600;
             transition: all 0.3s ease;
         }
 
@@ -204,6 +207,7 @@ try {
             border-radius: 15px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
             border: none;
+            color: #0f172a;
             transition: all 0.3s ease;
             margin-bottom: 2rem;
         }
@@ -288,12 +292,16 @@ try {
         .table-container thead th {
             border: none;
             font-weight: 600;
+            font-size: 0.98rem;
             padding: 1.5rem;
         }
 
         .table-container tbody td {
             padding: 1.2rem 1.5rem;
             border-color: #f0f0f0;
+            color: #1f2937;
+            font-size: 0.96rem;
+            font-weight: 500;
             vertical-align: middle;
         }
 
@@ -389,7 +397,7 @@ try {
             .table-container thead th,
             .table-container tbody td {
                 padding: 0.8rem 0.6rem;
-                font-size: 0.85rem;
+                font-size: 0.89rem;
                 white-space: nowrap;
             }
 
@@ -443,8 +451,9 @@ try {
         }
 
         .savings-section-header p {
-            opacity: 0.9;
-            font-size: 0.97rem;
+            opacity: 1;
+            font-size: 1.03rem;
+            line-height: 1.55;
             margin: 0;
         }
 
@@ -482,8 +491,9 @@ try {
         }
 
         .savings-label {
-            color: #666;
-            font-size: 0.88rem;
+            color: #334155;
+            font-size: 0.92rem;
+            font-weight: 600;
             margin-top: 0.4rem;
         }
 
@@ -502,17 +512,17 @@ try {
         .info-card h6 {
             font-weight: 700;
             margin-bottom: 0.9rem;
-            color: #333;
+            color: #0f172a;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 1rem;
+            font-size: 1.08rem;
         }
 
         .info-card p, .info-card li {
-            font-size: 0.9rem;
-            color: #555;
-            line-height: 1.6;
+            font-size: 0.98rem;
+            color: #334155;
+            line-height: 1.72;
         }
 
         .rate-badge {
@@ -547,11 +557,23 @@ try {
             border: 1px solid rgba(17,153,142,0.25);
             border-radius: 10px;
             padding: 1rem 1.4rem;
-            font-size: 0.9rem;
-            color: #0f6b64;
+            font-size: 0.98rem;
+            color: #0f5f59;
+            line-height: 1.65;
         }
 
         .savings-tip-box i { color: #11998e; }
+
+        .card-custom .text-muted.small {
+            font-size: 0.93rem !important;
+            color: #475569 !important;
+            line-height: 1.6;
+        }
+
+        .info-card small.text-muted {
+            color: #64748b !important;
+            font-size: 0.9rem !important;
+        }
 
         @media (max-width: 768px) {
             .savings-value      { font-size: 1.3rem; }

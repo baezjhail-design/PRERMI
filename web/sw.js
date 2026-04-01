@@ -1,9 +1,18 @@
-const CACHE_NAME = 'prermi-cache-v1';
+const CACHE_NAME = 'prermi-cache-v2';
 const ASSETS = [
   './',
   'index.php',
   'assets/css/style.css',
   'manifest.json'
+];
+
+const AUTH_PATHS = [
+  '/PRERMI/web/login.php',
+  '/PRERMI/web/register.php',
+  '/PRERMI/web/admin/loginA.php',
+  '/PRERMI/web/admin/register.php',
+  '/PRERMI/web/login.html',
+  '/PRERMI/web/register.html'
 ];
 
 // Install event
@@ -38,6 +47,21 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  const url = new URL(event.request.url);
+  const isAuthPage = AUTH_PATHS.some((path) => url.pathname === path);
+
+  // Navegaciones y autenticación siempre desde red para evitar contenido cacheado obsoleto.
+  if (event.request.mode === 'navigate' || isAuthPage) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   // No cachear APIs JSON
   if (event.request.url.includes('/api/')) {
     event.respondWith(
